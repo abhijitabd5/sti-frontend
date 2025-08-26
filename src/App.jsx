@@ -11,6 +11,7 @@ import '@/components/charts/config/chartConfig';
 
 // Import pages
 import Dashboard from '@/pages/internal/Dashboard/Dashboard';
+import Home from '@/pages/website/Home';
 
 function App() {
 
@@ -25,7 +26,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Routes>
-        <Route exact path="/" element={<Dashboard />} />
+        {/* <Route exact path="/" element={<Dashboard />} /> */}
+        <Route exact path="/" element={<Home />} />
       </Routes>
     </div>
   );
