@@ -1,0 +1,15 @@
+/* src/styles/components/utilities.css */
+
+/**
+ * Utility classes
+ */
+
+/* Hide scrollbars across different browsers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
