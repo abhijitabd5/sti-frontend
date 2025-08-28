@@ -2,8 +2,8 @@ import React, { useState } from "react";
 
 import Sidebar from "@/components/common/SideBar/AdminSideBar";
 import Header from "@/components/common/Header/AdminHeader";
-import FilterButton from "@/components/ui/Dropdown/DropdownFilter";
-import Datepicker from "@/components/ui/DatePicker/Datepicker";
+import FilterButton from "@/components/ui/Internal/Dropdown/DropdownFilter";
+import Datepicker from "@/components/ui/Internal/DatePicker/Datepicker";
 import DashboardStatCard from "@/pages/internal/Dashboard/components/DashboardStatCard";
 import DashboardBarChart from "@/pages/internal/Dashboard/components/DashboardBarChart";
 import DashboardDoughnutChart from "@/pages/internal/Dashboard/components/DashboardDoughnutChart";

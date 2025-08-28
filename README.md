@@ -20,6 +20,9 @@ tools to ensure performance, maintainability, and flexibility.
 -   **Component-driven architecture** (reusable UI and form components)
 
 ------------------------------------------------------------------------
+### Instructions
+- Use absolute paths for imports
+------------------------------------------------------------------------
 
 ## Project Structure
 
@@ -34,16 +37,19 @@ tools to ensure performance, maintainability, and flexibility.
     `Modal`, `Loader`, `Layout`.
 -   **common/Layout/** -> Further divided into :
     -   `WebsiteLayout`, `StudentLayout`, `AdminLayout`.
--   **ui/** → Small reusable UI components like `Button`, `Calender`,`Card`, `DatePicker`, 
-      `Dropdown`, `Input`, `Modal`,`Popover`,`ThemeToggle`,`Toast`, `Tooltip`.
+-   **ui/** → Further divided into : `Internal`, `Website`
+-   **ui/Internal/**  (For Internal Dashboards) Small reusable UI components like `Button`,
+      `Calender`,`Card`, `DatePicker`, `Dropdown`, `Input`, `Modal`,`Popover`,`ThemeToggle`,`Toast`, `Tooltip`.
+-   **ui/Website/** (For Website) Small reusable UI components like `Button`, `Calender`, 
+      `Card`, `DatePicker`, `Dropdown`, `Input`, `Modal`,`Popover`,`ThemeToggle`,`Toast`, `Tooltip`.
 -   **forms/** → Form-specific components such as `LoginForm`,
-    `ContactForm`.
+    `ContactUsForm`.
 
 ### `src/pages/`
 
 -   Organized into different **application areas**:
     -   **website/** → Public-facing pages (Home, About Us, Login, Register/Enroll, Courses,
-        Gallery, Contact, etc.)
+        Gallery, Contact Us, etc.)
     -   **student/** → Student portal (Student Dashboard, Profile, Payments,
         Certificates, Course Progress).
     -   **internal/** → Admin/internal portal (Admin Dashboard,
@@ -62,7 +68,7 @@ modular.
     -   `useLanguage` → Language selection logic.
     -   `usePagination` → Reusable pagination logic.
 
-### `src/context/`
+### `src/contexts/`
 
 -   **AuthContext** → Provides authentication state.
 -   **ThemeContext** → Manages light/dark theme across the app.
