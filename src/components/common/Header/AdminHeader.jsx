@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
-import SearchModal from '@/components/ui/Modal/ModalSearch';
-import Notifications from '@/components/ui/Dropdown/DropdownNotifications';
-import UserMenu from '@/components/ui/Dropdown/DropdownProfile';
-import ThemeToggle from '@/components/ui/ThemeToggle/ThemeToggle';
+import SearchModal from '@/components/ui/Internal/Modal/ModalSearch';
+import Notifications from '@/components/ui/Internal/Dropdown/DropdownNotifications';
+import UserMenu from '@/components/ui/Internal/Dropdown/DropdownProfile';
+import ThemeToggle from '@/components/ui/Internal/ThemeToggle/ThemeToggle';
 
 function Header({
   sidebarOpen,
