@@ -25,6 +25,12 @@ import TransactionCategories from "@/pages/internal/TransactionCategories/Transa
 import Transactions from "@/pages/internal/Transactions/Transactions";
 import AddEditTransaction from "@/pages/internal/Transactions/AddEditTransaction";
 import ViewTransaction from "@/pages/internal/Transactions/ViewTransaction";
+import Gallery from "@/pages/internal/Gallery/Gallery";
+import OtherGallery from "@/pages/internal/Gallery/OtherGallery";
+import StudentList from "@/pages/internal/Students/StudentList";
+import StudentDetail from "@/pages/internal/Students/StudentDetail";
+import EnrollmentForm from "@/pages/internal/Students/EnrollmentForm";
+import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
 
 // Import guards
 import { AdminRoute } from "@/guards/ProtectedRoute";
@@ -74,6 +80,17 @@ function App() {
             <Route path="create" element={<AddEditTransaction />} />
             <Route path=":id" element={<ViewTransaction />} />
             <Route path="edit/:id" element={<AddEditTransaction />} />
+          </Route>
+
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="gallery/other" element={<OtherGallery />} />
+
+          <Route path="students">
+            <Route index element={<StudentList />} />
+            <Route path="enroll" element={<EnrollmentForm />} />
+            <Route path=":studentId" element={<StudentDetail />} />
+            <Route path=":studentId/documents" element={<StudentDocuments />} />
+            <Route path="edit/:enrollmentId" element={<EnrollmentForm />} />
           </Route>
         </Route>
 
