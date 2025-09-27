@@ -20,7 +20,6 @@ function StudentDocuments() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState([]);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [documentRows, setDocumentRows] = useState([
     { id: 1, type: "", file: null },
@@ -55,17 +54,18 @@ function StudentDocuments() {
   };
 
   // Document row handlers
-  const handleDocumentTypeChange = (rowId, selectedType) => {
-    setDocumentRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId ? { ...row, type: selectedType } : row
-      )
-    );
-  };
 
   const handleDocumentFileChange = (rowId, file) => {
     setDocumentRows((prev) =>
       prev.map((row) => (row.id === rowId ? { ...row, file: file } : row))
+    );
+  };
+
+  const handleDocumentTypeChange = (rowId, selectedType) => {
+    setDocumentRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId ? { ...row, type: selectedType, file: null } : row
+      )
     );
   };
 
@@ -97,10 +97,15 @@ function StudentDocuments() {
     return selectedTypes.length >= documentTypes.length;
   };
 
-  const uploadDocuments = async (studentId, documentsToUpload) => {
-    if (documentsToUpload.length === 0) return;
+  const handleUploadDocuments = async () => {
+    const documentsToUpload = documentRows.filter(row => row.file && row.type);
+    if (documentsToUpload.length === 0) {
+      alert('Please select at least one document to upload.');
+      return;
+    }
 
     try {
+      setUploading(true);
       const formData = new FormData();
 
       // Add document types (slugs)
@@ -112,9 +117,20 @@ function StudentDocuments() {
         formData.append("documents", row.file);
       });
 
-      await studentApi.uploadDocuments(studentId, formData);
+      const response = await studentApi.uploadDocuments(studentId, formData);
+      
+      if (response.success) {
+        // Reset document rows to initial state
+        setDocumentRows([{ id: 1, type: "", file: null }]);
+        // Reload student details to show new documents
+        await loadStudentDetails();
+        alert(`${response.data.uploadCount} document(s) uploaded successfully!`);
+      }
     } catch (error) {
       console.error("Error uploading documents:", error);
+      alert('Error uploading documents. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -259,8 +275,16 @@ function StudentDocuments() {
                             )
                           }
                           accept=".jpg,.jpeg,.png,.pdf"
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-900 dark:file:text-violet-300"
+                          disabled={!row.type}
+                          className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-900 dark:file:text-violet-300 ${
+                            !row.type ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                         />
+                        {row.file && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Selected: {row.file.name}
+                          </p>
+                        )}
                       </div>
 
                       {/* Add More Button */}
@@ -282,6 +306,21 @@ function StudentDocuments() {
 
                 <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                   <p>• Supported formats: JPG, PNG, PDF</p>
+                  <p>• "Choose File" button is disabled until document type is selected</p>
+                  <p>• "Add More" button becomes active only when both document type and file are selected</p>
+                  <p>• Each document type can only be selected once</p>
+                </div>
+                
+                {/* Upload Button */}
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button
+                    type="button"
+                    onClick={handleUploadDocuments}
+                    disabled={uploading || !documentRows.some(row => row.file && row.type)}
+                    className="w-full md:w-auto px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                  >
+                    {uploading ? 'Uploading...' : 'Upload Documents'}
+                  </button>
                 </div>
               </div>
             </div>

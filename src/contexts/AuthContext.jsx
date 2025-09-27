@@ -141,15 +141,24 @@ export const AuthProvider = ({ children }) => {
       const response = await authApi.login(credentials);
       
       if (response.success) {
-        // Save auth data to localStorage
-        localStorage.setItem('token', response.data.token);
+        // Save auth data to localStorage - handle both old and new token formats
+        const tokens = response.data.tokens || response.data.token;
+        const accessToken = typeof tokens === 'string' ? tokens : tokens.access_token;
+        
+        localStorage.setItem('token', accessToken); // Keep for backward compatibility
+        if (typeof tokens === 'object' && tokens.access_token) {
+          localStorage.setItem('access_token', tokens.access_token);
+          if (tokens.refresh_token) {
+            localStorage.setItem('refresh_token', tokens.refresh_token);
+          }
+        }
         localStorage.setItem('user', JSON.stringify(response.data.user));
         
         dispatch({
           type: AUTH_ACTIONS.LOGIN_SUCCESS,
           payload: {
             user: response.data.user,
-            token: response.data.token
+            token: accessToken
           }
         });
         
