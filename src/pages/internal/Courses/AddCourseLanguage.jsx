@@ -1,90 +1,99 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import courseApi from '@/services/api/courseApi';
+import AdminLayout from "@/components/common/Layouts/AdminLayout";
+import courseApi from "@/services/api/courseApi";
 
 // Icons
-import { 
+import {
   ArrowLeftIcon,
   DocumentTextIcon,
   CheckIcon,
   XMarkIcon,
-  LanguageIcon,
-  InformationCircleIcon
-} from '@heroicons/react/24/outline';
+  InformationCircleIcon,
+} from "@heroicons/react/24/outline";
 
 function AddCourseLanguage() {
   const navigate = useNavigate();
-  const { courseId } = useParams();
+  const { id: courseGroupId } = useParams();
   const [loading, setLoading] = useState(false);
   const [baseCourse, setBaseCourse] = useState(null);
+  const [hindiVersion, setHindiVersion] = useState(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    language: 'hi', // Default to Hindi for new language variant
-    summary: '',
-    description: '',
-    duration: '',
-    syllabus_text: '',
+    title: "",
+    summary: "",
+    description: "",
+    syllabus_text: "",
     syllabus_file: null,
-    course_group_id: ''
   });
 
   const [errors, setErrors] = useState({});
 
-  // Load base course data
+  // Load base course data and check for existing Hindi version
   useEffect(() => {
     loadBaseCourse();
-  }, [courseId]);
+  }, [courseGroupId]);
 
-  const loadBaseCourse = async () => {
-    try {
-      setInitialLoading(true);
-      const response = await courseApi.getCourseById(courseId);
-      if (response.success) {
-        const course = response.data;
-        setBaseCourse(course);
-        // Pre-fill some fields with base course data for reference
-        setFormData(prev => ({
-          ...prev,
-          duration: course.duration.toString(),
-          course_group_id: course.course_group_id.toString()
-        }));
-      } else {
-        navigate('/admin/courses');
-      }
-    } catch (error) {
-      console.error('Error loading base course:', error);
-      navigate('/admin/courses');
-    } finally {
-      setInitialLoading(false);
+const loadBaseCourse = async () => {
+  try {
+    setInitialLoading(true);
+    console.log("Course Group Id is ", courseGroupId);
+
+    const response = await courseApi.getCourseVariantsByGroupId(courseGroupId);
+    if (response.success) {
+      const englishCourse = response.data.en;
+      setBaseCourse(englishCourse);
+        const hindiCourse = response.data.hi;
+        
+        if (hindiCourse) {
+          // Hindi version exists, prefill form
+          setHindiVersion(hindiCourse);
+          setIsEditMode(true);
+          setFormData({
+            title: hindiCourse.title || "",
+            summary: hindiCourse.summary || "",
+            description: hindiCourse.description || "",
+            syllabus_text: hindiCourse.syllabus_text || "",
+            syllabus_file: null,
+          });
+        }
+      // }
+    } else {
+      navigate("/admin/courses");
     }
-  };
+  } catch (error) {
+    console.error("Error loading base course:", error);
+    navigate("/admin/courses");
+  } finally {
+    setInitialLoading(false);
+  }
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Handle file inputs
     if (name === "syllabus_file") {
       const file = e.target.files[0] || null;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: file,
       }));
       return;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -93,23 +102,15 @@ function AddCourseLanguage() {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Course title is required';
-    }
-
-    if (!formData.language) {
-      newErrors.language = 'Language is required';
+      newErrors.title = "Course title is required";
     }
 
     if (!formData.summary.trim()) {
-      newErrors.summary = 'Course summary is required';
+      newErrors.summary = "Course summary is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Course description is required';
-    }
-
-    if (!formData.duration || formData.duration <= 0) {
-      newErrors.duration = 'Valid duration is required';
+      newErrors.description = "Course description is required";
     }
 
     setErrors(newErrors);
@@ -118,68 +119,61 @@ function AddCourseLanguage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      // Prepare course data for language variant creation
       const courseData = {
         ...formData,
-        duration: parseInt(formData.duration),
-        course_group_id: parseInt(formData.course_group_id),
-        // Copy required fields from base course
-        base_course_fee: parseFloat(baseCourse.base_course_fee),
+        language: "hi",
+        duration: baseCourse.duration,
+        course_group_id: baseCourse.course_group_id,
+        base_course_fee: baseCourse.base_course_fee,
         is_discounted: baseCourse.is_discounted,
-        discount_percentage: parseFloat(baseCourse.discount_percentage || 0),
-        discount_amount: parseFloat(baseCourse.discount_amount || 0),
+        discount_percentage: baseCourse.discount_percentage || 0,
+        discount_amount: baseCourse.discount_amount || 0,
         hostel_available: baseCourse.hostel_available,
-        hostel_fee: parseFloat(baseCourse.hostel_fee || 0),
+        hostel_fee: baseCourse.hostel_fee || 0,
         mess_available: baseCourse.mess_available,
-        mess_fee: parseFloat(baseCourse.mess_fee || 0),
+        mess_fee: baseCourse.mess_fee || 0,
         show_offer_badge: baseCourse.show_offer_badge,
         offer_badge_text: baseCourse.offer_badge_text,
         is_featured: baseCourse.is_featured,
         is_active: true,
-        display_order: baseCourse.display_order
+        display_order: baseCourse.display_order,
+        thumbnail: baseCourse.thumbnail,
       };
-      
-      const response = await courseApi.createCourse(courseData);
+
+      let response;
+      if (isEditMode) {
+        // Update existing Hindi version
+        response = await courseApi.updateCourse(hindiVersion.id, courseData);
+      } else {
+        // Create new Hindi version
+        response = await courseApi.createCourse(courseData);
+      }
 
       if (response.success) {
-        navigate('/admin/courses', {
-          state: { message: `Course language variant (${getLanguageName(formData.language)}) added successfully!` }
+        navigate("/admin/courses", {
+          state: {
+            message: isEditMode
+              ? "Hindi version updated successfully!"
+              : "Hindi version added successfully!",
+          },
         });
       }
     } catch (error) {
-      console.error('Error adding course language variant:', error);
+      console.error("Error saving Hindi version:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/admin/courses');
-  };
-
-  const getLanguageName = (code) => {
-    const languages = {
-      'en': 'English',
-      'hi': 'Hindi',
-      'mar': 'Marathi'
-    };
-    return languages[code] || code;
-  };
-
-  const getLanguageFlag = (code) => {
-    const flags = {
-      'en': '🇺🇸',
-      'hi': '🇮🇳',
-      'mar': '🇮🇳'
-    };
-    return flags[code] || '🌐';
+    navigate("/admin/courses");
   };
 
   if (initialLoading) {
@@ -198,7 +192,9 @@ function AddCourseLanguage() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <XMarkIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">Base course not found</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              Base course not found
+            </p>
           </div>
         </div>
       </AdminLayout>
@@ -217,39 +213,52 @@ function AddCourseLanguage() {
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
             <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-              Add Course Language Variant
+              {isEditMode ? "Edit Hindi Version" : "Add Hindi Version"}
             </h1>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Add a new language version for "{baseCourse.title}"
+            {isEditMode ? "Update" : "Add"} Hindi translation for "
+            {baseCourse.title}"
           </p>
         </div>
       </div>
 
-      {/* Base Course Info */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6">
+      {/* Info Alert */}
+      <div
+        className={`border rounded-lg p-4 mb-6 ${
+          isEditMode
+            ? "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700"
+            : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700"
+        }`}
+      >
         <div className="flex items-center space-x-2 mb-2">
-          <InformationCircleIcon className="h-5 w-5 text-blue-500" />
-          <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">Base Course Information</h3>
+          <InformationCircleIcon
+            className={`h-5 w-5 ${
+              isEditMode ? "text-yellow-500" : "text-blue-500"
+            }`}
+          />
+          <h3
+            className={`text-sm font-medium ${
+              isEditMode
+                ? "text-yellow-800 dark:text-yellow-200"
+                : "text-blue-800 dark:text-blue-200"
+            }`}
+          >
+            {isEditMode
+              ? "Editing Existing Hindi Version"
+              : "Important Information"}
+          </h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div>
-            <span className="font-medium text-blue-700 dark:text-blue-300">Title:</span>
-            <p className="text-blue-600 dark:text-blue-400">{baseCourse.title}</p>
-          </div>
-          <div>
-            <span className="font-medium text-blue-700 dark:text-blue-300">Current Language:</span>
-            <p className="text-blue-600 dark:text-blue-400">
-              {getLanguageFlag(baseCourse.language)} {getLanguageName(baseCourse.language)}
-            </p>
-          </div>
-          <div>
-            <span className="font-medium text-blue-700 dark:text-blue-300">Duration:</span>
-            <p className="text-blue-600 dark:text-blue-400">{baseCourse.duration} weeks</p>
-          </div>
-        </div>
-        <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-          Note: Pricing, discount settings, thumbnail, and display order will be copied from the base course.
+        <p
+          className={`text-sm ${
+            isEditMode
+              ? "text-yellow-600 dark:text-yellow-400"
+              : "text-blue-600 dark:text-blue-400"
+          }`}
+        >
+          {isEditMode
+            ? "You are editing an existing Hindi version. Update the fields as needed."
+            : "Pricing, discount settings, hostel & mess fees, thumbnail, and display order will be automatically copied from the English version."}
         </p>
       </div>
 
@@ -260,118 +269,71 @@ function AddCourseLanguage() {
             {/* Basic Information */}
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-                <div className="flex items-center space-x-2">
-                  <LanguageIcon className="h-5 w-5 text-gray-400" />
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                    Language Variant Information
-                  </h3>
-                </div>
+                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                  Course Information (Hindi)
+                </h3>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Title *
+                    Course Title (Hindi) *
                   </label>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className={`form-input w-full ${errors.title ? 'border-red-500' : ''}`}
-                    placeholder="Enter course title in the selected language"
+                    className={`form-input w-full ${
+                      errors.title ? "border-red-500" : ""
+                    }`}
+                    placeholder="कोर्स का शीर्षक हिंदी में दर्ज करें"
                   />
-                  {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                  {errors.title && (
+                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Language *
-                  </label>
-                  <select
-                    name="language"
-                    value={formData.language}
-                    onChange={handleInputChange}
-                    className={`form-input w-full ${errors.language ? 'border-red-500' : ''}`}
-                  >
-                    <option value="">Select Language</option>
-                    <option value="en" disabled={baseCourse.language === 'en'}>
-                      🇺🇸 English {baseCourse.language === 'en' ? '(Base Course)' : ''}
-                    </option>
-                    <option value="hi" disabled={baseCourse.language === 'hi'}>
-                      🇮🇳 Hindi {baseCourse.language === 'hi' ? '(Base Course)' : ''}
-                    </option>
-                    <option value="mar" disabled={baseCourse.language === 'mar'}>
-                      🇮🇳 Marathi {baseCourse.language === 'mar' ? '(Base Course)' : ''}
-                    </option>
-                  </select>
-                  {errors.language && <p className="text-red-500 text-sm mt-1">{errors.language}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Summary *
+                    Course Summary (Hindi) *
                   </label>
                   <textarea
                     name="summary"
                     value={formData.summary}
                     onChange={handleInputChange}
                     rows={3}
-                    className={`form-input w-full ${errors.summary ? 'border-red-500' : ''}`}
-                    placeholder="Brief summary of the course in the selected language"
+                    className={`form-input w-full ${
+                      errors.summary ? "border-red-500" : ""
+                    }`}
+                    placeholder="कोर्स का संक्षिप्त सारांश हिंदी में लिखें"
                   />
-                  {errors.summary && <p className="text-red-500 text-sm mt-1">{errors.summary}</p>}
+                  {errors.summary && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.summary}
+                    </p>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Description *
+                    Course Description (Hindi) *
                   </label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={6}
-                    className={`form-input w-full ${errors.description ? 'border-red-500' : ''}`}
-                    placeholder="Detailed description of the course in the selected language"
+                    className={`form-input w-full ${
+                      errors.description ? "border-red-500" : ""
+                    }`}
+                    placeholder="कोर्स का विस्तृत विवरण हिंदी में लिखें"
                   />
-                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Duration (weeks) *
-                  </label>
-                  <input
-                    type="number"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleInputChange}
-                    min="1"
-                    className={`form-input w-full ${errors.duration ? 'border-red-500' : ''}`}
-                    placeholder="Course duration in weeks"
-                  />
-                  {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Pre-filled with base course duration ({baseCourse.duration} weeks)
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Course Group ID
-                  </label>
-                  <input
-                    type="text"
-                    name="course_group_id"
-                    value={formData.course_group_id}
-                    readOnly
-                    className="form-input w-full bg-gray-50 dark:bg-gray-700"
-                    placeholder="Course Group ID"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Inherited from base course (read-only)
-                  </p>
+                  {errors.description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.description}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -386,11 +348,11 @@ function AddCourseLanguage() {
                   </h3>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Syllabus Text
+                    Syllabus Text (Hindi)
                   </label>
                   <textarea
                     name="syllabus_text"
@@ -398,16 +360,13 @@ function AddCourseLanguage() {
                     onChange={handleInputChange}
                     rows={6}
                     className="form-input w-full"
-                    placeholder="Enter week-by-week syllabus details in the selected language"
+                    placeholder="सप्ताह-दर-सप्ताह पाठ्यक्रम विवरण हिंदी में दर्ज करें"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Translate the syllabus content to the selected language
-                  </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Syllabus PDF File
+                    Syllabus PDF File (Hindi)
                   </label>
                   <input
                     type="file"
@@ -417,13 +376,10 @@ function AddCourseLanguage() {
                     accept="application/pdf"
                   />
                   {formData.syllabus_file && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                       Selected: {formData.syllabus_file.name}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Upload syllabus PDF file in the selected language
-                  </p>
                 </div>
               </div>
             </div>
@@ -431,70 +387,126 @@ function AddCourseLanguage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* What will be inherited */}
+            {/* Auto-Inherited Fields */}
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
                 <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                  Inherited from Base Course
+                  Auto-Inherited Settings
                 </h3>
               </div>
-              
-              <div className="p-6 space-y-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Pricing:</span>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    ₹{parseFloat(baseCourse.base_course_fee).toLocaleString('en-IN')}
-                    {baseCourse.is_discounted && (
-                      <span className="text-green-600 dark:text-green-400 ml-2">
-                        (₹{parseFloat(baseCourse.discounted_course_fee || baseCourse.base_course_fee).toLocaleString('en-IN')} - {baseCourse.discount_percentage}% OFF)
+
+              <div className="p-6 space-y-3 text-sm">
+                <div className="flex items-start space-x-2">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                      Duration
+                    </span>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {baseCourse.duration} weeks
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-2">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                      Pricing
+                    </span>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      ₹
+                      {parseFloat(baseCourse.base_course_fee).toLocaleString(
+                        "en-IN"
+                      )}
+                      {baseCourse.is_discounted && (
+                        <span className="text-green-600 dark:text-green-400 block">
+                          After Discount: ₹
+                          {parseFloat(
+                            baseCourse.discounted_course_fee ||
+                              baseCourse.base_course_fee
+                          ).toLocaleString("en-IN")}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {baseCourse.hostel_available && (
+                  <div className="flex items-start space-x-2">
+                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                        Hostel Fee
                       </span>
-                    )}
-                  </p>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        ₹
+                        {parseFloat(baseCourse.hostel_fee || 0).toLocaleString(
+                          "en-IN"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {baseCourse.mess_available && (
+                  <div className="flex items-start space-x-2">
+                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                        Mess Fee
+                      </span>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        ₹
+                        {parseFloat(baseCourse.mess_fee || 0).toLocaleString(
+                          "en-IN"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-start space-x-2">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                      Display Order
+                    </span>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      #{baseCourse.display_order}
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Display Order:</span>
-                  <p className="text-gray-600 dark:text-gray-400">#{baseCourse.display_order}</p>
-                </div>
-
-                <div>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Thumbnail:</span>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {baseCourse.thumbnail ? 'Same as base course' : 'None'}
-                  </p>
+                <div className="flex items-start space-x-2">
+                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                  <div>
+                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                      Thumbnail
+                    </span>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {baseCourse.thumbnail
+                        ? "Same as English version"
+                        : "None"}
+                    </p>
+                  </div>
                 </div>
 
                 {baseCourse.show_offer_badge && (
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Offer Badge:</span>
-                    <p className="text-gray-600 dark:text-gray-400">{baseCourse.offer_badge_text}</p>
+                  <div className="flex items-start space-x-2">
+                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
+                    <div>
+                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
+                        Offer Badge
+                      </span>
+                      <p className="text-gray-600 dark:text-gray-400">
+                        {baseCourse.offer_badge_text}
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
-
-            {/* Preview */}
-            {formData.language && (
-              <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                    Preview
-                  </h3>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-xl">{getLanguageFlag(formData.language)}</span>
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      {getLanguageName(formData.language)} Version
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    This language variant will be created with all the content you provide above
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -519,7 +531,7 @@ function AddCourseLanguage() {
             ) : (
               <CheckIcon className="h-4 w-4 mr-2" />
             )}
-            Add Language Variant
+            {isEditMode ? 'Update Hindi Version' : 'Add Hindi Version'}
           </button>
         </div>
       </form>

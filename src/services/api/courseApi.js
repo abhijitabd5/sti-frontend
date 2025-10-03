@@ -133,6 +133,17 @@ class CourseApi {
     }
   }
 
+  // Replace getHindiVersion with this
+async getCourseVariantsByGroupId(courseGroupId) {
+  try {
+    const response = await httpClient.get(`/internal/courses/variants/${courseGroupId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching course variants:', error);
+    return { success: false, data: null };
+  }
+}
+
   // Delete course
   async deleteCourse(id) {
     try {

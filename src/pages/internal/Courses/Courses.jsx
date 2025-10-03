@@ -36,14 +36,14 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
     },
   });
 
-  const getLanguageFlag = (language) => {
-    const flags = {
-      'en': '🇺🇸',
-      'hi': '🇮🇳', 
-      'mar': '🇮🇳'
-    };
-    return flags[language] || '🌐';
-  };
+  // const getLanguageFlag = (language) => {
+  //   const flags = {
+  //     'en': '🇺🇸',
+  //     'hi': '🇮🇳', 
+  //     'mar': '🇮🇳'
+  //   };
+  //   return flags[language] || '🌐';
+  // };
 
   return (
     <tr
@@ -56,7 +56,7 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
       <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 font-medium">{course.display_order}</td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-2">
-          <span className="text-lg">{getLanguageFlag(course.language)}</span>
+          {/* <span className="text-lg">{getLanguageFlag(course.language)}</span> */}
           <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{course.title}</span>
         </div>
       </td>
@@ -80,7 +80,7 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
         <div className="flex items-center space-x-2">
           {/* View */}
           <button
-            onClick={() => onNavigate(`/admin/courses/${course.id}`)}
+            onClick={() => onNavigate(`/admin/courses/view/${course.id}`)}
             className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             title="View Course"
           >
@@ -106,8 +106,8 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
           
           {/* Add Language */}
           <button
-            onClick={() => onAddLanguage(course.id)}
-            // onClick={() => onNavigate(`/admin/courses/add-language/${course.id}`)}
+            onClick={() => onAddLanguage(course.course_group_id)}
+            // onClick={() => onAddLanguage(course.id)}
             className="p-1 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
             title="Add Course Language"
           >
@@ -190,8 +190,9 @@ function Courses() {
     navigate(path);
   };
 
-  const handleAddLanguage = (courseId) => {
-    navigate(`/admin/courses/add-language/${courseId}`);
+  const handleAddLanguage = (courseGroupId) => {
+    console.log('Navigating to add-language with courseId:', courseGroupId);
+    navigate(`/admin/courses/add-language/${courseGroupId}`);
   };
 
   const handleSaveOrder = async () => {
