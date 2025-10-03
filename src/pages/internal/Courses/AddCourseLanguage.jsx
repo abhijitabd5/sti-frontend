@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import internalApi from '@/services/api/internalApi';
+import courseApi from '@/services/api/courseApi';
 
 // Icons
 import { 
@@ -27,7 +27,8 @@ function AddCourseLanguage() {
     description: '',
     duration: '',
     syllabus_text: '',
-    syllabus_file_path: ''
+    syllabus_file: null,
+    course_group_id: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -40,14 +41,15 @@ function AddCourseLanguage() {
   const loadBaseCourse = async () => {
     try {
       setInitialLoading(true);
-      const response = await internalApi.getCourseById(courseId);
+      const response = await courseApi.getCourseById(courseId);
       if (response.success) {
         const course = response.data;
         setBaseCourse(course);
         // Pre-fill some fields with base course data for reference
         setFormData(prev => ({
           ...prev,
-          duration: course.duration.toString()
+          duration: course.duration.toString(),
+          course_group_id: course.course_group_id.toString()
         }));
       } else {
         navigate('/admin/courses');
@@ -62,6 +64,16 @@ function AddCourseLanguage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
+    // Handle file inputs
+    if (name === "syllabus_file") {
+      const file = e.target.files[0] || null;
+      setFormData(prev => ({
+        ...prev,
+        [name]: file,
+      }));
+      return;
+    }
     
     setFormData(prev => ({
       ...prev,
@@ -113,10 +125,28 @@ function AddCourseLanguage() {
 
     setLoading(true);
     try {
-      const response = await internalApi.addCourseLanguageVariant(courseId, {
+      // Prepare course data for language variant creation
+      const courseData = {
         ...formData,
-        duration: parseInt(formData.duration)
-      });
+        duration: parseInt(formData.duration),
+        course_group_id: parseInt(formData.course_group_id),
+        // Copy required fields from base course
+        base_course_fee: parseFloat(baseCourse.base_course_fee),
+        is_discounted: baseCourse.is_discounted,
+        discount_percentage: parseFloat(baseCourse.discount_percentage || 0),
+        discount_amount: parseFloat(baseCourse.discount_amount || 0),
+        hostel_available: baseCourse.hostel_available,
+        hostel_fee: parseFloat(baseCourse.hostel_fee || 0),
+        mess_available: baseCourse.mess_available,
+        mess_fee: parseFloat(baseCourse.mess_fee || 0),
+        show_offer_badge: baseCourse.show_offer_badge,
+        offer_badge_text: baseCourse.offer_badge_text,
+        is_featured: baseCourse.is_featured,
+        is_active: true,
+        display_order: baseCourse.display_order
+      };
+      
+      const response = await courseApi.createCourse(courseData);
 
       if (response.success) {
         navigate('/admin/courses', {
@@ -326,6 +356,23 @@ function AddCourseLanguage() {
                     Pre-filled with base course duration ({baseCourse.duration} weeks)
                   </p>
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Course Group ID
+                  </label>
+                  <input
+                    type="text"
+                    name="course_group_id"
+                    value={formData.course_group_id}
+                    readOnly
+                    className="form-input w-full bg-gray-50 dark:bg-gray-700"
+                    placeholder="Course Group ID"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Inherited from base course (read-only)
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -360,18 +407,22 @@ function AddCourseLanguage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Syllabus PDF Path
+                    Syllabus PDF File
                   </label>
                   <input
-                    type="text"
-                    name="syllabus_file_path"
-                    value={formData.syllabus_file_path}
+                    type="file"
+                    name="syllabus_file"
                     onChange={handleInputChange}
                     className="form-input w-full"
-                    placeholder="/uploads/syllabus/course-syllabus-hindi.pdf"
+                    accept="application/pdf"
                   />
+                  {formData.syllabus_file && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Selected: {formData.syllabus_file.name}
+                    </p>
+                  )}
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Path to the syllabus PDF file in the selected language
+                    Upload syllabus PDF file in the selected language
                   </p>
                 </div>
               </div>
@@ -392,10 +443,10 @@ function AddCourseLanguage() {
                 <div>
                   <span className="font-medium text-gray-700 dark:text-gray-300">Pricing:</span>
                   <p className="text-gray-600 dark:text-gray-400">
-                    ₹{baseCourse.original_fee.toLocaleString('en-IN')}
+                    ₹{parseFloat(baseCourse.base_course_fee).toLocaleString('en-IN')}
                     {baseCourse.is_discounted && (
                       <span className="text-green-600 dark:text-green-400 ml-2">
-                        (₹{baseCourse.discounted_fee.toLocaleString('en-IN')} - {baseCourse.discount_percentage}% OFF)
+                        (₹{parseFloat(baseCourse.discounted_course_fee || baseCourse.base_course_fee).toLocaleString('en-IN')} - {baseCourse.discount_percentage}% OFF)
                       </span>
                     )}
                   </p>

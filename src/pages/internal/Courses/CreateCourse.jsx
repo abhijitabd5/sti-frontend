@@ -1,72 +1,89 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import internalApi from '@/services/api/internalApi';
+import AdminLayout from "@/components/common/Layouts/AdminLayout";
+import courseApi from "@/services/api/courseApi";
 
 // Icons
-import { 
+import {
   ArrowLeftIcon,
   DocumentTextIcon,
   CurrencyDollarIcon,
   PhotoIcon,
   CheckIcon,
-  XMarkIcon
-} from '@heroicons/react/24/outline';
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 function CreateCourse() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: '',
-    language: 'en',
-    summary: '',
-    description: '',
-    duration: '',
-    syllabus_text: '',
-    syllabus_file_path: '',
-    original_fee: '',
+    title: "",
+    language: "en",
+    summary: "",
+    description: "",
+    duration: "",
+    syllabus_text: "",
+    syllabus_file: null,
+    base_course_fee: "",
     is_discounted: false,
-    discounted_fee: '',
-    discount_percentage: '',
+    discount_amount: "",
+    discount_percentage: "",
     show_offer_badge: false,
-    offer_badge_text: '',
-    thumbnail: '',
-    display_order: ''
+    offer_badge_text: "",
+    hostel_available: false,
+    hostel_fee: "",
+    mess_available: false,
+    mess_fee: "",
+    is_featured: false,
+    is_active: true,
+    thumbnail: null,
+    display_order: "",
+    course_group_id: ""
   });
 
   const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    
-    setFormData(prev => ({
+    const newValue = type === "checkbox" ? checked : value;
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: newValue
+      [name]: newValue,
     }));
 
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
 
-    // Auto-calculate discount percentage
-    if (name === 'original_fee' || name === 'discounted_fee') {
-      const originalFee = name === 'original_fee' ? parseFloat(value) || 0 : parseFloat(formData.original_fee) || 0;
-      const discountedFee = name === 'discounted_fee' ? parseFloat(value) || 0 : parseFloat(formData.discounted_fee) || 0;
-      
-      if (originalFee > 0 && discountedFee > 0 && discountedFee < originalFee) {
-        const percentage = Math.round(((originalFee - discountedFee) / originalFee) * 100);
-        setFormData(prev => ({
+    // Auto-calculate discount percentage and amount
+    if (name === "base_course_fee" || name === "discount_percentage") {
+      const baseFee = name === "base_course_fee" ? parseFloat(value) || 0 : parseFloat(formData.base_course_fee) || 0;
+      const discountPercentage = name === "discount_percentage" ? parseFloat(value) || 0 : parseFloat(formData.discount_percentage) || 0;
+
+      if (baseFee > 0 && discountPercentage > 0) {
+        const discountAmount = (baseFee * discountPercentage) / 100;
+        setFormData((prev) => ({
           ...prev,
           [name]: newValue,
-          discount_percentage: percentage.toString()
+          discount_amount: discountAmount.toFixed(2),
         }));
       }
+    }
+
+    // Handle file inputs
+    if (name === "syllabus_file" || name === "thumbnail") {
+      const file = e.target.files[0] || null;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: file,
+      }));
+      return;
     }
   };
 
@@ -74,35 +91,33 @@ function CreateCourse() {
     const newErrors = {};
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Course title is required';
+      newErrors.title = "Course title is required";
     }
 
     if (!formData.summary.trim()) {
-      newErrors.summary = 'Course summary is required';
+      newErrors.summary = "Course summary is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Course description is required';
+      newErrors.description = "Course description is required";
     }
 
     if (!formData.duration || formData.duration <= 0) {
-      newErrors.duration = 'Valid duration is required';
+      newErrors.duration = "Valid duration is required";
     }
 
-    if (!formData.original_fee || formData.original_fee <= 0) {
-      newErrors.original_fee = 'Valid original fee is required';
+    if (!formData.base_course_fee || formData.base_course_fee <= 0) {
+      newErrors.base_course_fee = "Valid base course fee is required";
     }
 
     if (formData.is_discounted) {
-      if (!formData.discounted_fee || formData.discounted_fee <= 0) {
-        newErrors.discounted_fee = 'Valid discounted fee is required when discount is enabled';
-      } else if (parseFloat(formData.discounted_fee) >= parseFloat(formData.original_fee)) {
-        newErrors.discounted_fee = 'Discounted fee must be less than original fee';
+      if (!formData.discount_percentage || formData.discount_percentage <= 0) {
+        newErrors.discount_percentage = "Valid discount percentage is required when discount is enabled";
       }
     }
 
     if (!formData.display_order || formData.display_order <= 0) {
-      newErrors.display_order = 'Valid display order is required';
+      newErrors.display_order = "Valid display order is required";
     }
 
     setErrors(newErrors);
@@ -111,36 +126,41 @@ function CreateCourse() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
     try {
-      const response = await internalApi.createCourse({
+      // Prepare form data for submission
+      const courseData = {
         ...formData,
         duration: parseInt(formData.duration),
-        original_fee: parseFloat(formData.original_fee),
-        discounted_fee: formData.is_discounted ? parseFloat(formData.discounted_fee) : null,
-        discount_percentage: formData.is_discounted ? parseInt(formData.discount_percentage) : 0,
-        display_order: parseInt(formData.display_order)
-      });
+        base_course_fee: parseFloat(formData.base_course_fee),
+        discount_amount: formData.is_discounted ? parseFloat(formData.discount_amount) : 0,
+        discount_percentage: formData.is_discounted ? parseFloat(formData.discount_percentage) : 0,
+        hostel_fee: formData.hostel_available ? parseFloat(formData.hostel_fee || 0) : 0,
+        mess_fee: formData.mess_available ? parseFloat(formData.mess_fee || 0) : 0,
+        display_order: parseInt(formData.display_order),
+      };
+      
+      const response = await courseApi.createCourse(courseData);
 
       if (response.success) {
-        navigate('/admin/courses', {
-          state: { message: 'Course created successfully!' }
+        navigate("/admin/courses", {
+          state: { message: "Course created successfully!" },
         });
       }
     } catch (error) {
-      console.error('Error creating course:', error);
+      console.error("Error creating course:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    navigate('/admin/courses');
+    navigate("/admin/courses");
   };
 
   return (
@@ -175,7 +195,7 @@ function CreateCourse() {
                   Basic Information
                 </h3>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -186,10 +206,14 @@ function CreateCourse() {
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className={`form-input w-full ${errors.title ? 'border-red-500' : ''}`}
+                    className={`form-input w-full ${
+                      errors.title ? "border-red-500" : ""
+                    }`}
                     placeholder="Enter course title"
                   />
-                  {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                  {errors.title && (
+                    <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+                  )}
                 </div>
 
                 <div>
@@ -217,10 +241,16 @@ function CreateCourse() {
                     value={formData.summary}
                     onChange={handleInputChange}
                     rows={3}
-                    className={`form-input w-full ${errors.summary ? 'border-red-500' : ''}`}
+                    className={`form-input w-full ${
+                      errors.summary ? "border-red-500" : ""
+                    }`}
                     placeholder="Brief summary of the course"
                   />
-                  {errors.summary && <p className="text-red-500 text-sm mt-1">{errors.summary}</p>}
+                  {errors.summary && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.summary}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -232,10 +262,16 @@ function CreateCourse() {
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={6}
-                    className={`form-input w-full ${errors.description ? 'border-red-500' : ''}`}
+                    className={`form-input w-full ${
+                      errors.description ? "border-red-500" : ""
+                    }`}
                     placeholder="Detailed description of the course"
                   />
-                  {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
+                  {errors.description && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.description}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -248,10 +284,16 @@ function CreateCourse() {
                     value={formData.duration}
                     onChange={handleInputChange}
                     min="1"
-                    className={`form-input w-full ${errors.duration ? 'border-red-500' : ''}`}
+                    className={`form-input w-full ${
+                      errors.duration ? "border-red-500" : ""
+                    }`}
                     placeholder="Course duration in weeks"
                   />
-                  {errors.duration && <p className="text-red-500 text-sm mt-1">{errors.duration}</p>}
+                  {errors.duration && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.duration}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -266,7 +308,7 @@ function CreateCourse() {
                   </h3>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -284,16 +326,20 @@ function CreateCourse() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Syllabus PDF Path
+                    Syllabus PDF
                   </label>
                   <input
-                    type="text"
-                    name="syllabus_file_path"
-                    value={formData.syllabus_file_path}
+                    type="file"
+                    name="syllabus_file"
                     onChange={handleInputChange}
                     className="form-input w-full"
-                    placeholder="/uploads/syllabus/course-syllabus.pdf"
+                    accept="application/pdf"
                   />
+                  {formData.syllabus_file && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Selected: {formData.syllabus_file.name}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -311,23 +357,29 @@ function CreateCourse() {
                   </h3>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Original Fee *
+                    Base Course Fee *
                   </label>
                   <input
                     type="number"
-                    name="original_fee"
-                    value={formData.original_fee}
+                    name="base_course_fee"
+                    value={formData.base_course_fee}
                     onChange={handleInputChange}
                     min="0"
                     step="0.01"
-                    className={`form-input w-full ${errors.original_fee ? 'border-red-500' : ''}`}
+                    className={`form-input w-full ${
+                      errors.base_course_fee ? "border-red-500" : ""
+                    }`}
                     placeholder="0.00"
                   />
-                  {errors.original_fee && <p className="text-red-500 text-sm mt-1">{errors.original_fee}</p>}
+                  {errors.base_course_fee && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.base_course_fee}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -339,7 +391,10 @@ function CreateCourse() {
                     onChange={handleInputChange}
                     className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                   />
-                  <label htmlFor="is_discounted" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="is_discounted"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Apply Discount
                   </label>
                 </div>
@@ -348,36 +403,112 @@ function CreateCourse() {
                   <>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Discounted Fee *
-                      </label>
-                      <input
-                        type="number"
-                        name="discounted_fee"
-                        value={formData.discounted_fee}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`form-input w-full ${errors.discounted_fee ? 'border-red-500' : ''}`}
-                        placeholder="0.00"
-                      />
-                      {errors.discounted_fee && <p className="text-red-500 text-sm mt-1">{errors.discounted_fee}</p>}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Discount Percentage
+                        Discount Percentage *
                       </label>
                       <input
                         type="number"
                         name="discount_percentage"
                         value={formData.discount_percentage}
+                        onChange={handleInputChange}
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className={`form-input w-full ${
+                          errors.discount_percentage ? "border-red-500" : ""
+                        }`}
+                        placeholder="0.00"
+                      />
+                      {errors.discount_percentage && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.discount_percentage}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Discount Amount
+                      </label>
+                      <input
+                        type="number"
+                        name="discount_amount"
+                        value={formData.discount_amount}
                         readOnly
                         className="form-input w-full bg-gray-50 dark:bg-gray-700"
-                        placeholder="0"
+                        placeholder="0.00"
                       />
                     </div>
                   </>
                 )}
+                
+                {/* Accommodation Options */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Accommodation Options</h4>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="hostel_available"
+                      name="hostel_available"
+                      checked={formData.hostel_available}
+                      onChange={handleInputChange}
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <label htmlFor="hostel_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Hostel Available
+                    </label>
+                  </div>
+                  
+                  {formData.hostel_available && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Hostel Fee
+                      </label>
+                      <input
+                        type="number"
+                        name="hostel_fee"
+                        value={formData.hostel_fee}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="0.01"
+                        className="form-input w-full"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="mess_available"
+                      name="mess_available"
+                      checked={formData.mess_available}
+                      onChange={handleInputChange}
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <label htmlFor="mess_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Mess Available
+                    </label>
+                  </div>
+                  
+                  {formData.mess_available && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Mess Fee
+                      </label>
+                      <input
+                        type="number"
+                        name="mess_fee"
+                        value={formData.mess_fee}
+                        onChange={handleInputChange}
+                        min="0"
+                        step="0.01"
+                        className="form-input w-full"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -388,7 +519,7 @@ function CreateCourse() {
                   Offer Badge
                 </h3>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div className="flex items-center space-x-2">
                   <input
@@ -399,7 +530,10 @@ function CreateCourse() {
                     onChange={handleInputChange}
                     className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                   />
-                  <label htmlFor="show_offer_badge" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <label
+                    htmlFor="show_offer_badge"
+                    className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
                     Show Offer Badge
                   </label>
                 </div>
@@ -422,46 +556,89 @@ function CreateCourse() {
               </div>
             </div>
 
-            {/* Media & Display */}
+            {/* Media */}
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
                 <div className="flex items-center space-x-2">
                   <PhotoIcon className="h-5 w-5 text-gray-400" />
                   <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                    Media & Display
+                    Media
                   </h3>
                 </div>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Thumbnail Image Path
+                    Thumbnail Image
                   </label>
                   <input
-                    type="text"
+                    type="file"
                     name="thumbnail"
-                    value={formData.thumbnail}
                     onChange={handleInputChange}
                     className="form-input w-full"
-                    placeholder="/api/placeholder/400/300"
+                    accept="image/*"
                   />
+                  {formData.thumbnail && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Selected: {formData.thumbnail.name}
+                    </p>
+                  )}
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Display Order *
-                  </label>
-                  <input
-                    type="number"
-                    name="display_order"
-                    value={formData.display_order}
-                    onChange={handleInputChange}
-                    min="1"
-                    className={`form-input w-full ${errors.display_order ? 'border-red-500' : ''}`}
-                    placeholder="1"
-                  />
-                  {errors.display_order && <p className="text-red-500 text-sm mt-1">{errors.display_order}</p>}
+                
+                {/* Settings */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Course Settings</h4>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="is_featured"
+                      name="is_featured"
+                      checked={formData.is_featured}
+                      onChange={handleInputChange}
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <label htmlFor="is_featured" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Featured Course
+                    </label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="is_active"
+                      name="is_active"
+                      checked={formData.is_active}
+                      onChange={handleInputChange}
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    />
+                    <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Active Course
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Display Order *
+                    </label>
+                    <input
+                      type="number"
+                      name="display_order"
+                      value={formData.display_order}
+                      onChange={handleInputChange}
+                      min="1"
+                      className={`form-input w-full ${
+                        errors.display_order ? "border-red-500" : ""
+                      }`}
+                      placeholder="1"
+                    />
+                    {errors.display_order && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.display_order}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -478,7 +655,7 @@ function CreateCourse() {
             <XMarkIcon className="h-4 w-4 mr-2" />
             Cancel
           </button>
-          
+
           <button
             type="submit"
             disabled={loading}

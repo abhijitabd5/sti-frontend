@@ -4,7 +4,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import internalApi from '@/services/api/internalApi';
+import courseApi from '@/services/api/courseApi';
 
 // Icons
 import { 
@@ -13,7 +13,8 @@ import {
   Bars3Icon, 
   LanguageIcon,
   PlusIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, onAddLanguage }) => {
@@ -63,14 +64,14 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
         <button
           onClick={() => onToggleStatus(course.id)}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
-            course.status === 'active'
+            course.is_active
               ? 'bg-green-600'
               : 'bg-gray-300 dark:bg-gray-600'
           }`}
         >
           <span
             className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-              course.status === 'active' ? 'translate-x-6' : 'translate-x-1'
+              course.is_active ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
         </button>
@@ -123,6 +124,8 @@ function Courses() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState({});
+  const [saveOrderLoading, setSaveOrderLoading] = useState(false);
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
   // Load courses
   useEffect(() => {
@@ -132,7 +135,7 @@ function Courses() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const response = await internalApi.getCourses();
+      const response = await courseApi.getCourses({ language: 'en' });
       if (response.success) {
         setCourses(response.data);
       }
@@ -147,12 +150,12 @@ function Courses() {
     setStatusLoading(prev => ({ ...prev, [courseId]: true }));
     
     try {
-      const response = await internalApi.toggleCourseStatus(courseId);
+      const response = await courseApi.toggleCourseStatus(courseId);
       if (response.success) {
         setCourses(prev => 
           prev.map(course => 
             course.id === courseId 
-              ? { ...course, status: response.data.status }
+              ? { ...course, is_active: response.data.is_active }
               : course
           )
         );
@@ -164,7 +167,7 @@ function Courses() {
     }
   };
 
-  const moveCourse = async (dragIndex, hoverIndex) => {
+  const moveCourse = (dragIndex, hoverIndex) => {
     const draggedCourse = courses[dragIndex];
     const updatedCourses = [...courses];
     
@@ -172,26 +175,15 @@ function Courses() {
     updatedCourses.splice(dragIndex, 1);
     updatedCourses.splice(hoverIndex, 0, draggedCourse);
     
-    // Update display order
-    const courseOrders = updatedCourses.map((course, index) => ({
-      id: course.id,
+    // Update display order locally
+    const reorderedCourses = updatedCourses.map((course, index) => ({
+      ...course,
       display_order: index + 1
     }));
     
     // Optimistic update
-    setCourses(updatedCourses.map((course, index) => ({
-      ...course,
-      display_order: index + 1
-    })));
-    
-    // Update on server
-    try {
-      await internalApi.reorderCourses(courseOrders);
-    } catch (error) {
-      console.error('Error reordering courses:', error);
-      // Revert on error
-      loadCourses();
-    }
+    setCourses(reorderedCourses);
+    setHasOrderChanged(true);
   };
 
   const handleNavigate = (path) => {
@@ -199,7 +191,31 @@ function Courses() {
   };
 
   const handleAddLanguage = (courseId) => {
-    navigate(`http://localhost:3000/admin/courses/add-language/${courseId}`);
+    navigate(`/admin/courses/add-language/${courseId}`);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      setSaveOrderLoading(true);
+      const courseOrders = courses.map((course, index) => ({
+        id: course.id,
+        display_order: index + 1
+      }));
+      
+      const response = await courseApi.reorderCourses(courseOrders);
+      if (response.success) {
+        setHasOrderChanged(false);
+        // Show success message (you can add a toast notification here)
+        console.log('Course order saved successfully');
+      }
+    } catch (error) {
+      console.error('Error saving course order:', error);
+      // Revert on error
+      loadCourses();
+      setHasOrderChanged(false);
+    } finally {
+      setSaveOrderLoading(false);
+    }
   };
 
   if (loading) {
@@ -225,6 +241,20 @@ function Courses() {
         </div>
 
         <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
+          {hasOrderChanged && (
+            <button
+              onClick={handleSaveOrder}
+              disabled={saveOrderLoading}
+              className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg disabled:opacity-50"
+            >
+              {saveOrderLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <CheckIcon className="h-4 w-4 mr-2" />
+              )}
+              Save Order
+            </button>
+          )}
           <button
             onClick={() => navigate('/admin/courses/create')}
             className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 shadow-lg"
