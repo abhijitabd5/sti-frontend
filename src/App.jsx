@@ -31,7 +31,7 @@ import StudentList from "@/pages/internal/Students/StudentList";
 import StudentDetail from "@/pages/internal/Students/StudentDetail";
 import EnrollmentForm from "@/pages/internal/Students/EnrollmentForm";
 import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
-import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
+// import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 // Import guards
 import { AdminRoute } from "@/guards/ProtectedRoute";
@@ -58,7 +58,7 @@ function App() {
         <Route path="/gallery/videos" element={<Videos />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/logout" element={<Logout />} />
-        <Route path="/example-editor" element={<ExampleUsage />} />
+        {/* <Route path="/example-editor" element={<ExampleUsage />} /> */}
 
         {/* Protected Admin Routes */}
         <Route path="/admin" element={<AdminRoute />}>

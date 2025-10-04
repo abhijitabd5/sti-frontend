@@ -200,7 +200,7 @@ const TransactionTable = ({
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.created_by}
+                        {transaction.created_by || 'System'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">

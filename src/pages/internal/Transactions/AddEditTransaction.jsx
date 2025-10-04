@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 import internalApi from '@/services/api/internalApi';
 
 // Icons
@@ -17,6 +19,9 @@ const AddEditTransaction = () => {
   const [searchParams] = useSearchParams();
   const isEdit = !!id;
   const transactionType = searchParams.get('type') || 'income';
+
+  // Toast notifications
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
   // State management
   const [categories, setCategories] = useState([]);
@@ -61,9 +66,12 @@ const AddEditTransaction = () => {
       });
       if (response.success) {
         setCategories(response.data);
+      } else {
+        showError(response.message || 'Failed to load categories');
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      showError('An error occurred while loading categories');
     } finally {
       setCategoriesLoading(false);
     }
@@ -74,14 +82,36 @@ const AddEditTransaction = () => {
       setLoading(true);
       const response = await internalApi.getTransactionById(id);
       if (response.success) {
-        setFormData(response.data);
+        // Map API response to form data structure
+        const transaction = response.data;
+        setFormData({
+          category_id: transaction.category_id,
+          amount: transaction.amount,
+          transaction_date: transaction.transaction_date?.split('T')[0] || transaction.transaction_date,
+          payment_mode: transaction.payment_mode || '',
+          payer_name: transaction.payer_name || '',
+          payer_contact: transaction.payer_contact || '',
+          payer_bank_name: transaction.payer_bank_name || '',
+          payer_account_number: transaction.payer_account_number || '',
+          payer_upi_id: transaction.payer_upi_id || '',
+          receiver_name: transaction.receiver_name || '',
+          receiver_contact: transaction.receiver_contact || '',
+          receiver_bank_name: transaction.receiver_bank_name || '',
+          receiver_account_number: transaction.receiver_account_number || '',
+          receiver_upi_id: transaction.receiver_upi_id || '',
+          payment_ref_number: transaction.payment_ref_number || '',
+          attachment_path: transaction.attachment_path || '',
+          description: transaction.description || '',
+          created_by: transaction.created_by || 'admin'
+        });
       } else {
-        // Transaction not found, redirect to transactions page
-        navigate('/admin/transactions');
+        showError(response.message || 'Transaction not found');
+        setTimeout(() => navigate('/admin/transactions'), 2000);
       }
     } catch (error) {
       console.error('Error loading transaction:', error);
-      navigate('/admin/transactions');
+      showError('An error occurred while loading the transaction');
+      setTimeout(() => navigate('/admin/transactions'), 2000);
     } finally {
       setLoading(false);
     }
@@ -154,13 +184,17 @@ const AddEditTransaction = () => {
       }
 
       if (response.success) {
-        navigate('/admin/transactions?tab=' + transactionType);
+        showSuccess(isEdit ? 
+          'Transaction updated successfully' : 
+          'Transaction created successfully'
+        );
+        setTimeout(() => navigate('/admin/transactions?tab=' + transactionType), 1000);
       } else {
-        console.error('Save error:', response.message);
-        // You could show an error toast here
+        showError(response.message || 'Failed to save transaction');
       }
     } catch (error) {
       console.error('Error saving transaction:', error);
+      showError('An error occurred while saving the transaction');
     } finally {
       setLoading(false);
     }
@@ -533,6 +567,14 @@ const AddEditTransaction = () => {
           </div>
         </form>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 };

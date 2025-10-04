@@ -126,7 +126,7 @@ This document tracks the development progress of the STI Training Institute fron
 
 #### Admin Pages
 
- **Completed**
+ **Static Pages Completed**
 
 - Dashboard
 - Course Pages
@@ -136,11 +136,13 @@ This document tracks the development progress of the STI Training Institute fron
 - Transaction Pages (Expense and Income Unified)
 
 **API Integration**
-- Only Student Pages are integrated with backend API's
+- Courses Pages
+- Students Pages
 
 **Pending**
 
-- All other pages (except Student Pages) need backend API integration
+- All other pages (except Courses and Student Pages) need backend API integration
+- Like Transaction, 
 
 #### Website/Public Pages
 

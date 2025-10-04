@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import TransactionTable from './components/TransactionTable';
 import TransactionFilters from './components/TransactionFilters';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 import internalApi from '@/services/api/internalApi';
 
 // Icons
@@ -15,6 +17,9 @@ import {
 const Transactions = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Toast notifications
+  const { toast, showSuccess, showError, hideToast } = useToast();
   
   // State management
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'income');
@@ -67,9 +72,12 @@ const Transactions = () => {
       if (response.success) {
         setTransactions(response.data);
         setPagination(response.pagination);
+      } else {
+        showError(response.message || 'Failed to load transactions');
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
+      showError('An error occurred while loading transactions');
     } finally {
       setLoading(false);
     }
@@ -84,9 +92,12 @@ const Transactions = () => {
       });
       if (response.success) {
         setCategories(response.data);
+      } else {
+        showError(response.message || 'Failed to load categories');
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      showError('An error occurred while loading categories');
     } finally {
       setCategoriesLoading(false);
     }
@@ -130,10 +141,13 @@ const Transactions = () => {
       const response = await internalApi.deleteTransaction(transactionId);
       if (response.success) {
         loadTransactions();
-        // You could add a toast notification here
+        showSuccess('Transaction deleted successfully');
+      } else {
+        showError(response.message || 'Failed to delete transaction');
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
+      showError('An error occurred while deleting the transaction');
     }
   };
 
@@ -229,6 +243,14 @@ const Transactions = () => {
         onDelete={handleDeleteTransaction}
         transactionType={activeTab}
         onAddTransaction={handleAddTransaction}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
       />
     </AdminLayout>
   );
