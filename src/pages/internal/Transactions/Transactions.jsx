@@ -5,7 +5,8 @@ import TransactionTable from './components/TransactionTable';
 import TransactionFilters from './components/TransactionFilters';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
-import internalApi from '@/services/api/internalApi';
+import TransactionApi from '@/services/api/transactionApi';
+import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
 
 // Icons
 import { 
@@ -68,7 +69,7 @@ const Transactions = () => {
         limit: pagination.per_page
       };
 
-      const response = await internalApi.getTransactions(params);
+      const response = await TransactionApi.getTransactions(params);
       if (response.success) {
         setTransactions(response.data);
         setPagination(response.pagination);
@@ -86,7 +87,7 @@ const Transactions = () => {
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await internalApi.getTransactionCategories({ 
+      const response = await TransactionCategoryApi.getTransactionCategories({ 
         type: activeTab,
         limit: 100 // Get all categories
       });
@@ -138,7 +139,7 @@ const Transactions = () => {
 
   const handleDeleteTransaction = async (transactionId) => {
     try {
-      const response = await internalApi.deleteTransaction(transactionId);
+      const response = await TransactionApi.deleteTransaction(transactionId);
       if (response.success) {
         loadTransactions();
         showSuccess('Transaction deleted successfully');

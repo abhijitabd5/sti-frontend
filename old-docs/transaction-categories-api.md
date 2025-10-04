@@ -1,9 +1,3 @@
-### API
-- Method :
-- Endpoint :
-- Request Payload :
-- Response Payload :
-
 ### get All Transaction Categories API
 - Method : GET
 - Endpoint : {{base_url}}/api/internal/transaction-categories?search=&page=1&limit=10

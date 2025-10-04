@@ -687,6 +687,95 @@ class InternalApi {
       .replace(/-+/g, '-')
       .trim('-');
   }
+    async getTransactionCategories(params = {}) {
+      try {
+        const queryParams = new URLSearchParams();
+  
+        // Add search parameter
+        if (params.search) {
+          queryParams.append("search", params.search);
+        }
+  
+        // Add pagination parameters
+        queryParams.append("page", params.page || 1);
+        queryParams.append("limit", params.limit || 10);
+  
+        const response = await httpClient.get(
+          `/internal/transaction-categories?${queryParams}`
+        );
+  
+        if (response.data.success) {
+          // Filter by type on frontend if needed (since API doesn't seem to support type filtering)
+          let data = response.data.data;
+          if (params.type && params.type !== "all") {
+            data = data.filter((category) => category.type === params.type);
+          }
+  
+          return {
+            success: true,
+            data: data,
+            pagination: response.data.pagination || {
+              current_page: parseInt(params.page) || 1,
+              per_page: parseInt(params.limit) || 10,
+              total: data.length,
+              last_page: Math.ceil(data.length / (parseInt(params.limit) || 10)),
+            },
+            message:
+              response.data.message ||
+              "Transaction categories retrieved successfully",
+          };
+        }
+  
+        return {
+          success: false,
+          data: [],
+          message:
+            response.data.message || "Failed to retrieve transaction categories",
+        };
+      } catch (error) {
+        console.error("Error fetching transaction categories:", error);
+        return {
+          success: false,
+          data: [],
+          message:
+            error.response?.data?.message ||
+            "Error retrieving transaction categories",
+        };
+      }
+    }
+  
+    async getTransactionCategoryById(id) {
+      try {
+        const response = await httpClient.get(
+          `/internal/transaction-categories/${id}`
+        );
+  
+        if (response.data.success) {
+          return {
+            success: true,
+            data: response.data.data,
+            message:
+              response.data.message ||
+              "Transaction category retrieved successfully",
+          };
+        }
+  
+        return {
+          success: false,
+          data: null,
+          message: response.data.message || "Transaction category not found",
+        };
+      } catch (error) {
+        console.error("Error fetching transaction category:", error);
+        return {
+          success: false,
+          data: null,
+          message:
+            error.response?.data?.message ||
+            "Error retrieving transaction category",
+        };
+      }
+    }
 }
 
 export default new InternalApi();

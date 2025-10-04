@@ -61,7 +61,7 @@ class TransactionCategoryApi {
   async getTransactionCategoryById(id) {
     try {
       const response = await httpClient.get(
-        `/internal/transaction-categories/${id}`
+        `/internal/transaction-categories/view/${id}`
       );
 
       if (response.data.success) {
@@ -99,7 +99,7 @@ class TransactionCategoryApi {
       };
 
       const response = await httpClient.post(
-        "/internal/transaction-categories",
+        "/internal/transaction-categories/create",
         payload
       );
 
@@ -139,7 +139,7 @@ class TransactionCategoryApi {
       };
 
       const response = await httpClient.put(
-        `/internal/transaction-categories/${id}`,
+        `/internal/transaction-categories/edit/${id}`,
         payload
       );
 
@@ -174,7 +174,7 @@ class TransactionCategoryApi {
   async deleteTransactionCategory(id) {
     try {
       const response = await httpClient.delete(
-        `/internal/transaction-categories/${id}`
+        `/internal/transaction-categories/delete/${id}`
       );
 
       if (response.data.success) {

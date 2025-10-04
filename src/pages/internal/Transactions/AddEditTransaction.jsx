@@ -3,7 +3,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
-import internalApi from '@/services/api/internalApi';
+import TransactionApi from '@/services/api/transactionApi';
+import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
 
 // Icons
 import { 
@@ -27,26 +28,30 @@ const AddEditTransaction = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(() => ({
+    type: transactionType,
     category_id: '',
     amount: '',
     transaction_date: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
     payment_mode: '',
+    description: '',
+    payment_ref_num: '',
+    payment_ref_type: '',
     payer_name: '',
     payer_contact: '',
     payer_bank_name: '',
     payer_account_number: '',
     payer_upi_id: '',
-    receiver_name: '',
-    receiver_contact: '',
-    receiver_bank_name: '',
-    receiver_account_number: '',
-    receiver_upi_id: '',
-    payment_ref_number: '',
-    attachment_path: '',
-    description: '',
-    created_by: 'admin' // This would come from auth context in real app
-  });
+    payee_name: '',
+    payee_contact: '',
+    payee_bank_name: '',
+    payee_account_number: '',
+    payee_upi_id: '',
+    reference_note: '',
+    expense_for_user: '',
+    attachment: null,
+    attachment_type: ''
+  }));
   const [errors, setErrors] = useState({});
 
   // Load data on component mount
@@ -60,7 +65,7 @@ const AddEditTransaction = () => {
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await internalApi.getTransactionCategories({ 
+      const response = await TransactionCategoryApi.getTransactionCategories({ 
         type: transactionType,
         limit: 100 
       });
@@ -80,29 +85,33 @@ const AddEditTransaction = () => {
   const loadTransaction = async () => {
     try {
       setLoading(true);
-      const response = await internalApi.getTransactionById(id);
+      const response = await TransactionApi.getTransactionById(id);
       if (response.success) {
         // Map API response to form data structure
         const transaction = response.data;
         setFormData({
+          type: transaction.type,
           category_id: transaction.category_id,
           amount: transaction.amount,
           transaction_date: transaction.transaction_date?.split('T')[0] || transaction.transaction_date,
           payment_mode: transaction.payment_mode || '',
+          description: transaction.description || '',
+          payment_ref_num: transaction.payment_ref_num || '',
+          payment_ref_type: transaction.payment_ref_type || '',
           payer_name: transaction.payer_name || '',
           payer_contact: transaction.payer_contact || '',
           payer_bank_name: transaction.payer_bank_name || '',
           payer_account_number: transaction.payer_account_number || '',
           payer_upi_id: transaction.payer_upi_id || '',
-          receiver_name: transaction.receiver_name || '',
-          receiver_contact: transaction.receiver_contact || '',
-          receiver_bank_name: transaction.receiver_bank_name || '',
-          receiver_account_number: transaction.receiver_account_number || '',
-          receiver_upi_id: transaction.receiver_upi_id || '',
-          payment_ref_number: transaction.payment_ref_number || '',
-          attachment_path: transaction.attachment_path || '',
-          description: transaction.description || '',
-          created_by: transaction.created_by || 'admin'
+          payee_name: transaction.payee_name || '',
+          payee_contact: transaction.payee_contact || '',
+          payee_bank_name: transaction.payee_bank_name || '',
+          payee_account_number: transaction.payee_account_number || '',
+          payee_upi_id: transaction.payee_upi_id || '',
+          reference_note: transaction.reference_note || '',
+          expense_for_user: transaction.expense_for_user || '',
+          attachment: null, // Files need to be handled separately
+          attachment_type: transaction.attachment_type || ''
         });
       } else {
         showError(response.message || 'Transaction not found');
@@ -142,15 +151,14 @@ const AddEditTransaction = () => {
       newErrors.payment_mode = 'Payment mode is required';
     }
 
-    // Cheque number validation
-    if (formData.payment_mode === 'Cheque' && !formData.payment_ref_number) {
-      newErrors.payment_ref_number = 'Cheque number is required for cheque payments';
+    // Payment reference validation (if provided, payment_ref_type is required)
+    if (formData.payment_ref_num && !formData.payment_ref_type) {
+      newErrors.payment_ref_type = 'Payment reference type is required when reference number is provided';
     }
-
-    // Person name validation (based on transaction type)
-    const nameField = transactionType === 'income' ? 'payer_name' : 'receiver_name';
-    if (!formData[nameField]) {
-      newErrors[nameField] = `${transactionType === 'income' ? 'Payer' : 'Receiver'} name is required`;
+    
+    // Attachment type validation (if attachment is provided, attachment_type is required)
+    if (formData.attachment && !formData.attachment_type) {
+      newErrors.attachment_type = 'Attachment type is required when attachment is provided';
     }
 
     setErrors(newErrors);
@@ -176,11 +184,19 @@ const AddEditTransaction = () => {
     try {
       setLoading(true);
       
+      // Ensure type is set correctly
+      const finalFormData = {
+        ...formData,
+        type: transactionType
+      };
+      
+      console.log('Form submission data:', finalFormData);
+      
       let response;
       if (isEdit) {
-        response = await internalApi.updateTransaction(id, formData);
+        response = await TransactionApi.updateTransaction(id, finalFormData);
       } else {
-        response = await internalApi.createTransaction(formData);
+        response = await TransactionApi.createTransaction(finalFormData);
       }
 
       if (response.success) {
@@ -341,11 +357,13 @@ const AddEditTransaction = () => {
                   } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100`}
                 >
                   <option value="">Select payment mode</option>
-                  <option value="Cash">Cash</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Online">Online</option>
-                  <option value="Cheque">Cheque</option>
-                  <option value="Bank">Bank Transfer</option>
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                  <option value="net_banking">Net Banking</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="card">Card</option>
+                  <option value="payment_gateway">Payment Gateway</option>
                 </select>
                 {errors.payment_mode && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.payment_mode}</p>
@@ -355,23 +373,49 @@ const AddEditTransaction = () => {
               {/* Payment Reference Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Payment Reference Number {formData.payment_mode === 'Cheque' ? '*' : ''}
+                  Payment Reference Number
                 </label>
                 <input
                   type="text"
-                  value={formData.payment_ref_number}
-                  onChange={(e) => handleInputChange('payment_ref_number', e.target.value)}
+                  value={formData.payment_ref_num}
+                  onChange={(e) => handleInputChange('payment_ref_num', e.target.value)}
                   className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors ${
-                    errors.payment_ref_number 
+                    errors.payment_ref_num 
                       ? 'border-red-300 dark:border-red-500' 
                       : 'border-gray-200 dark:border-gray-700/60'
                   } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500`}
                   placeholder="Enter reference number"
                 />
-                {errors.payment_ref_number && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.payment_ref_number}</p>
+                {errors.payment_ref_num && (
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.payment_ref_num}</p>
                 )}
               </div>
+              
+              {/* Payment Reference Type */}
+              {formData.payment_ref_num && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Payment Reference Type *
+                  </label>
+                  <select
+                    value={formData.payment_ref_type}
+                    onChange={(e) => handleInputChange('payment_ref_type', e.target.value)}
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors ${
+                      errors.payment_ref_type 
+                        ? 'border-red-300 dark:border-red-500' 
+                        : 'border-gray-200 dark:border-gray-700/60'
+                    } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100`}
+                  >
+                    <option value="">Select reference type</option>
+                    <option value="invoice">Invoice</option>
+                    <option value="receipt">Receipt</option>
+                    <option value="proof">Proof</option>
+                  </select>
+                  {errors.payment_ref_type && (
+                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.payment_ref_type}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -388,21 +432,21 @@ const AddEditTransaction = () => {
                 </label>
                 <input
                   type="text"
-                  value={transactionType === 'income' ? formData.payer_name : formData.receiver_name}
+                  value={transactionType === 'income' ? formData.payer_name : formData.payee_name}
                   onChange={(e) => handleInputChange(
-                    transactionType === 'income' ? 'payer_name' : 'receiver_name', 
+                    transactionType === 'income' ? 'payer_name' : 'payee_name', 
                     e.target.value
                   )}
                   className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors ${
-                    errors[transactionType === 'income' ? 'payer_name' : 'receiver_name'] 
+                    errors[transactionType === 'income' ? 'payer_name' : 'payee_name'] 
                       ? 'border-red-300 dark:border-red-500' 
                       : 'border-gray-200 dark:border-gray-700/60'
                   } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500`}
                   placeholder={`Enter ${getPersonLabel().toLowerCase()} name`}
                 />
-                {errors[transactionType === 'income' ? 'payer_name' : 'receiver_name'] && (
+                {errors[transactionType === 'income' ? 'payer_name' : 'payee_name'] && (
                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                    {errors[transactionType === 'income' ? 'payer_name' : 'receiver_name']}
+                    {errors[transactionType === 'income' ? 'payer_name' : 'payee_name']}
                   </p>
                 )}
               </div>
@@ -414,9 +458,9 @@ const AddEditTransaction = () => {
                 </label>
                 <input
                   type="text"
-                  value={transactionType === 'income' ? formData.payer_contact : formData.receiver_contact}
+                  value={transactionType === 'income' ? formData.payer_contact : formData.payee_contact}
                   onChange={(e) => handleInputChange(
-                    transactionType === 'income' ? 'payer_contact' : 'receiver_contact', 
+                    transactionType === 'income' ? 'payer_contact' : 'payee_contact', 
                     e.target.value
                   )}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
@@ -431,9 +475,9 @@ const AddEditTransaction = () => {
                 </label>
                 <input
                   type="text"
-                  value={transactionType === 'income' ? formData.payer_bank_name : formData.receiver_bank_name}
+                  value={transactionType === 'income' ? formData.payer_bank_name : formData.payee_bank_name}
                   onChange={(e) => handleInputChange(
-                    transactionType === 'income' ? 'payer_bank_name' : 'receiver_bank_name', 
+                    transactionType === 'income' ? 'payer_bank_name' : 'payee_bank_name', 
                     e.target.value
                   )}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
@@ -448,9 +492,9 @@ const AddEditTransaction = () => {
                 </label>
                 <input
                   type="text"
-                  value={transactionType === 'income' ? formData.payer_account_number : formData.receiver_account_number}
+                  value={transactionType === 'income' ? formData.payer_account_number : formData.payee_account_number}
                   onChange={(e) => handleInputChange(
-                    transactionType === 'income' ? 'payer_account_number' : 'receiver_account_number', 
+                    transactionType === 'income' ? 'payer_account_number' : 'payee_account_number', 
                     e.target.value
                   )}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
@@ -465,9 +509,9 @@ const AddEditTransaction = () => {
                 </label>
                 <input
                   type="text"
-                  value={transactionType === 'income' ? formData.payer_upi_id : formData.receiver_upi_id}
+                  value={transactionType === 'income' ? formData.payer_upi_id : formData.payee_upi_id}
                   onChange={(e) => handleInputChange(
-                    transactionType === 'income' ? 'payer_upi_id' : 'receiver_upi_id', 
+                    transactionType === 'income' ? 'payer_upi_id' : 'payee_upi_id', 
                     e.target.value
                   )}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
@@ -488,53 +532,97 @@ const AddEditTransaction = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Attachment
                 </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={(e) => {
-                      // In a real app, you'd upload the file and get the path
-                      const file = e.target.files[0];
-                      if (file) {
-                        handleInputChange('attachment_path', `/uploads/transactions/${file.name}`);
-                      }
-                    }}
-                    className="hidden"
-                    id="attachment"
-                  />
-                  <label
-                    htmlFor="attachment"
-                    className="flex items-center px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 transition-colors"
-                  >
-                    <PaperClipIcon className="h-4 w-4 mr-2" />
-                    Choose File
-                  </label>
-                  {formData.attachment_path && (
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                      <span className="truncate max-w-xs">{formData.attachment_path.split('/').pop()}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange('attachment_path', '')}
-                        className="ml-2 text-red-500 hover:text-red-700"
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleInputChange('attachment', file);
+                        }
+                      }}
+                      className="hidden"
+                      id="attachment"
+                    />
+                    <label
+                      htmlFor="attachment"
+                      className="flex items-center px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 transition-colors"
+                    >
+                      <PaperClipIcon className="h-4 w-4 mr-2" />
+                      Choose File
+                    </label>
+                    {formData.attachment && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <span className="truncate max-w-xs">{formData.attachment.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleInputChange('attachment', null);
+                            handleInputChange('attachment_type', '');
+                          }}
+                          className="ml-2 text-red-500 hover:text-red-700"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Attachment Type */}
+                  {formData.attachment && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Attachment Type *
+                      </label>
+                      <select
+                        value={formData.attachment_type}
+                        onChange={(e) => handleInputChange('attachment_type', e.target.value)}
+                        className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors ${
+                          errors.attachment_type 
+                            ? 'border-red-300 dark:border-red-500' 
+                            : 'border-gray-200 dark:border-gray-700/60'
+                        } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100`}
                       >
-                        <XMarkIcon className="h-4 w-4" />
-                      </button>
+                        <option value="">Select attachment type</option>
+                        <option value="invoice">Invoice</option>
+                        <option value="receipt">Receipt</option>
+                        <option value="proof">Proof</option>
+                      </select>
+                      {errors.attachment_type && (
+                        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.attachment_type}</p>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
               {/* Description */}
-              <div className="md:col-span-2">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description / Note
+                  Description
                 </label>
                 <textarea
                   rows={3}
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="Enter any additional notes or description"
+                  placeholder="Enter transaction description"
+                />
+              </div>
+              
+              {/* Reference Note */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Reference Note
+                </label>
+                <textarea
+                  rows={3}
+                  value={formData.reference_note}
+                  onChange={(e) => handleInputChange('reference_note', e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                  placeholder="Enter any additional notes or reference information"
                 />
               </div>
             </div>
