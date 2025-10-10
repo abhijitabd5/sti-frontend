@@ -52,7 +52,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/courses" element={<Courses />} />
-        <Route path="/course/:id" element={<CourseDetails />} />
+        <Route path="/courses/:id" element={<CourseDetails />} />
         <Route path="/about" element={<About />} />
         <Route path="/gallery/images" element={<Images />} />
         <Route path="/gallery/videos" element={<Videos />} />
