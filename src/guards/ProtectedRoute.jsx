@@ -45,13 +45,16 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => 
 };
 
 // Higher-order component for admin routes
+import { Outlet } from "react-router-dom";
+
 export const AdminRoute = ({ children }) => {
   return (
     <ProtectedRoute 
       allowedRoles={['super_admin', 'admin', 'account', 'instructor']}
       requireAuth={true}
     >
-      {children}
+      {/* If children exist (flat routes), render them. Otherwise render nested outlet */}
+      {children || <Outlet />}
     </ProtectedRoute>
   );
 };
