@@ -5,7 +5,7 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    identifier: '', // Can be mobile or email
+    login: '', // Can be mobile or email
     password: '',
     rememberMe: false
   });
@@ -43,13 +43,14 @@ const Login = () => {
 
     try {
       const response = await authApi.login({
-        identifier: formData.identifier,
+        login: formData.login,
         password: formData.password
       });
 
       if (response.success) {
-        // Save auth data
-        saveAuthData(response.data.token, response.data.user);
+        // Save auth data - handle both old and new token formats
+        const tokens = response.data.tokens || response.data.token;
+        saveAuthData(tokens, response.data.user);
 
         // Show success message briefly
         const successMessage = `Welcome back, ${response.data.user.first_name}!`;
@@ -200,7 +201,7 @@ const Login = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="identifier" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label htmlFor="login" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Mobile Number or Email
                 </label>
                 <div className="relative">
@@ -210,11 +211,11 @@ const Login = () => {
                     </svg>
                   </div>
                   <input
-                    id="identifier"
-                    name="identifier"
+                    id="login"
+                    name="login"
                     type="text"
                     required
-                    value={formData.identifier}
+                    value={formData.login}
                     onChange={handleInputChange}
                     className="pl-10 w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors"
                     placeholder="Enter mobile number or email"

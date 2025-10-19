@@ -1,4 +1,5 @@
 import MOCK_DATA from '@/mockData/mockData';
+import httpClient from '@/services/utils/httpClient';
 
 // Extended mock data for internal course management
 const INTERNAL_COURSES = [
@@ -499,165 +500,6 @@ class InternalApi {
     };
   }
 
-  // Transaction Categories Management Methods
-  async getTransactionCategories(params = {}) {
-    await delay(400);
-    let categories = [...TRANSACTION_CATEGORIES];
-    
-    // Apply search filter
-    if (params.search) {
-      const searchTerm = params.search.toLowerCase();
-      categories = categories.filter(category => 
-        category.name.toLowerCase().includes(searchTerm) ||
-        category.slug.toLowerCase().includes(searchTerm)
-      );
-    }
-    
-    // Apply type filter
-    if (params.type && params.type !== 'all') {
-      categories = categories.filter(category => category.type === params.type);
-    }
-    
-    // Sort by created_at (newest first)
-    categories.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    
-    // Apply pagination
-    const page = parseInt(params.page) || 1;
-    const limit = parseInt(params.limit) || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedCategories = categories.slice(startIndex, endIndex);
-    
-    return {
-      success: true,
-      data: paginatedCategories,
-      pagination: {
-        current_page: page,
-        per_page: limit,
-        total: categories.length,
-        last_page: Math.ceil(categories.length / limit),
-        from: startIndex + 1,
-        to: Math.min(endIndex, categories.length)
-      },
-      message: "Transaction categories retrieved successfully"
-    };
-  }
-  
-  async getTransactionCategoryById(id) {
-    await delay(200);
-    const category = TRANSACTION_CATEGORIES.find(cat => cat.id === parseInt(id));
-    
-    if (category) {
-      return {
-        success: true,
-        data: category,
-        message: "Transaction category retrieved successfully"
-      };
-    }
-    
-    return {
-      success: false,
-      data: null,
-      message: "Transaction category not found"
-    };
-  }
-  
-  async createTransactionCategory(categoryData) {
-    await delay(600);
-    
-    // Check for duplicate name
-    const existingCategory = TRANSACTION_CATEGORIES.find(cat => 
-      cat.name.toLowerCase() === categoryData.name.toLowerCase()
-    );
-    
-    if (existingCategory) {
-      return {
-        success: false,
-        data: null,
-        message: "A category with this name already exists"
-      };
-    }
-    
-    const newCategory = {
-      id: Math.max(...TRANSACTION_CATEGORIES.map(c => c.id)) + 1,
-      name: categoryData.name,
-      slug: this.generateSlug(categoryData.name),
-      type: categoryData.type,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    
-    TRANSACTION_CATEGORIES.push(newCategory);
-    
-    return {
-      success: true,
-      data: newCategory,
-      message: "Transaction category created successfully"
-    };
-  }
-  
-  async updateTransactionCategory(id, categoryData) {
-    await delay(600);
-    const categoryIndex = TRANSACTION_CATEGORIES.findIndex(cat => cat.id === parseInt(id));
-    
-    if (categoryIndex === -1) {
-      return {
-        success: false,
-        data: null,
-        message: "Transaction category not found"
-      };
-    }
-    
-    // Check for duplicate name (exclude current category)
-    const existingCategory = TRANSACTION_CATEGORIES.find(cat => 
-      cat.name.toLowerCase() === categoryData.name.toLowerCase() && cat.id !== parseInt(id)
-    );
-    
-    if (existingCategory) {
-      return {
-        success: false,
-        data: null,
-        message: "A category with this name already exists"
-      };
-    }
-    
-    TRANSACTION_CATEGORIES[categoryIndex] = {
-      ...TRANSACTION_CATEGORIES[categoryIndex],
-      name: categoryData.name,
-      slug: this.generateSlug(categoryData.name),
-      type: categoryData.type,
-      updated_at: new Date().toISOString()
-    };
-    
-    return {
-      success: true,
-      data: TRANSACTION_CATEGORIES[categoryIndex],
-      message: "Transaction category updated successfully"
-    };
-  }
-  
-  async deleteTransactionCategory(id) {
-    await delay(400);
-    const categoryIndex = TRANSACTION_CATEGORIES.findIndex(cat => cat.id === parseInt(id));
-    
-    if (categoryIndex === -1) {
-      return {
-        success: false,
-        data: null,
-        message: "Transaction category not found"
-      };
-    }
-    
-    const deletedCategory = TRANSACTION_CATEGORIES.splice(categoryIndex, 1)[0];
-    
-    return {
-      success: true,
-      data: deletedCategory,
-      message: "Transaction category deleted successfully"
-    };
-  }
-
   // Transaction Management Methods
   async getTransactions(params = {}) {
     await delay(500);
@@ -845,6 +687,95 @@ class InternalApi {
       .replace(/-+/g, '-')
       .trim('-');
   }
+    async getTransactionCategories(params = {}) {
+      try {
+        const queryParams = new URLSearchParams();
+  
+        // Add search parameter
+        if (params.search) {
+          queryParams.append("search", params.search);
+        }
+  
+        // Add pagination parameters
+        queryParams.append("page", params.page || 1);
+        queryParams.append("limit", params.limit || 10);
+  
+        const response = await httpClient.get(
+          `/internal/transaction-categories?${queryParams}`
+        );
+  
+        if (response.data.success) {
+          // Filter by type on frontend if needed (since API doesn't seem to support type filtering)
+          let data = response.data.data;
+          if (params.type && params.type !== "all") {
+            data = data.filter((category) => category.type === params.type);
+          }
+  
+          return {
+            success: true,
+            data: data,
+            pagination: response.data.pagination || {
+              current_page: parseInt(params.page) || 1,
+              per_page: parseInt(params.limit) || 10,
+              total: data.length,
+              last_page: Math.ceil(data.length / (parseInt(params.limit) || 10)),
+            },
+            message:
+              response.data.message ||
+              "Transaction categories retrieved successfully",
+          };
+        }
+  
+        return {
+          success: false,
+          data: [],
+          message:
+            response.data.message || "Failed to retrieve transaction categories",
+        };
+      } catch (error) {
+        console.error("Error fetching transaction categories:", error);
+        return {
+          success: false,
+          data: [],
+          message:
+            error.response?.data?.message ||
+            "Error retrieving transaction categories",
+        };
+      }
+    }
+  
+    async getTransactionCategoryById(id) {
+      try {
+        const response = await httpClient.get(
+          `/internal/transaction-categories/${id}`
+        );
+  
+        if (response.data.success) {
+          return {
+            success: true,
+            data: response.data.data,
+            message:
+              response.data.message ||
+              "Transaction category retrieved successfully",
+          };
+        }
+  
+        return {
+          success: false,
+          data: null,
+          message: response.data.message || "Transaction category not found",
+        };
+      } catch (error) {
+        console.error("Error fetching transaction category:", error);
+        return {
+          success: false,
+          data: null,
+          message:
+            error.response?.data?.message ||
+            "Error retrieving transaction category",
+        };
+      }
+    }
 }
 
 export default new InternalApi();

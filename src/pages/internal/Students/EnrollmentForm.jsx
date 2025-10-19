@@ -201,7 +201,7 @@ function EnrollmentForm() {
   const handleDocumentTypeChange = (rowId, selectedType) => {
     setDocumentRows(prev => 
       prev.map(row => 
-        row.id === rowId ? { ...row, type: selectedType } : row
+        row.id === rowId ? { ...row, type: selectedType, file: null } : row
       )
     );
   };
@@ -867,7 +867,10 @@ function EnrollmentForm() {
                           type="file"
                           onChange={(e) => handleDocumentFileChange(row.id, e.target.files[0] || null)}
                           accept=".jpg,.jpeg,.png,.pdf"
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-900 dark:file:text-violet-300"
+                          disabled={!row.type}
+                          className={`block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 dark:file:bg-violet-900 dark:file:text-violet-300 ${
+                            !row.type ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                         />
                         {row.file && (
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -895,6 +898,7 @@ function EnrollmentForm() {
                 
                 <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                   <p>• Supported formats: JPG, PNG, PDF</p>
+                  <p>• "Choose File" button is disabled until document type is selected</p>
                   <p>• "Add More" button becomes active only when both document type and file are selected</p>
                   <p>• Each document type can only be selected once</p>
                 </div>

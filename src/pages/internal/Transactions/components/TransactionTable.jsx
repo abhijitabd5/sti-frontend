@@ -59,14 +59,31 @@ const TransactionTable = ({
 
   // Get payment mode color
   const getPaymentModeColor = (mode) => {
+    const normalizedMode = mode?.toLowerCase();
     const colors = {
-      'Cash': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
-      'UPI': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
-      'Online': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
-      'Cheque': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
-      'Bank': 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+      'cash': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+      'upi': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+      'net_banking': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
+      'cheque': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400',
+      'bank_transfer': 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
+      'card': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400',
+      'payment_gateway': 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-400'
     };
-    return colors[mode] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+    return colors[normalizedMode] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+  };
+  
+  // Format payment mode display
+  const formatPaymentMode = (mode) => {
+    const modeMap = {
+      'cash': 'Cash',
+      'upi': 'UPI',
+      'net_banking': 'Net Banking',
+      'cheque': 'Cheque',
+      'bank_transfer': 'Bank Transfer',
+      'card': 'Card',
+      'payment_gateway': 'Payment Gateway'
+    };
+    return modeMap[mode?.toLowerCase()] || mode;
   };
 
   // Delete handlers
@@ -91,11 +108,11 @@ const TransactionTable = ({
   };
 
   const getPersonName = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_name : transaction.receiver_name;
+    return transaction.type === 'income' ? transaction.payer_name : transaction.payee_name;
   };
 
   const getPersonContact = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_contact : transaction.receiver_contact;
+    return transaction.type === 'income' ? transaction.payer_contact : transaction.payee_contact;
   };
 
   return (
@@ -170,7 +187,7 @@ const TransactionTable = ({
                         {formatDate(transaction.transaction_date)}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-100">
-                        {transaction.category_name}
+                        {transaction.category?.name || 'Unknown Category'}
                       </td>
                       <td className="px-4 py-3 text-sm font-semibold">
                         <span className={transactionType === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
@@ -179,7 +196,7 @@ const TransactionTable = ({
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentModeColor(transaction.payment_mode)}`}>
-                          {transaction.payment_mode}
+                          {formatPaymentMode(transaction.payment_mode)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
@@ -189,18 +206,18 @@ const TransactionTable = ({
                         {getPersonContact(transaction)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.payment_ref_number}
+                        {transaction.payment_ref_num || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
                         <div className="flex items-center">
-                          {truncateText(transaction.description, 40)}
+                          {truncateText(transaction.reference_note || transaction.description, 40)}
                           {transaction.attachment_path && (
                             <PaperClipIcon className="h-4 w-4 ml-2 text-gray-400" title="Has attachment" />
                           )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.created_by}
+                        {transaction.creator ? `${transaction.creator.first_name} ${transaction.creator.last_name}` : 'System'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">

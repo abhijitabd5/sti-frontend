@@ -72,24 +72,8 @@ class StudentApi {
   }
 
   // Upload student documents
-  async uploadDocuments(studentId, documentsToUpload) {
+  async uploadDocuments(studentId, formData) {
     try {
-      const formData = new FormData();
-      
-      // Create file-slug mapping array as expected by backend
-      const fileSlugMapping = documentsToUpload.map((doc, index) => ({
-        fileIndex: index,
-        slug: doc.type
-      }));
-      
-      // Add the mapping as JSON string
-      formData.append('fileSlugMapping', JSON.stringify(fileSlugMapping));
-      
-      // Add files
-      documentsToUpload.forEach((doc) => {
-        formData.append('documents', doc.file);
-      });
-      
       const response = await httpClient.post(`/internal/student/students/${studentId}/documents`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

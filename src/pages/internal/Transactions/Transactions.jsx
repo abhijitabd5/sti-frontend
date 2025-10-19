@@ -3,7 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import TransactionTable from './components/TransactionTable';
 import TransactionFilters from './components/TransactionFilters';
-import internalApi from '@/services/api/internalApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
+import TransactionApi from '@/services/api/transactionApi';
+import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
 
 // Icons
 import { 
@@ -15,6 +18,9 @@ import {
 const Transactions = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Toast notifications
+  const { toast, showSuccess, showError, hideToast } = useToast();
   
   // State management
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'income');
@@ -63,13 +69,16 @@ const Transactions = () => {
         limit: pagination.per_page
       };
 
-      const response = await internalApi.getTransactions(params);
+      const response = await TransactionApi.getTransactions(params);
       if (response.success) {
         setTransactions(response.data);
         setPagination(response.pagination);
+      } else {
+        showError(response.message || 'Failed to load transactions');
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
+      showError('An error occurred while loading transactions');
     } finally {
       setLoading(false);
     }
@@ -78,15 +87,18 @@ const Transactions = () => {
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await internalApi.getTransactionCategories({ 
+      const response = await TransactionCategoryApi.getTransactionCategories({ 
         type: activeTab,
         limit: 100 // Get all categories
       });
       if (response.success) {
         setCategories(response.data);
+      } else {
+        showError(response.message || 'Failed to load categories');
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      showError('An error occurred while loading categories');
     } finally {
       setCategoriesLoading(false);
     }
@@ -127,13 +139,16 @@ const Transactions = () => {
 
   const handleDeleteTransaction = async (transactionId) => {
     try {
-      const response = await internalApi.deleteTransaction(transactionId);
+      const response = await TransactionApi.deleteTransaction(transactionId);
       if (response.success) {
         loadTransactions();
-        // You could add a toast notification here
+        showSuccess('Transaction deleted successfully');
+      } else {
+        showError(response.message || 'Failed to delete transaction');
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
+      showError('An error occurred while deleting the transaction');
     }
   };
 
@@ -229,6 +244,14 @@ const Transactions = () => {
         onDelete={handleDeleteTransaction}
         transactionType={activeTab}
         onAddTransaction={handleAddTransaction}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
       />
     </AdminLayout>
   );

@@ -22,6 +22,10 @@ tools to ensure performance, maintainability, and flexibility.
 ------------------------------------------------------------------------
 ### Instructions
 - Use absolute paths for imports
+- Do not run commands (like starting server or installing something), If you want to install something just skip it, user will install it later
+- Do not create documentation (md files) of each task, user have already created good documentation
+- For API integration tasks create separate file for each module inside src/services/api
+
 ------------------------------------------------------------------------
 
 ## Project Structure

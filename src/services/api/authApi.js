@@ -57,54 +57,24 @@ export const authApi = {
   // Login function
   login: async (credentials) => {
     try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.post(API_ENDPOINTS.LOGIN, credentials);
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const { identifier, password } = credentials;
-          
-          // Find user by mobile or email
-          const user = MOCK_USERS.find(u => 
-            (u.mobile === identifier || u.email === identifier) && 
-            u.password === password &&
-            u.is_active
-          );
-
-          if (user) {
-            // Generate mock JWT token
-            const token = `mock_jwt_token_${user.id}_${Date.now()}`;
-            
-            // Create user data without password
-            const { password: _, ...userData } = user;
-            
-            resolve({
-              success: true,
-              message: 'Login successful',
-              data: {
-                user: userData,
-                token,
-                expires_in: 86400, // 24 hours
-                redirect_url: ROLE_REDIRECTS[user.role] || '/dashboard'
-              }
-            });
-          } else {
-            reject({
-              response: {
-                data: {
-                  success: false,
-                  message: 'Invalid credentials or account is inactive',
-                  errors: {
-                    identifier: ['Invalid mobile/email or password']
-                  }
-                }
-              }
-            });
-          }
-        }, 1000); // Simulate network delay
+      const response = await httpClient.post('/auth/login', {
+        login: credentials.login || credentials.identifier,
+        password: credentials.password
       });
+      
+      if (response.data.success) {
+        // Add redirect URL based on role
+        const redirectUrl = ROLE_REDIRECTS[response.data.data.user.role] || '/admin/dashboard';
+        return {
+          ...response.data,
+          data: {
+            ...response.data.data,
+            redirect_url: redirectUrl
+          }
+        };
+      }
+      
+      return response.data;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -114,26 +84,15 @@ export const authApi = {
   // Logout function
   logout: async () => {
     try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.post(API_ENDPOINTS.LOGOUT);
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // Clear token from localStorage
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          
-          resolve({
-            success: true,
-            message: 'Logged out successfully'
-          });
-        }, 500);
-      });
+      const response = await httpClient.post('/auth/logout');
+      return response.data;
     } catch (error) {
       console.error('Logout error:', error);
-      throw error;
+      // Even if logout API fails, we still want to clear local data
+      return {
+        success: true,
+        message: 'Logged out successfully'
+      };
     }
   },
 
@@ -296,6 +255,38 @@ export const authApi = {
       console.error('Token verification error:', error);
       throw error;
     }
+  },
+
+  // Refresh token
+  refreshToken: async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
+      }
+      
+      const response = await httpClient.post('/auth/refresh-token', {
+        refresh_token: refreshToken
+      });
+      
+      if (response.data.success) {
+        // Update stored tokens
+        const tokens = response.data.data.tokens;
+        localStorage.setItem('token', tokens.access_token);
+        localStorage.setItem('access_token', tokens.access_token);
+        if (tokens.refresh_token) {
+          localStorage.setItem('refresh_token', tokens.refresh_token);
+        }
+        return response.data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      // If refresh fails, clear all auth data
+      clearAuthData();
+      throw error;
+    }
   }
 };
 
@@ -311,14 +302,28 @@ export const hasPermission = (user, permission) => {
 };
 
 // Helper function to save auth data to localStorage
-export const saveAuthData = (token, user) => {
-  localStorage.setItem('token', token);
+export const saveAuthData = (tokens, user) => {
+  // Handle both old format (single token) and new format (tokens object)
+  if (typeof tokens === 'string') {
+    // Old format - single token
+    localStorage.setItem('token', tokens);
+    localStorage.setItem('access_token', tokens);
+  } else if (tokens && tokens.access_token) {
+    // New format - tokens object
+    localStorage.setItem('token', tokens.access_token); // Keep for backward compatibility
+    localStorage.setItem('access_token', tokens.access_token);
+    if (tokens.refresh_token) {
+      localStorage.setItem('refresh_token', tokens.refresh_token);
+    }
+  }
   localStorage.setItem('user', JSON.stringify(user));
 };
 
 // Helper function to clear auth data
 export const clearAuthData = () => {
   localStorage.removeItem('token');
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
 };
 
@@ -330,6 +335,16 @@ export const getStoredUser = () => {
   } catch {
     return null;
   }
+};
+
+// Helper function to get access token
+export const getAccessToken = () => {
+  return localStorage.getItem('access_token') || localStorage.getItem('token');
+};
+
+// Helper function to get refresh token
+export const getRefreshToken = () => {
+  return localStorage.getItem('refresh_token');
 };
 
 export default authApi;
