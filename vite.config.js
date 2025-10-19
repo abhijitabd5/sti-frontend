@@ -34,7 +34,6 @@ export default defineConfig({
           router: ["react-router-dom"],
           ui: [
             "@radix-ui/react-dialog",
-            "@radix-ui/react-button",
             "@radix-ui/react-select",
           ],
           utils: ["axios", "date-fns", "framer-motion"],

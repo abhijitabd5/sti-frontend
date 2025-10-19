@@ -168,7 +168,7 @@ const CoursesMarquee = ({ courses = [] }) => {
                   key={`${course.id}-${index}`}
                   className="flex-shrink-0 w-80 group cursor-pointer"
                 >
-                  <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 dark:border-gray-700 overflow-hidden h-full flex flex-col">
                     <div className="relative">
                       <img
                         src={course.thumbnail || course.image}
@@ -196,10 +196,10 @@ const CoursesMarquee = ({ courses = [] }) => {
 
                     </div>
 
-                    <div className="p-6">
+                    <div className="p-6 flex flex-col">
                       {/* Header with title and discount chip (match list card) */}
                       <div className="flex items-start justify-between mb-3">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors flex-1">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-orange-500 transition-colors flex-1 line-clamp-2 min-h-[3.5rem]">
                           {course.title}
                         </h3>
                         {isDiscounted && (
@@ -228,7 +228,7 @@ const CoursesMarquee = ({ courses = [] }) => {
                       </div>
 
                       {/* Actions (same as list card) */}
-                      <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                         <Link
                           to={`/courses/${course.id}`}
                           className="flex-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-semibold py-3 px-4 rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 text-center"
