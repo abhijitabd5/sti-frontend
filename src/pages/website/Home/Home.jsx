@@ -114,7 +114,7 @@ const Home = () => {
       <HeroSection slides={data.heroSlides} />
       
       {/* Scrolling Courses Marquee */}
-      <CoursesMarquee courses={data.scrollingCourses} />
+      <CoursesMarquee/>
       
       {/* About Section */}
       <AboutSection aboutInfo={data.aboutInfo} />

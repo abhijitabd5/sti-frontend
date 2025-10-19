@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import CategoryModal from './CategoryModal';
-import internalApi from '@/services/api/internalApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
+import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
 
 // Icons
 import { 
@@ -15,6 +17,9 @@ import {
 } from '@heroicons/react/24/outline';
 
 const TransactionCategories = () => {
+  // Toast notifications
+  const { toast, showSuccess, showError, showWarning, hideToast } = useToast();
+  
   // State management
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +61,16 @@ const TransactionCategories = () => {
         limit: pagination.per_page
       };
 
-      const response = await internalApi.getTransactionCategories(params);
+      const response = await TransactionCategoryApi.getTransactionCategories(params);
       if (response.success) {
         setCategories(response.data);
         setPagination(response.pagination);
+      } else {
+        showError(response.message || 'Failed to load transaction categories');
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+      showError('An error occurred while loading transaction categories');
     } finally {
       setLoading(false);
     }
@@ -108,22 +116,25 @@ const TransactionCategories = () => {
       let response;
       if (modalState.category) {
         // Update existing category
-        response = await internalApi.updateTransactionCategory(modalState.category.id, categoryData);
+        response = await TransactionCategoryApi.updateTransactionCategory(modalState.category.id, categoryData);
       } else {
         // Create new category
-        response = await internalApi.createTransactionCategory(categoryData);
+        response = await TransactionCategoryApi.createTransactionCategory(categoryData);
       }
 
       if (response.success) {
         closeModal();
         loadCategories();
-        // You could add a toast notification here
+        showSuccess(modalState.category ? 
+          'Transaction category updated successfully' : 
+          'Transaction category created successfully'
+        );
       } else {
-        // Handle error - you could show an error message
-        console.error('Save error:', response.message);
+        showError(response.message || 'Failed to save transaction category');
       }
     } catch (error) {
       console.error('Error saving category:', error);
+      showError('An error occurred while saving the transaction category');
     } finally {
       setModalState(prev => ({ ...prev, loading: false }));
     }
@@ -142,16 +153,17 @@ const TransactionCategories = () => {
     try {
       setDeleteState(prev => ({ ...prev, loading: true }));
       
-      const response = await internalApi.deleteTransactionCategory(deleteState.category.id);
+      const response = await TransactionCategoryApi.deleteTransactionCategory(deleteState.category.id);
       if (response.success) {
         closeDeleteConfirmation();
         loadCategories();
-        // You could add a toast notification here
+        showSuccess('Transaction category deleted successfully');
       } else {
-        console.error('Delete error:', response.message);
+        showError(response.message || 'Failed to delete transaction category');
       }
     } catch (error) {
       console.error('Error deleting category:', error);
+      showError('An error occurred while deleting the transaction category');
     } finally {
       setDeleteState(prev => ({ ...prev, loading: false }));
     }
@@ -300,7 +312,7 @@ const TransactionCategories = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {formatDate(category.created_at)}
+                        {formatDate(category.createdAt || category.created_at)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
@@ -420,6 +432,14 @@ const TransactionCategories = () => {
           </div>
         </div>
       )}
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 };

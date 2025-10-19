@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import internalApi from '@/services/api/internalApi';
+import courseApi from '@/services/api/courseApi';
 
 // Icons
 import { 
@@ -34,7 +34,7 @@ function ViewCourse() {
   const loadCourse = async () => {
     try {
       setLoading(true);
-      const response = await internalApi.getCourseById(id);
+      const response = await courseApi.getCourseById(id);
       if (response.success) {
         setCourse(response.data);
       } else {
@@ -150,16 +150,16 @@ function ViewCourse() {
                       {course.title}
                     </h2>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      course.status === 'active' 
+                      course.is_active 
                         ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
                         : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                     }`}>
-                      {course.status === 'active' ? (
+                      {course.is_active ? (
                         <CheckBadgeIcon className="h-3 w-3 mr-1" />
                       ) : (
                         <XMarkIcon className="h-3 w-3 mr-1" />
                       )}
-                      {course.status}
+                      {course.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                   <p className="text-gray-600 dark:text-gray-400 text-lg">
@@ -253,7 +253,14 @@ function ViewCourse() {
                   </h4>
                   <div className="flex items-center space-x-2 text-sm">
                     <DocumentTextIcon className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600 dark:text-gray-400">{course.syllabus_file_path}</span>
+                    <a 
+                      href={course.syllabus_file_path} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      View Syllabus PDF
+                    </a>
                   </div>
                 </div>
               )}
@@ -278,10 +285,10 @@ function ViewCourse() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Original Fee
+                    Base Course Fee
                   </label>
                   <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                    {formatCurrency(course.original_fee)}
+                    {formatCurrency(parseFloat(course.base_course_fee))}
                   </p>
                 </div>
 
@@ -292,7 +299,7 @@ function ViewCourse() {
                         Discounted Fee
                       </label>
                       <p className="text-xl font-semibold text-green-600 dark:text-green-400">
-                        {formatCurrency(course.discounted_fee)}
+                        {formatCurrency(parseFloat(course.discounted_course_fee || course.base_course_fee))}
                       </p>
                     </div>
 
@@ -305,11 +312,48 @@ function ViewCourse() {
                           {course.discount_percentage}% OFF
                         </span>
                         <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Save {formatCurrency(course.original_fee - course.discounted_fee)}
+                          Save {formatCurrency(parseFloat(course.discount_amount || 0))}
                         </span>
                       </div>
                     </div>
                   </>
+                )}
+                
+                {/* Additional Fees */}
+                {(course.hostel_available || course.mess_available) && (
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                      Additional Services
+                    </h4>
+                    {course.hostel_available && (
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Hostel Fee</span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                          {formatCurrency(parseFloat(course.hostel_fee || 0))}
+                        </span>
+                      </div>
+                    )}
+                    {course.mess_available && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Mess Fee</span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                          {formatCurrency(parseFloat(course.mess_fee || 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Total Fee */}
+                {course.total_fee && (
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-medium text-gray-700 dark:text-gray-300">Total Fee</span>
+                      <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(parseFloat(course.total_fee))}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -395,7 +439,7 @@ function ViewCourse() {
                   Created Date
                 </label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatDate(course.created_at)}
+                  {formatDate(course.createdAt)}
                 </p>
               </div>
 
@@ -404,7 +448,7 @@ function ViewCourse() {
                   Last Updated
                 </label>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatDate(course.updated_at)}
+                  {formatDate(course.updatedAt)}
                 </p>
               </div>
             </div>

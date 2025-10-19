@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import internalApi from '@/services/api/internalApi';
+import TransactionApi from '@/services/api/transactionApi';
 
 // Icons
 import { 
@@ -34,7 +34,7 @@ const ViewTransaction = () => {
   const loadTransaction = async () => {
     try {
       setLoading(true);
-      const response = await internalApi.getTransactionById(id);
+      const response = await TransactionApi.getTransactionById(id);
       if (response.success) {
         setTransaction(response.data);
       } else {
@@ -56,7 +56,7 @@ const ViewTransaction = () => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       try {
-        const response = await internalApi.deleteTransaction(id);
+        const response = await TransactionApi.deleteTransaction(id);
         if (response.success) {
           navigate('/admin/transactions?tab=' + transaction.type);
         }
@@ -111,23 +111,23 @@ const ViewTransaction = () => {
   };
 
   const getPersonName = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_name : transaction.receiver_name;
+    return transaction.type === 'income' ? transaction.payer_name : transaction.payee_name;
   };
 
   const getPersonContact = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_contact : transaction.receiver_contact;
+    return transaction.type === 'income' ? transaction.payer_contact : transaction.payee_contact;
   };
 
   const getBankName = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_bank_name : transaction.receiver_bank_name;
+    return transaction.type === 'income' ? transaction.payer_bank_name : transaction.payee_bank_name;
   };
 
   const getAccountNumber = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_account_number : transaction.receiver_account_number;
+    return transaction.type === 'income' ? transaction.payer_account_number : transaction.payee_account_number;
   };
 
   const getUpiId = (transaction) => {
-    return transaction.type === 'income' ? transaction.payer_upi_id : transaction.receiver_upi_id;
+    return transaction.type === 'income' ? transaction.payer_upi_id : transaction.payee_upi_id;
   };
 
   const getPersonLabel = (transaction) => {
@@ -235,7 +235,7 @@ const ViewTransaction = () => {
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Category</p>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      {transaction.category_name}
+                      {transaction.category?.name || 'Unknown Category'}
                     </p>
                   </div>
                 </div>
@@ -252,11 +252,14 @@ const ViewTransaction = () => {
                   </div>
                 </div>
 
-                {transaction.payment_ref_number && (
+                {transaction.payment_ref_num && (
                   <div>
                     <p className="text-sm text-gray-500 dark:text-gray-400">Payment Reference</p>
                     <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                      {transaction.payment_ref_number}
+                      {transaction.payment_ref_num}
+                      {transaction.payment_ref_type && (
+                        <span className="ml-2 text-xs text-gray-500">({transaction.payment_ref_type})</span>
+                      )}
                     </p>
                   </div>
                 )}
@@ -264,7 +267,7 @@ const ViewTransaction = () => {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Created By</p>
                   <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                    {transaction.created_by}
+                    {transaction.creator ? `${transaction.creator.first_name} ${transaction.creator.last_name}` : 'System'}
                   </p>
                 </div>
               </div>
@@ -336,15 +339,30 @@ const ViewTransaction = () => {
             </div>
           </div>
 
-          {/* Description */}
-          {transaction.description && (
+          {/* Description and Reference Note */}
+          {(transaction.description || transaction.reference_note) && (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 p-6">
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">
-                Description / Note
+                Notes
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {transaction.description}
-              </p>
+              
+              {transaction.description && (
+                <div className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {transaction.description}
+                  </p>
+                </div>
+              )}
+              
+              {transaction.reference_note && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference Note</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {transaction.reference_note}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -427,14 +445,14 @@ const ViewTransaction = () => {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Created</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                  {formatDateTime(transaction.created_at)}
+                  {formatDateTime(transaction.createdAt)}
                 </p>
               </div>
               
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Last Updated</p>
                 <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
-                  {formatDateTime(transaction.updated_at)}
+                  {formatDateTime(transaction.updatedAt)}
                 </p>
               </div>
             </div>

@@ -25,6 +25,13 @@ import TransactionCategories from "@/pages/internal/TransactionCategories/Transa
 import Transactions from "@/pages/internal/Transactions/Transactions";
 import AddEditTransaction from "@/pages/internal/Transactions/AddEditTransaction";
 import ViewTransaction from "@/pages/internal/Transactions/ViewTransaction";
+import Gallery from "@/pages/internal/Gallery/Gallery";
+import OtherGallery from "@/pages/internal/Gallery/OtherGallery";
+import StudentList from "@/pages/internal/Students/StudentList";
+import StudentDetail from "@/pages/internal/Students/StudentDetail";
+import EnrollmentForm from "@/pages/internal/Students/EnrollmentForm";
+import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
+// import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 // Import guards
 import { AdminRoute } from "@/guards/ProtectedRoute";
@@ -45,12 +52,13 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/courses" element={<Courses />} />
-        <Route path="/course/:id" element={<CourseDetails />} />
+        <Route path="/courses/:id" element={<CourseDetails />} />
         <Route path="/about" element={<About />} />
         <Route path="/gallery/images" element={<Images />} />
         <Route path="/gallery/videos" element={<Videos />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/logout" element={<Logout />} />
+        {/* <Route path="/example-editor" element={<ExampleUsage />} /> */}
 
         {/* Protected Admin Routes */}
         <Route path="/admin" element={<AdminRoute />}>
@@ -59,8 +67,8 @@ function App() {
           <Route path="courses">
             <Route index element={<InternalCourses />} />
             <Route path="create" element={<CreateCourse />} />
-            <Route path=":id" element={<ViewCourse />} />
-            <Route path=":id/edit" element={<EditCourse />} />
+            <Route path="view/:id" element={<ViewCourse />} />
+            <Route path="edit/:id" element={<EditCourse />} />
             <Route path="add-language/:id" element={<AddCourseLanguage />} />
           </Route>
 
@@ -74,6 +82,17 @@ function App() {
             <Route path="create" element={<AddEditTransaction />} />
             <Route path=":id" element={<ViewTransaction />} />
             <Route path="edit/:id" element={<AddEditTransaction />} />
+          </Route>
+
+          <Route path="gallery" element={<Gallery />} />
+          <Route path="gallery/other" element={<OtherGallery />} />
+
+          <Route path="students">
+            <Route index element={<StudentList />} />
+            <Route path="enroll" element={<EnrollmentForm />} />
+            <Route path=":studentId" element={<StudentDetail />} />
+            <Route path=":studentId/documents" element={<StudentDocuments />} />
+            <Route path="edit/:enrollmentId" element={<EnrollmentForm />} />
           </Route>
         </Route>
 
