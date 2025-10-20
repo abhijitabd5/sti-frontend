@@ -104,7 +104,7 @@ const HeroSection = ({ slides = [] }) => {
                     to="/about"
                     className="inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold text-lg rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-300"
                   >
-                    Learn More
+                    Study More
                   </Link>
                 </div>
               </div>
