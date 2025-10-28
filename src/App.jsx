@@ -86,7 +86,7 @@ function App() {
           </Route>
 
           <Route path="gallery" element={<Gallery />} />
-          <Route path="gallery/other" element={<OtherGallery />} />
+          <Route path="other-gallery" element={<OtherGallery />} />
 
           <Route path="students">
             <Route index element={<StudentList />} />
