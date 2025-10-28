@@ -107,8 +107,8 @@ function GalleryItemModal({
       submitData.append("caption", formData.caption);
       submitData.append("media_type", mediaType);
       submitData.append("page_slug", pageSlug);
-      submitData.append("is_media_remote", formData.is_media_remote);
-      submitData.append("is_thumbnail_remote", formData.is_thumbnail_remote);
+      submitData.append("is_media_remote", formData.is_media_remote ? "true" : "false");
+      submitData.append("is_thumbnail_remote", formData.is_thumbnail_remote ? "true" : "false");
 
       if (formData.is_media_remote) {
         submitData.append("media_path", formData.media_path);
