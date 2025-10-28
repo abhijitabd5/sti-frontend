@@ -31,6 +31,7 @@ import StudentList from "@/pages/internal/Students/StudentList";
 import StudentDetail from "@/pages/internal/Students/StudentDetail";
 import EnrollmentForm from "@/pages/internal/Students/EnrollmentForm";
 import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
+import Reviews from "@/pages/internal/Reviews/Reviews";
 // import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 // Import guards
@@ -93,6 +94,10 @@ function App() {
             <Route path=":studentId" element={<StudentDetail />} />
             <Route path=":studentId/documents" element={<StudentDocuments />} />
             <Route path="edit/:enrollmentId" element={<EnrollmentForm />} />
+          </Route>
+
+          <Route path="reviews">
+            <Route index element={<Reviews />} />
           </Route>
         </Route>
 
