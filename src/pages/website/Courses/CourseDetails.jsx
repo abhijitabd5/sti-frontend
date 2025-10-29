@@ -4,6 +4,7 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import { publicCourseApi } from '@/services/api/publicCourseApi';
 import { useLanguage } from '@/contexts/LanguageContext';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const CourseDetails = () => {
   const { id } = useParams();
@@ -580,42 +581,11 @@ const CourseDetails = () => {
       )}
 
       {/* Enrollment Modal */}
-      {showEnrollmentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-8">
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                Ready to Enroll?
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Complete your enrollment for {course.title}
-              </p>
-              <div className="flex flex-col gap-4">
-                <Link
-                  to="/apply"
-                  className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 font-bold rounded-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300"
-                  onClick={() => setShowEnrollmentModal(false)}
-                >
-                  Start Application
-                </Link>
-                <Link
-                  to="/contact"
-                  className="px-6 py-3 border-2 border-orange-500 text-orange-500 font-semibold rounded-lg hover:bg-orange-500 hover:text-white transition-all duration-300"
-                  onClick={() => setShowEnrollmentModal(false)}
-                >
-                  Contact Us First
-                </Link>
-                <button
-                  onClick={() => setShowEnrollmentModal(false)}
-                  className="px-6 py-3 text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <EnrollModal
+        isOpen={showEnrollmentModal}
+        onClose={() => setShowEnrollmentModal(false)}
+        selectedCourseId={course?.id}
+      />
     </WebsiteLayout>
   );
 };

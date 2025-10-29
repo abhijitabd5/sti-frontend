@@ -1,19 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import Transition from '@/components/common/Transition/Transition';
+import React, { useEffect } from 'react';
 import { XMarkIcon, StarIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 function ViewReviewModal({ isOpen, onClose, review }) {
-  const modalContent = useRef(null);
-
-  // Close on click outside
-  useEffect(() => {
-    const clickHandler = ({ target }) => {
-      if (!isOpen || !modalContent.current || modalContent.current.contains(target)) return;
-      onClose();
-    };
-    document.addEventListener('click', clickHandler);
-    return () => document.removeEventListener('click', clickHandler);
-  }, [isOpen, onClose]);
+  // Close on click outside handled by overlay onClick
 
   // Close on ESC key
   useEffect(() => {
@@ -25,7 +14,7 @@ function ViewReviewModal({ isOpen, onClose, review }) {
     return () => document.removeEventListener('keydown', keyHandler);
   }, [isOpen, onClose]);
 
-  if (!review) return null;
+  if (!isOpen || !review) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -37,37 +26,25 @@ function ViewReviewModal({ isOpen, onClose, review }) {
   };
 
   return (
-    <>
-      {/* Modal backdrop */}
-      <Transition
-        className="fixed inset-0 bg-gray-900/30 z-50 transition-opacity"
-        show={isOpen}
-        enter="transition ease-out duration-200"
-        enterStart="opacity-0"
-        enterEnd="opacity-100"
-        leave="transition ease-out duration-100"
-        leaveStart="opacity-100"
-        leaveEnd="opacity-0"
-        aria-hidden="true"
-      />
-
-      {/* Modal dialog */}
-      <Transition
-        className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center px-4 sm:px-6"
-        role="dialog"
-        aria-modal="true"
-        show={isOpen}
-        enter="transition ease-in-out duration-200"
-        enterStart="opacity-0 translate-y-4"
-        enterEnd="opacity-100 translate-y-0"
-        leave="transition ease-in-out duration-200"
-        leaveStart="opacity-100 translate-y-0"
-        leaveEnd="opacity-0 translate-y-4"
-      >
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        {/* Background overlay */}
         <div
-          ref={modalContent}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700/60 overflow-auto max-w-2xl w-full max-h-[90vh] rounded-lg shadow-lg"
+          className="fixed inset-0 transition-opacity bg-gray-500/60 dark:bg-gray-900/70"
+          aria-hidden="true"
+          onClick={onClose}
+        />
+
+        {/* Center modal alignment helper */}
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
         >
+          &#8203;
+        </span>
+
+        {/* Modal panel */}
+        <div className="relative z-[10000] inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
           {/* Modal Header */}
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
             <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Review Details</h2>
@@ -246,8 +223,8 @@ function ViewReviewModal({ isOpen, onClose, review }) {
             </button>
           </div>
         </div>
-      </Transition>
-    </>
+      </div>
+    </div>
   );
 }
 
