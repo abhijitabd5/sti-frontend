@@ -4,6 +4,7 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import { publicCourseApi } from '@/services/api/publicCourseApi';
 import { useLanguage } from '@/contexts/LanguageContext';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const Courses = () => {
   const { getCurrentLanguageObj } = useLanguage();
@@ -12,6 +13,8 @@ const Courses = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -32,6 +35,11 @@ const Courses = () => {
     loadCourses();
     return () => { active = false; };
   }, [languageCode]);
+
+  const handleEnrollClick = (courseId) => {
+    setSelectedCourseId(courseId);
+    setEnrollModalOpen(true);
+  };
 
   const formatINR = (price) => {
     const num = Number(price);
@@ -258,12 +266,12 @@ const Courses = () => {
                       >
                         View Details
                       </Link>
-                      <Link
-                        to="/apply"
+                      <button
+                        onClick={() => handleEnrollClick(course.id)}
                         className="flex-1 text-center bg-transparent border-2 border-orange-500 text-orange-500 dark:text-orange-400 font-semibold py-2.5 px-4 rounded-lg hover:bg-orange-500 hover:text-white transition-all duration-300"
                       >
                         Enroll Now
-                      </Link>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -313,6 +321,13 @@ const Courses = () => {
           </div>
         </div>
       </section>
+
+      {/* Enrollment Modal */}
+      <EnrollModal
+        isOpen={enrollModalOpen}
+        onClose={() => setEnrollModalOpen(false)}
+        selectedCourseId={selectedCourseId}
+      />
     </WebsiteLayout>
   );
 };

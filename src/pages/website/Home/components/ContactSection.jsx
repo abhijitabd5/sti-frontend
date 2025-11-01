@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { websiteApi } from '../../../../services/api/websiteApi';
+import enquiryApi from '@/services/api/enquiryApi';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ const ContactSection = () => {
     setSubmitStatus({ type: '', message: '' });
 
     try {
-      const response = await websiteApi.submitContactForm(formData);
+      const response = await enquiryApi.createEnquiry(formData);
       setSubmitStatus({
         type: 'success',
         message: response.message
@@ -142,13 +142,12 @@ const ContactSection = () => {
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address *
+                    Email Address
                   </label>
                   <input
                     type="email"
                     id="email"
                     name="email"
-                    required
                     value={formData.email}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors"
@@ -169,28 +168,8 @@ const ContactSection = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors"
-                    placeholder="(555) 123-4567"
+                    placeholder="1234567890"
                   />
-                </div>
-                <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Subject
-                  </label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors"
-                  >
-                    <option value="">Select a subject</option>
-                    <option value="General Information">General Information</option>
-                    <option value="Course Enrollment">Course Enrollment</option>
-                    <option value="Schedule Tour">Schedule Tour</option>
-                    <option value="Financial Aid">Financial Aid</option>
-                    <option value="Job Placement">Job Placement</option>
-                    <option value="Other">Other</option>
-                  </select>
                 </div>
               </div>
 

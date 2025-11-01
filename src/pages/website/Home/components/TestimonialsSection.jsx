@@ -1,19 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import { reviewApi } from '@/services/api/reviewApi';
+import defaultProfile from '@/assets/icons/user-profile.png';
 
 const TestimonialsSection = ({ testimonials = [] }) => {
+  const [fetchedReviews, setFetchedReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  // Fetch reviews from backend
+  useEffect(() => {
+    let active = true;
+    const loadReviews = async () => {
+      try {
+        setLoading(true);
+        const response = await reviewApi.getPublicReviews({ limit: 5 });
+        if (!active) return;
+        // Extract data from response { success, message, data }
+        const reviewData = response?.data || response;
+        setFetchedReviews(Array.isArray(reviewData) ? reviewData : []);
+      } catch (error) {
+        console.error('Failed to load reviews:', error);
+        if (active) setFetchedReviews([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    loadReviews();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Use fetched reviews (ignore testimonials prop)
+  const reviews = fetchedReviews;
+
   // Auto-rotate testimonials
   useEffect(() => {
-    if (!isAutoPlaying || testimonials.length <= 1) return;
+    if (!isAutoPlaying || reviews.length <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+      setCurrentTestimonial((prev) => (prev + 1) % reviews.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentTestimonial, isAutoPlaying, testimonials.length]);
+  }, [currentTestimonial, isAutoPlaying, reviews.length]);
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
@@ -30,7 +61,7 @@ const TestimonialsSection = ({ testimonials = [] }) => {
     ));
   };
 
-  if (!testimonials.length) {
+  if (loading || !reviews.length) {
     return (
       <section className="py-16 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -80,7 +111,7 @@ const TestimonialsSection = ({ testimonials = [] }) => {
         </div>
 
         {/* Featured Testimonial (Large) */}
-        {testimonials.length > 0 && (
+        {reviews.length > 0 && (
           <div className="mb-16">
             <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl p-8 md:p-12 text-white text-center relative overflow-hidden">
               {/* Background Pattern */}
@@ -99,46 +130,51 @@ const TestimonialsSection = ({ testimonials = [] }) => {
                 {/* Quote Icon */}
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35l.539-.222.574-.197-.479-1.501c-.1.047-.285.087-.443.157-.159.07-.318.148-.475.220-.314.156-.607.405-.901.604-.294.199-.583.497-.827.765-.255.27-.477.628-.649.991-.17.363-.298.797-.366 1.115-.069.318-.068.646-.048.96v1.85zm8 0c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35l.539-.222.574-.197-.479-1.501c-.1.047-.285.087-.443.157-.159.07-.318.148-.475.22-.314.156-.607.405-.901.604-.294.199-.583.497-.827.765-.255.27-.477.628-.649.991-.17.363-.298.797-.366 1.115-.069.318-.068.646-.048.96v1.85z" />
+                    <path d="M6.5 10c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35l.539-.222.574-.197-.479-1.501c-.1.047-.285.087-.443.157-.159.07-.318.148-.475.22-.314.156-.607.405-.901.604-.294.199-.583.497-.827.765-.255.27-.477.628-.649.991-.17.363-.298.797-.366 1.115-.069.318-.068.646-.048.96v1.85zm8 0c-.223 0-.437.034-.65.065.069-.232.14-.468.254-.68.114-.308.292-.575.469-.844.148-.291.409-.488.601-.737.201-.242.475-.403.692-.604.213-.21.492-.315.714-.463.232-.133.434-.28.65-.35l.539-.222.574-.197-.479-1.501c-.1.047-.285.087-.443.157-.159.07-.318.148-.475.22-.314.156-.607.405-.901.604-.294.199-.583.497-.827.765-.255.27-.477.628-.649.991-.17.363-.298.797-.366 1.115-.069.318-.068.646-.048.96v1.85z" />
                   </svg>
                 </div>
 
                 {/* Featured Quote */}
                 <blockquote className="text-xl md:text-2xl font-medium mb-8 leading-relaxed">
-                  "{testimonials[currentTestimonial].comment}"
+                  "{reviews[currentTestimonial].review_text}"
                 </blockquote>
 
                 {/* Author Info */}
                 <div className="flex items-center justify-center space-x-4">
                   <img
-                    src={testimonials[currentTestimonial].image}
-                    alt={testimonials[currentTestimonial].name}
-                    className="w-16 h-16 rounded-full border-4 border-white/30"
+                    src={reviews[currentTestimonial].profile_photo || defaultProfile}
+                    alt={reviews[currentTestimonial].name}
+                    className="w-16 h-16 rounded-full border-4 border-white/30 object-cover"
                   />
                   <div className="text-left">
                     <div className="font-bold text-lg">
-                      {testimonials[currentTestimonial].name}
+                      {reviews[currentTestimonial].name}
                     </div>
                     <div className="text-white/90">
-                      {testimonials[currentTestimonial].position}
+                      {reviews[currentTestimonial].enrolled_course}
                     </div>
+                    {reviews[currentTestimonial].recruited_at && (
+                      <div className="text-sm text-white/80">
+                        {reviews[currentTestimonial].recruited_at}
+                      </div>
+                    )}
                     <div className="text-sm text-white/80">
-                      {testimonials[currentTestimonial].company}
+                      {reviews[currentTestimonial].city}
                     </div>
                   </div>
                 </div>
 
                 {/* Rating */}
                 <div className="flex items-center justify-center mt-6 space-x-1">
-                  {renderStars(testimonials[currentTestimonial].rating)}
+                  {renderStars(reviews[currentTestimonial].rating)}
                 </div>
               </div>
             </div>
 
             {/* Navigation Dots */}
-            {testimonials.length > 1 && (
+            {reviews.length > 1 && (
               <div className="flex justify-center mt-6 space-x-2">
-                {testimonials.map((_, index) => (
+                {reviews.map((_, index) => (
                   <button
                     key={index}
                     onClick={() => {
@@ -161,48 +197,51 @@ const TestimonialsSection = ({ testimonials = [] }) => {
 
         {/* All Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {testimonials.map((testimonial, index) => (
+          {reviews.map((review, index) => (
             <div
-              key={testimonial.id}
+              key={review.id}
               className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
             >
               {/* Rating */}
               <div className="flex items-center mb-4 space-x-1">
-                {renderStars(testimonial.rating)}
+                {renderStars(review.rating)}
               </div>
 
               {/* Quote */}
               <blockquote className="text-gray-700 dark:text-gray-300 mb-6 line-clamp-4">
-                "{testimonial.comment}"
+                "{review.review_text}"
               </blockquote>
 
               {/* Author */}
               <div className="flex items-center">
                 <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
+                  src={review.profile_photo || defaultProfile}
+                  alt={review.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
                 <div className="ml-4">
                   <div className="font-semibold text-gray-900 dark:text-white">
-                    {testimonial.name}
+                    {review.name}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {testimonial.position}
+                    {review.enrolled_course}
                   </div>
-                  <div className="text-sm text-orange-500">
-                    {testimonial.company}
-                  </div>
+                  {review.recruited_at && (
+                    <div className="text-sm text-orange-500">
+                      {review.recruited_at}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Graduation Year */}
+              {/* City */}
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <div className="text-xs text-gray-500 dark:text-gray-500 flex items-center">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  Graduate Class of {testimonial.graduationYear}
+                  {review.city}
                 </div>
               </div>
             </div>

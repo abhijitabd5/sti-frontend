@@ -48,7 +48,7 @@ const DraggableRow = ({ item, index, moveItem, onToggleStatus, onEdit, onView, o
       <td className="px-4 py-3">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            {item.media_type === 'photo' ? (
+            {item.media_type === 'image' ? (
               <img 
                 src={item.media_url} 
                 alt={item.title}
@@ -79,11 +79,11 @@ const DraggableRow = ({ item, index, moveItem, onToggleStatus, onEdit, onView, o
       </td>
       <td className="px-4 py-3">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          item.media_type === 'photo' 
+          item.media_type === 'image' 
             ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
             : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
         }`}>
-          {item.media_type === 'photo' ? (
+          {item.media_type === 'image' ? (
             <>
               <PhotoIcon className="h-3 w-3 mr-1" />
               Image
@@ -170,8 +170,8 @@ function Gallery() {
   const loadGalleryItems = async () => {
     try {
       setLoading(true);
-      const mediaType = activeTab === 'images' ? 'photo' : 'video';
-      const pageSlug = activeTab === 'images' ? 'image_gallery' : 'video_gallery';
+      const mediaType = activeTab === 'images' ? 'image' : 'video';
+      const pageSlug = activeTab === 'images' ? 'gallery_image' : 'gallery_video';
       
       const response = await galleryApi.getGalleryItems({
         media_type: mediaType,
@@ -308,8 +308,8 @@ function Gallery() {
     );
   }
 
-  const currentMediaType = activeTab === 'images' ? 'photo' : 'video';
-  const currentPageSlug = activeTab === 'images' ? 'image_gallery' : 'video_gallery';
+  const currentMediaType = activeTab === 'images' ? 'image' : 'video';
+  const currentPageSlug = activeTab === 'images' ? 'gallery_image' : 'gallery_video';
 
   return (
     <AdminLayout>
