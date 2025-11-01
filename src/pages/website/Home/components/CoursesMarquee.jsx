@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { publicCourseApi } from "@/services/api/publicCourseApi";
+import EnrollModal from "@/components/common/Modal/EnrollModal";
 
 const CoursesMarquee = ({ courses = [] }) => {
   const scrollRef = useRef(null);
@@ -12,6 +13,8 @@ const CoursesMarquee = ({ courses = [] }) => {
   );
   const [fetchedCourses, setFetchedCourses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [selectedCourseId, setSelectedCourseId] = useState(null);
 
   // Fetch courses if none provided via props
   useEffect(() => {
@@ -87,6 +90,17 @@ const CoursesMarquee = ({ courses = [] }) => {
     if (scrollContainer) {
       scrollContainer.style.animationPlayState = "running";
     }
+  };
+
+  const handleEnrollClick = (courseId) => {
+    setSelectedCourseId(courseId);
+    setEnrollModalOpen(true);
+  };
+
+  const handleEnrollSuccess = () => {
+    // Optional: Show success message or perform any action after enrollment
+    setEnrollModalOpen(false);
+    setSelectedCourseId(null);
   };
 
   const formatINR = (value) => {
@@ -235,12 +249,12 @@ const CoursesMarquee = ({ courses = [] }) => {
                         >
                           View Course
                         </Link>
-                        <Link
-                          to="/enroll"
+                        <button
+                          onClick={() => handleEnrollClick(course.id)}
                           className="flex-1 bg-transparent border-2 border-orange-500 text-orange-500 font-semibold py-3 px-4 rounded-lg hover:bg-orange-500 hover:text-white transition-all duration-300 text-center"
                         >
                           Enroll Now
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -273,6 +287,14 @@ const CoursesMarquee = ({ courses = [] }) => {
           </svg>
         </Link>
       </div>
+
+      {/* Enroll Modal */}
+      <EnrollModal
+        isOpen={enrollModalOpen}
+        onClose={() => setEnrollModalOpen(false)}
+        onSuccess={handleEnrollSuccess}
+        selectedCourseId={selectedCourseId}
+      />
     </section>
   );
 };

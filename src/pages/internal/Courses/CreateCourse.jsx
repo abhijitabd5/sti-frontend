@@ -12,6 +12,7 @@ import {
   PhotoIcon,
   CheckIcon,
   XMarkIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 function CreateCourse() {
@@ -39,7 +40,7 @@ function CreateCourse() {
     is_active: true,
     thumbnail: null,
     display_order: "",
-    course_group_id: ""
+    course_group_id: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -63,8 +64,14 @@ function CreateCourse() {
 
     // Auto-calculate discount percentage and amount
     if (name === "base_course_fee" || name === "discount_percentage") {
-      const baseFee = name === "base_course_fee" ? parseFloat(value) || 0 : parseFloat(formData.base_course_fee) || 0;
-      const discountPercentage = name === "discount_percentage" ? parseFloat(value) || 0 : parseFloat(formData.discount_percentage) || 0;
+      const baseFee =
+        name === "base_course_fee"
+          ? parseFloat(value) || 0
+          : parseFloat(formData.base_course_fee) || 0;
+      const discountPercentage =
+        name === "discount_percentage"
+          ? parseFloat(value) || 0
+          : parseFloat(formData.discount_percentage) || 0;
 
       if (baseFee > 0 && discountPercentage > 0) {
         const discountAmount = (baseFee * discountPercentage) / 100;
@@ -87,6 +94,13 @@ function CreateCourse() {
     }
   };
 
+  const handleClearFile = (fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: null,
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -102,6 +116,10 @@ function CreateCourse() {
       newErrors.description = "Course description is required";
     }
 
+    if (!formData.features.trim()) {
+      newErrors.features = "Course features is required";
+    }
+
     if (!formData.duration || formData.duration <= 0) {
       newErrors.duration = "Valid duration is required";
     }
@@ -112,7 +130,8 @@ function CreateCourse() {
 
     if (formData.is_discounted) {
       if (!formData.discount_percentage || formData.discount_percentage <= 0) {
-        newErrors.discount_percentage = "Valid discount percentage is required when discount is enabled";
+        newErrors.discount_percentage =
+          "Valid discount percentage is required when discount is enabled";
       }
     }
 
@@ -138,13 +157,21 @@ function CreateCourse() {
         ...formData,
         duration: parseInt(formData.duration),
         base_course_fee: parseFloat(formData.base_course_fee),
-        discount_amount: formData.is_discounted ? parseFloat(formData.discount_amount) : 0,
-        discount_percentage: formData.is_discounted ? parseFloat(formData.discount_percentage) : 0,
-        hostel_fee: formData.hostel_available ? parseFloat(formData.hostel_fee || 0) : 0,
-        mess_fee: formData.mess_available ? parseFloat(formData.mess_fee || 0) : 0,
+        discount_amount: formData.is_discounted
+          ? parseFloat(formData.discount_amount)
+          : 0,
+        discount_percentage: formData.is_discounted
+          ? parseFloat(formData.discount_percentage)
+          : 0,
+        hostel_fee: formData.hostel_available
+          ? parseFloat(formData.hostel_fee || 0)
+          : 0,
+        mess_fee: formData.mess_available
+          ? parseFloat(formData.mess_fee || 0)
+          : 0,
         display_order: parseInt(formData.display_order),
       };
-      
+
       const response = await courseApi.createCourse(courseData);
 
       if (response.success) {
@@ -276,6 +303,27 @@ function CreateCourse() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Course Features *
+                  </label>
+                  <textarea
+                    name="features"
+                    value={formData.features}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className={`form-input w-full ${
+                      errors.features ? "border-red-500" : ""
+                    }`}
+                    placeholder="Enter course features separated by commas (No new lines)"
+                  />
+                  {errors.features && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.features}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Duration (weeks) *
                   </label>
                   <input
@@ -328,17 +376,33 @@ function CreateCourse() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Syllabus PDF
                   </label>
-                  <input
-                    type="file"
-                    name="syllabus_file"
-                    onChange={handleInputChange}
-                    className="form-input w-full"
-                    accept="application/pdf"
-                  />
-                  {formData.syllabus_file && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Selected: {formData.syllabus_file.name}
-                    </p>
+                  {formData.syllabus_file ? (
+                    <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <DocumentTextIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-900 dark:text-green-300 truncate">
+                          {formData.syllabus_file.name}
+                        </p>
+                        <p className="text-xs text-green-700 dark:text-green-400">
+                          {(formData.syllabus_file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleClearFile('syllabus_file')}
+                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                      >
+                        <XCircleIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      name="syllabus_file"
+                      onChange={handleInputChange}
+                      className="form-input w-full"
+                      accept="application/pdf"
+                    />
                   )}
                 </div>
               </div>
@@ -440,11 +504,13 @@ function CreateCourse() {
                     </div>
                   </>
                 )}
-                
+
                 {/* Accommodation Options */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Accommodation Options</h4>
-                  
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Accommodation Options
+                  </h4>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -454,11 +520,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="hostel_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="hostel_available"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Hostel Available
                     </label>
                   </div>
-                  
+
                   {formData.hostel_available && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -476,7 +545,7 @@ function CreateCourse() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -486,11 +555,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="mess_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="mess_available"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Mess Available
                     </label>
                   </div>
-                  
+
                   {formData.mess_available && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -572,24 +644,51 @@ function CreateCourse() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Thumbnail Image
                   </label>
-                  <input
-                    type="file"
-                    name="thumbnail"
-                    onChange={handleInputChange}
-                    className="form-input w-full"
-                    accept="image/*"
-                  />
-                  {formData.thumbnail && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Selected: {formData.thumbnail.name}
-                    </p>
+                  {formData.thumbnail ? (
+                    <div className="space-y-2">
+                      <div className="relative inline-block">
+                        <img
+                          src={URL.createObjectURL(formData.thumbnail)}
+                          alt="Thumbnail preview"
+                          className="h-32 w-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <PhotoIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-300 truncate">
+                            {formData.thumbnail.name}
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-400">
+                            {(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleClearFile('thumbnail')}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                        >
+                          <XCircleIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      name="thumbnail"
+                      onChange={handleInputChange}
+                      className="form-input w-full"
+                      accept="image/*"
+                    />
                   )}
                 </div>
-                
+
                 {/* Settings */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Course Settings</h4>
-                  
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Course Settings
+                  </h4>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -599,11 +698,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="is_featured" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="is_featured"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Featured Course
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -613,11 +715,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="is_active"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Active Course
                     </label>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Display Order *
@@ -638,6 +743,21 @@ function CreateCourse() {
                         {errors.display_order}
                       </p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Course Group ID *
+                    </label>
+                    <input
+                      type="number"
+                      name="course_group_id"
+                      value={formData.course_group_id}
+                      onChange={handleInputChange}
+                      min="1"
+                      className="form-input w-full"
+                      placeholder="Enter course group ID"
+                    />
                   </div>
                 </div>
               </div>

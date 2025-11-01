@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from '../../ui/Internal/ThemeToggle/ThemeToggle';
 import LanguageDropdown from '../LanguageDropdown/LanguageDropdown';
+import stiLogo from '@/assets/logos/sti-logo.svg';
 
 const WebsiteHeader = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,35 +69,16 @@ const WebsiteHeader = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
-              <svg className="w-6 h-6 lg:w-7 lg:h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M19 2H5C3.89 2 3 2.89 3 4v16a1 1 0 0 0 1.44.89L12 17.5l7.56 3.39A1 1 0 0 0 21 20V4c0-1.11-.89-2-2-2zm-7 14.5l-5.72 2.56L6 4h12l-.28 15.06L12 16.5z"/>
-                <circle cx="8" cy="8" r="1"/>
-                <circle cx="16" cy="8" r="1"/>
-                <path d="M8 12h8v2H8z"/>
-              </svg>
-            </div>
-            <div className="flex flex-col">
-              <span className={`font-bold text-lg lg:text-xl transition-colors ${
-                isSticky 
-                  ? 'text-gray-900 dark:text-white' 
-                  : 'text-white'
-              }`}>
-                Earth Movers
-              </span>
-              <span className={`text-xs font-medium transition-colors ${
-                isSticky 
-                  ? 'text-gray-600 dark:text-gray-400' 
-                  : 'text-white/80'
-              }`}>
-                Training Academy
-              </span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={stiLogo} 
+              alt="STI Logo" 
+              className="h-8 lg:h-10 w-auto transition-opacity duration-300"
+            />
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center space-x-4">
             {navItems.map((item) => (
               item.hasDropdown ? (
                 <div key={item.path} className="relative group">

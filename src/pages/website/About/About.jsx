@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const About = () => {
+  const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+
   const stats = [
     { number: '5000+', label: 'Graduates Trained' },
     { number: '95%', label: 'Job Placement Rate' },
@@ -381,15 +384,15 @@ const About = () => {
             Join thousands of successful graduates who've built rewarding careers through our comprehensive training programs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/apply"
+            <button
+              onClick={() => setEnrollModalOpen(true)}
               className="inline-flex items-center px-8 py-4 bg-gray-900 text-white font-bold text-lg rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
-              Apply Now
+              Enroll Now
               <svg className="ml-2 w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </button>
             <Link
               to="/gallery/images"
               className="inline-flex items-center px-8 py-4 bg-transparent border-2 border-gray-900 text-gray-900 font-semibold text-lg rounded-lg hover:bg-gray-900 hover:text-white transition-all duration-300"
@@ -399,6 +402,12 @@ const About = () => {
           </div>
         </div>
       </section>
+
+      {/* Enrollment Modal */}
+      <EnrollModal
+        isOpen={enrollModalOpen}
+        onClose={() => setEnrollModalOpen(false)}
+      />
     </WebsiteLayout>
   );
 };

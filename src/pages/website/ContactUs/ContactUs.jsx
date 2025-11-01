@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
+import enquiryApi from '@/services/api/enquiryApi';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -28,18 +29,26 @@ const Contact = () => {
     setSubmitStatus(null);
 
     try {
-      // Simulate form submission
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      console.log('Contact form submitted:', formData);
-      
-      setSubmitStatus('success');
-      setFormData({
-        fullName: '',
-        mobile: '',
-        email: '',
-        message: ''
+      const response = await enquiryApi.createEnquiry({
+        name: formData.fullName,
+        phone: formData.mobile,
+        email: formData.email || undefined,
+        course_id: null,
+        course_name: null,
+        message: formData.message
       });
+
+      if (response.success) {
+        setSubmitStatus('success');
+        setFormData({
+          fullName: '',
+          mobile: '',
+          email: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus('error');
+      }
     } catch (error) {
       console.error('Error submitting form:', error);
       setSubmitStatus('error');
@@ -249,7 +258,7 @@ const Contact = () => {
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Email Address *
+                    Email Address <span className="text-gray-500 text-xs">(Optional)</span>
                   </label>
                   <input
                     type="email"
@@ -257,7 +266,6 @@ const Contact = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
                     placeholder="Enter your email address"
                   />
