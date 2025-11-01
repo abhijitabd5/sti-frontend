@@ -1,3 +1,7 @@
+import facebookIcon from "@/assets/icons/facebook.png";
+import instagramIcon from "@/assets/icons/instagram.png";
+import youtubeIcon from "@/assets/icons/youtube.png";
+
 function FloatingSocialButtons() {
   return (
     <div className="space-y-3">
@@ -10,7 +14,7 @@ function FloatingSocialButtons() {
         aria-label="Facebook"
       >
         <img
-          src="/src/assets/icons/facebook.png"
+          src={facebookIcon}
           alt="Facebook"
           className="w-10 h-10"
         />
@@ -25,7 +29,7 @@ function FloatingSocialButtons() {
         aria-label="Instagram"
       >
         <img
-          src="/src/assets/icons/instagram.png"
+          src={instagramIcon}
           alt="Instagram"
           className="w-10 h-10"
         />
@@ -40,7 +44,7 @@ function FloatingSocialButtons() {
         aria-label="YouTube"
       >
         <img
-          src="/src/assets/icons/youtube.png"
+          src={youtubeIcon}
           alt="YouTube"
           className="w-10 h-10"
         />

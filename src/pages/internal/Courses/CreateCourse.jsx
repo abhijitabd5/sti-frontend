@@ -12,6 +12,7 @@ import {
   PhotoIcon,
   CheckIcon,
   XMarkIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 function CreateCourse() {
@@ -91,6 +92,13 @@ function CreateCourse() {
       }));
       return;
     }
+  };
+
+  const handleClearFile = (fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: null,
+    }));
   };
 
   const validateForm = () => {
@@ -368,17 +376,33 @@ function CreateCourse() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Syllabus PDF
                   </label>
-                  <input
-                    type="file"
-                    name="syllabus_file"
-                    onChange={handleInputChange}
-                    className="form-input w-full"
-                    accept="application/pdf"
-                  />
-                  {formData.syllabus_file && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Selected: {formData.syllabus_file.name}
-                    </p>
+                  {formData.syllabus_file ? (
+                    <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <DocumentTextIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-900 dark:text-green-300 truncate">
+                          {formData.syllabus_file.name}
+                        </p>
+                        <p className="text-xs text-green-700 dark:text-green-400">
+                          {(formData.syllabus_file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleClearFile('syllabus_file')}
+                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                      >
+                        <XCircleIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      name="syllabus_file"
+                      onChange={handleInputChange}
+                      className="form-input w-full"
+                      accept="application/pdf"
+                    />
                   )}
                 </div>
               </div>
@@ -620,17 +644,42 @@ function CreateCourse() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Thumbnail Image
                   </label>
-                  <input
-                    type="file"
-                    name="thumbnail"
-                    onChange={handleInputChange}
-                    className="form-input w-full"
-                    accept="image/*"
-                  />
-                  {formData.thumbnail && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Selected: {formData.thumbnail.name}
-                    </p>
+                  {formData.thumbnail ? (
+                    <div className="space-y-2">
+                      <div className="relative inline-block">
+                        <img
+                          src={URL.createObjectURL(formData.thumbnail)}
+                          alt="Thumbnail preview"
+                          className="h-32 w-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                        />
+                      </div>
+                      <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <PhotoIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-300 truncate">
+                            {formData.thumbnail.name}
+                          </p>
+                          <p className="text-xs text-blue-700 dark:text-blue-400">
+                            {(formData.thumbnail.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleClearFile('thumbnail')}
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                        >
+                          <XCircleIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      name="thumbnail"
+                      onChange={handleInputChange}
+                      className="form-input w-full"
+                      accept="image/*"
+                    />
                   )}
                 </div>
 
@@ -694,6 +743,21 @@ function CreateCourse() {
                         {errors.display_order}
                       </p>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Course Group ID *
+                    </label>
+                    <input
+                      type="number"
+                      name="course_group_id"
+                      value={formData.course_group_id}
+                      onChange={handleInputChange}
+                      min="1"
+                      className="form-input w-full"
+                      placeholder="Enter course group ID"
+                    />
                   </div>
                 </div>
               </div>
