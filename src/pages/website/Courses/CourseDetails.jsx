@@ -111,7 +111,7 @@ const CourseDetails = () => {
     );
   }
 
-  const features = (course.syllabus_text || '')
+  const features = (course.features || '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);

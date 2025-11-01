@@ -39,7 +39,7 @@ function CreateCourse() {
     is_active: true,
     thumbnail: null,
     display_order: "",
-    course_group_id: ""
+    course_group_id: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -63,8 +63,14 @@ function CreateCourse() {
 
     // Auto-calculate discount percentage and amount
     if (name === "base_course_fee" || name === "discount_percentage") {
-      const baseFee = name === "base_course_fee" ? parseFloat(value) || 0 : parseFloat(formData.base_course_fee) || 0;
-      const discountPercentage = name === "discount_percentage" ? parseFloat(value) || 0 : parseFloat(formData.discount_percentage) || 0;
+      const baseFee =
+        name === "base_course_fee"
+          ? parseFloat(value) || 0
+          : parseFloat(formData.base_course_fee) || 0;
+      const discountPercentage =
+        name === "discount_percentage"
+          ? parseFloat(value) || 0
+          : parseFloat(formData.discount_percentage) || 0;
 
       if (baseFee > 0 && discountPercentage > 0) {
         const discountAmount = (baseFee * discountPercentage) / 100;
@@ -102,6 +108,10 @@ function CreateCourse() {
       newErrors.description = "Course description is required";
     }
 
+    if (!formData.features.trim()) {
+      newErrors.features = "Course features is required";
+    }
+
     if (!formData.duration || formData.duration <= 0) {
       newErrors.duration = "Valid duration is required";
     }
@@ -112,7 +122,8 @@ function CreateCourse() {
 
     if (formData.is_discounted) {
       if (!formData.discount_percentage || formData.discount_percentage <= 0) {
-        newErrors.discount_percentage = "Valid discount percentage is required when discount is enabled";
+        newErrors.discount_percentage =
+          "Valid discount percentage is required when discount is enabled";
       }
     }
 
@@ -138,13 +149,21 @@ function CreateCourse() {
         ...formData,
         duration: parseInt(formData.duration),
         base_course_fee: parseFloat(formData.base_course_fee),
-        discount_amount: formData.is_discounted ? parseFloat(formData.discount_amount) : 0,
-        discount_percentage: formData.is_discounted ? parseFloat(formData.discount_percentage) : 0,
-        hostel_fee: formData.hostel_available ? parseFloat(formData.hostel_fee || 0) : 0,
-        mess_fee: formData.mess_available ? parseFloat(formData.mess_fee || 0) : 0,
+        discount_amount: formData.is_discounted
+          ? parseFloat(formData.discount_amount)
+          : 0,
+        discount_percentage: formData.is_discounted
+          ? parseFloat(formData.discount_percentage)
+          : 0,
+        hostel_fee: formData.hostel_available
+          ? parseFloat(formData.hostel_fee || 0)
+          : 0,
+        mess_fee: formData.mess_available
+          ? parseFloat(formData.mess_fee || 0)
+          : 0,
         display_order: parseInt(formData.display_order),
       };
-      
+
       const response = await courseApi.createCourse(courseData);
 
       if (response.success) {
@@ -270,6 +289,27 @@ function CreateCourse() {
                   {errors.description && (
                     <p className="text-red-500 text-sm mt-1">
                       {errors.description}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Course Features *
+                  </label>
+                  <textarea
+                    name="features"
+                    value={formData.features}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className={`form-input w-full ${
+                      errors.features ? "border-red-500" : ""
+                    }`}
+                    placeholder="Enter course features separated by commas (No new lines)"
+                  />
+                  {errors.features && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.features}
                     </p>
                   )}
                 </div>
@@ -440,11 +480,13 @@ function CreateCourse() {
                     </div>
                   </>
                 )}
-                
+
                 {/* Accommodation Options */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Accommodation Options</h4>
-                  
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Accommodation Options
+                  </h4>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -454,11 +496,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="hostel_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="hostel_available"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Hostel Available
                     </label>
                   </div>
-                  
+
                   {formData.hostel_available && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -476,7 +521,7 @@ function CreateCourse() {
                       />
                     </div>
                   )}
-                  
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -486,11 +531,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="mess_available" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="mess_available"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Mess Available
                     </label>
                   </div>
-                  
+
                   {formData.mess_available && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -585,11 +633,13 @@ function CreateCourse() {
                     </p>
                   )}
                 </div>
-                
+
                 {/* Settings */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Course Settings</h4>
-                  
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Course Settings
+                  </h4>
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -599,11 +649,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="is_featured" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="is_featured"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Featured Course
                     </label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     <input
                       type="checkbox"
@@ -613,11 +666,14 @@ function CreateCourse() {
                       onChange={handleInputChange}
                       className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
-                    <label htmlFor="is_active" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="is_active"
+                      className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
                       Active Course
                     </label>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Display Order *
