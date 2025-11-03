@@ -100,6 +100,14 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = localStorage.getItem('token');
         const user = getStoredUser();
+        const expirationTime = localStorage.getItem('tokenExpiration');
+        
+        // Check if token has expired
+        if (expirationTime && new Date().getTime() > parseInt(expirationTime)) {
+          clearAuthData();
+          dispatch({ type: AUTH_ACTIONS.LOGOUT });
+          return;
+        }
         
         if (token && user) {
           // Verify token is still valid
@@ -144,6 +152,10 @@ export const AuthProvider = ({ children }) => {
         // Save auth data to localStorage - handle both old and new token formats
         const tokens = response.data.tokens || response.data.token;
         const accessToken = typeof tokens === 'string' ? tokens : tokens.access_token;
+        
+        // Set expiration to 7 days from now
+        const expirationTime = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
+        localStorage.setItem('tokenExpiration', expirationTime.toString());
         
         localStorage.setItem('token', accessToken); // Keep for backward compatibility
         if (typeof tokens === 'object' && tokens.access_token) {
