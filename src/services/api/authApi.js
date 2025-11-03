@@ -212,45 +212,8 @@ export const authApi = {
   // Verify token
   verifyToken: async (token) => {
     try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.post('/auth/verify', { token });
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (token && token.startsWith('mock_jwt_token_')) {
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-              try {
-                const user = JSON.parse(storedUser);
-                resolve({
-                  success: true,
-                  data: { user, valid: true }
-                });
-              } catch {
-                reject({
-                  response: {
-                    data: { success: false, message: 'Invalid token' }
-                  }
-                });
-              }
-            } else {
-              reject({
-                response: {
-                  data: { success: false, message: 'Token expired' }
-                }
-              });
-            }
-          } else {
-            reject({
-              response: {
-                data: { success: false, message: 'Invalid token' }
-              }
-            });
-          }
-        }, 200);
-      });
+      const response = await httpClient.get('/auth/me');
+      return response.data;
     } catch (error) {
       console.error('Token verification error:', error);
       throw error;
@@ -325,6 +288,7 @@ export const clearAuthData = () => {
   localStorage.removeItem('access_token');
   localStorage.removeItem('refresh_token');
   localStorage.removeItem('user');
+  localStorage.removeItem('tokenExpiration');
 };
 
 // Helper function to get stored user

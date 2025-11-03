@@ -109,6 +109,13 @@ export const AuthProvider = ({ children }) => {
           return;
         }
         
+        // Clear orphaned expiration time if token/user is missing
+        if ((expirationTime && !token) || (expirationTime && !user)) {
+          clearAuthData();
+          dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
+          return;
+        }
+        
         if (token && user) {
           // Verify token is still valid
           try {
