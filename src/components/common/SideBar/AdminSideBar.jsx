@@ -4,6 +4,8 @@ import { NavLink, useLocation } from "react-router-dom";
 import SidebarLinkGroup from "./AdminSideBarLinkGroup";
 import dashboardIcon from "@/assets/icons/dashboard.png";
 
+const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
+
 function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
   const location = useLocation();
   const { pathname } = location;
@@ -130,7 +132,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/dashboard"
+                  to={`/admin/dashboard`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/dashboard")
                       ? ""
@@ -162,7 +164,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/courses"
+                  to={`/admin/courses`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/courses")
                       ? ""
@@ -198,7 +200,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/transactions"
+                  to={`/admin/transactions`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/transactions")
                       ? ""
@@ -235,7 +237,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/gallery"
+                  to={`/admin/gallery`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/gallery")
                       ? ""
@@ -272,7 +274,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/students"
+                  to={`/admin/students`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/students")
                       ? ""
@@ -308,7 +310,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/enquiries"
+                  to={`/admin/enquiries`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/enquiries")
                       ? ""
@@ -345,7 +347,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/reviews"
+                  to={`/admin/reviews`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/reviews")
                       ? ""
@@ -382,7 +384,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               >
                 <NavLink
                   end
-                  to="http://localhost:3000/admin/other-gallery"
+                  to={`/admin/other-gallery`}
                   className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
                     pathname.includes("admin/other-gallery")
                       ? ""
