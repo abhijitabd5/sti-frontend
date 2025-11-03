@@ -4,19 +4,45 @@ import axios from 'axios';
 const httpClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+/**
+ * Check if token has expired (7 days)
+ */
+const isTokenExpired = () => {
+  const expirationTime = localStorage.getItem('tokenExpiration');
+  if (!expirationTime) return false;
+  return new Date().getTime() > parseInt(expirationTime);
+};
+
 // Request interceptor
 httpClient.interceptors.request.use(
   (config) => {
+    // Check if token has expired before making request
+    if (isTokenExpired()) {
+      // Clear auth data and redirect to login
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiration');
+      window.location.href = '/login';
+      return Promise.reject(new Error('Token expired'));
+    }
+
     // Add auth token if available
     const token = localStorage.getItem('access_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Ensure withCredentials is set for this request
+    config.withCredentials = true;
+    
     return config;
   },
   (error) => {
@@ -40,7 +66,7 @@ httpClient.interceptors.response.use(
       
       if (refreshToken) {
         try {
-          const response = await axios.post('http://localhost:5000/api/auth/refresh-token', {
+          const response = await axios.post('/api/auth/refresh-token', {
             refresh_token: refreshToken
           });
           
@@ -66,6 +92,7 @@ httpClient.interceptors.response.use(
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
+      localStorage.removeItem('tokenExpiration');
       window.location.href = '/login';
     }
     
