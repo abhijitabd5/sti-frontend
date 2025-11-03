@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import ThemeToggle from '../../ui/Internal/ThemeToggle/ThemeToggle';
+import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import LanguageDropdown from '../LanguageDropdown/LanguageDropdown';
 import stiLogo from '@/assets/logos/sti-logo.svg';
 
