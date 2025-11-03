@@ -33,6 +33,7 @@ import EnrollmentForm from "@/pages/internal/Students/EnrollmentForm";
 import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
 import Reviews from "@/pages/internal/Reviews/Reviews";
 import Enquiries from "@/pages/internal/Enquiries/Enquiries";
+import Profile from "@/pages/internal/Profile/Profile";
 // import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 // Import guards
@@ -103,6 +104,10 @@ function App() {
 
           <Route path="enquiries">
             <Route index element={<Enquiries />} />
+          </Route>
+          
+          <Route path="profile">
+            <Route index element={<Profile />} />
           </Route>
         </Route>
 
