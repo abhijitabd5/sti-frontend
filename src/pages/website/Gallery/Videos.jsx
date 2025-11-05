@@ -173,8 +173,8 @@ const Videos = () => {
                       />
                       
                       {/* Play Button Overlay */}
-                      <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-50 transition-opacity duration-300 flex items-center justify-center">
-                        <div className="w-16 h-16 bg-orange-500 bg-opacity-90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors duration-300 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-orange-500/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                           <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 6.82v10.36c0 .79.87 1.27 1.54.84l8.14-5.18c.62-.39.62-1.29 0-1.69L9.54 5.98C8.87 5.55 8 6.03 8 6.82z"/>
                           </svg>
@@ -217,12 +217,12 @@ const Videos = () => {
 
       {/* Video Modal */}
       {selectedVideo && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
           <div className="relative max-w-6xl max-h-screen w-full h-full flex items-center justify-center p-4">
             {/* Close Button */}
             <button
               onClick={closeVideoModal}
-              className="absolute top-4 right-4 z-50 w-12 h-12 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-full flex items-center justify-center text-white transition-all duration-300"
+              className="absolute top-4 right-4 z-50 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all duration-300"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -244,7 +244,7 @@ const Videos = () => {
               </div>
               
               {/* Video Info */}
-              <div className="text-center text-white bg-black bg-opacity-50 rounded-lg px-8 py-6 max-w-4xl">
+              <div className="text-center text-white bg-black/50 rounded-lg px-8 py-6 max-w-4xl">
                 <h3 className="text-2xl font-bold mb-3">{selectedVideo.title}</h3>
                 <p className="text-gray-300">{selectedVideo.caption || 'No description available'}</p>
               </div>
