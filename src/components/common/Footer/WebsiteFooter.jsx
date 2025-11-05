@@ -18,11 +18,10 @@ const WebsiteFooter = () => {
       { label: 'Bulldozer Training', path: '/courses/bulldozer' },
       { label: 'Heavy Equipment Package', path: '/courses/complete' },
     ],
-    support: [
-      { label: 'Student Portal', path: '/student/login' },
-      { label: 'Career Services', path: '/career-services' },
+    legal: [
+      { label: 'Privacy Policy', path: '/privacy' },
+      { label: 'Terms and Conditions', path: '/terms' },
       { label: 'FAQ', path: '/faq' },
-      { label: 'Financial Aid', path: '/financial-aid' },
     ]
   };
 
@@ -118,6 +117,12 @@ const WebsiteFooter = () => {
                 </svg>
                 shahabuddintraining@gmail.com
               </div>
+              <Link
+                to="/login"
+                className="text-yellow-400 hover:text-yellow-300 text-sm font-medium transition-colors duration-200 mt-3 inline-block"
+              >
+                → Admin Login
+              </Link>
             </div>
           </div>
 
@@ -155,11 +160,11 @@ const WebsiteFooter = () => {
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Legal */}
           <div>
-            <h3 className="font-semibold text-lg mb-4">Student Support</h3>
+            <h3 className="font-semibold text-lg mb-4">Legal</h3>
             <ul className="space-y-2">
-              {footerSections.support.map((item, index) => (
+              {footerSections.legal.map((item, index) => (
                 <li key={index}>
                   <Link
                     to={item.path}
@@ -196,14 +201,6 @@ const WebsiteFooter = () => {
             {/* Copyright */}
             <div className="text-gray-400 text-sm text-center md:text-right">
               <p>&copy; {currentYear} Earth Movers Training Academy. All rights reserved.</p>
-              <div className="mt-1 space-x-4">
-                <Link to="/privacy" className="hover:text-white transition-colors">
-                  Privacy Policy
-                </Link>
-                <Link to="/terms" className="hover:text-white transition-colors">
-                  Terms of Service
-                </Link>
-              </div>
             </div>
           </div>
         </div>
