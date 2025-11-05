@@ -213,46 +213,43 @@ function EditCourse() {
     }
     setLoading(true);
     try {
-      // Use FormData for file uploads
-      const submitData = new FormData();
+      // Prepare data as a plain object; courseApi will build FormData internally
+      const baseFee = parseFloat(formData.original_fee) || 0;
+      const discountedFee = parseFloat(formData.discounted_fee) || 0;
+      const isDiscounted = !!formData.is_discounted;
+      const discountAmount = isDiscounted && discountedFee > 0 && baseFee > 0
+        ? baseFee - discountedFee
+        : 0;
+      const discountPercentage = isDiscounted
+        ? parseFloat(formData.discount_percentage) || 0
+        : 0;
 
-      // Add form fields
-      submitData.append("title", formData.title);
-      submitData.append("language", formData.language);
-      submitData.append("summary", formData.summary);
-      submitData.append("description", formData.description);
-      submitData.append("duration", parseInt(formData.duration));
-      submitData.append("syllabus_text", formData.syllabus_text);
-      submitData.append("original_fee", parseFloat(formData.original_fee));
-      submitData.append("is_discounted", formData.is_discounted);
-      submitData.append(
-        "discounted_fee",
-        formData.is_discounted ? parseFloat(formData.discounted_fee) : null
-      );
-      submitData.append(
-        "discount_percentage",
-        formData.is_discounted ? parseInt(formData.discount_percentage) : 0
-      );
-      submitData.append("show_offer_badge", formData.show_offer_badge);
-      submitData.append("offer_badge_text", formData.offer_badge_text);
-      submitData.append("display_order", parseInt(formData.display_order));
+      const courseData = {
+        title: formData.title,
+        language: formData.language,
+        summary: formData.summary,
+        description: formData.description,
+        duration: parseInt(formData.duration),
+        syllabus_text: formData.syllabus_text,
+        // API expects base_course_fee, discount fields
+        base_course_fee: baseFee,
+        is_discounted: isDiscounted,
+        discount_amount: discountAmount,
+        discount_percentage: discountPercentage,
+        show_offer_badge: formData.show_offer_badge,
+        offer_badge_text: formData.offer_badge_text,
+        display_order: parseInt(formData.display_order),
+      };
 
-      // Add files - only if new files are selected or if files should be cleared
+      // Attach files if provided
       if (newFiles.syllabus_file) {
-        submitData.append("syllabus_file", newFiles.syllabus_file);
-      } else if (existingFiles.syllabus_file_path === null) {
-        // File was cleared
-        submitData.append("syllabus_file_path", null);
+        courseData.syllabus_file = newFiles.syllabus_file;
       }
-
       if (newFiles.thumbnail) {
-        submitData.append("thumbnail", newFiles.thumbnail);
-      } else if (existingFiles.thumbnail === null) {
-        // File was cleared
-        submitData.append("thumbnail", null);
+        courseData.thumbnail = newFiles.thumbnail;
       }
 
-      const response = await courseApi.updateCourse(id, submitData);
+      const response = await courseApi.updateCourse(id, courseData);
 
       if (response.success) {
         navigate("/admin/courses", {
@@ -651,7 +648,7 @@ function EditCourse() {
                 <div className="flex items-center space-x-2">
                   <PhotoIcon className="h-5 w-5 text-gray-400" />
                   <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                    Media & Display
+                    Media
                   </h3>
                 </div>
               </div>

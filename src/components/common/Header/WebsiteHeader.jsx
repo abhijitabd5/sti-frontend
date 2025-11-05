@@ -90,7 +90,7 @@ const WebsiteHeader = () => {
                           : 'text-yellow-400'
                         : isSticky
                           ? 'text-gray-700 dark:text-gray-300 hover:text-orange-500'
-                          : 'text-white/90 hover:text-white'
+                          : 'text-gray-900 dark:text-white/90 hover:text-gray-900 dark:hover:text-white'
                     }`}
                   >
                     <span>{item.label}</span>
@@ -130,7 +130,7 @@ const WebsiteHeader = () => {
                         : 'text-yellow-400'
                       : isSticky
                         ? 'text-gray-700 dark:text-gray-300 hover:text-orange-500'
-                        : 'text-white/90 hover:text-white'
+                        : 'text-gray-900 dark:text-white/90 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -162,7 +162,7 @@ const WebsiteHeader = () => {
                   className={`text-sm font-bold transition-all duration-200 hover:scale-105 ${
                     isSticky
                       ? 'text-gray-900 dark:text-white hover:text-orange-500'
-                      : 'text-white hover:text-yellow-400'
+                      : 'text-gray-900 dark:text-white hover:text-orange-500 dark:hover:text-yellow-400'
                   }`}
                 >
                   09175113022
@@ -191,7 +191,7 @@ const WebsiteHeader = () => {
             <LanguageDropdown isSticky={isSticky} />
 
             {/* Theme Toggle */}
-            <div className={`${!isSticky ? '[&_svg]:text-white/90' : ''}`}>
+            <div className={`${!isSticky ? '[&_svg]:text-gray-900 dark:[&_svg]:text-white/90' : ''}`}>
               <ThemeToggle />
             </div>
 
@@ -201,7 +201,7 @@ const WebsiteHeader = () => {
               className={`lg:hidden p-2 rounded-lg transition-colors ${
                 isSticky
                   ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-                  : 'text-white hover:bg-white/20'
+                  : 'text-gray-900 dark:text-white hover:bg-black/10 dark:hover:bg-white/20'
               }`}
               aria-label="Toggle menu"
             >

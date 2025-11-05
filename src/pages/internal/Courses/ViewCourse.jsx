@@ -392,21 +392,18 @@ function ViewCourse() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Course Thumbnail
+                      Thumbnail Image
                     </label>
                     <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
                       <img 
                         src={course.thumbnail} 
                         alt={course.title}
                         className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = '/api/placeholder/400/300';
-                        }}
+                        // onError={(e) => {
+                        //   e.target.src = '/api/placeholder/400/300';
+                        // }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {course.thumbnail}
-                    </p>
                   </div>
                 </div>
               ) : (
