@@ -16,6 +16,9 @@ import About from "@/pages/website/About/About";
 import Images from "@/pages/website/Gallery/Images";
 import Videos from "@/pages/website/Gallery/Videos";
 import Contact from "@/pages/website/ContactUs/ContactUs";
+import PrivacyPolicy from "@/pages/website/PrivacyPolicy";
+import TermsAndConditions from "@/pages/website/TermsAndConditions";
+import FAQ from "@/pages/website/FAQ";
 import InternalCourses from "@/pages/internal/Courses/Courses";
 import ViewCourse from "@/pages/internal/Courses/ViewCourse";
 import CreateCourse from "@/pages/internal/Courses/CreateCourse";
@@ -60,6 +63,9 @@ function App() {
         <Route path="/gallery/images" element={<Images />} />
         <Route path="/gallery/videos" element={<Videos />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="/logout" element={<Logout />} />
         {/* <Route path="/example-editor" element={<ExampleUsage />} /> */}
 
