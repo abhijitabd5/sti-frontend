@@ -37,6 +37,10 @@ import StudentDocuments from "@/pages/internal/Students/StudentDocuments";
 import Reviews from "@/pages/internal/Reviews/Reviews";
 import Enquiries from "@/pages/internal/Enquiries/Enquiries";
 import Profile from "@/pages/internal/Profile/Profile";
+import Partners from "@/pages/internal/Promotion/Partners/Partners";
+import Posts from "@/pages/internal/Promotion/Posts/Posts";
+import CreateLink from "@/pages/internal/Promotion/Links/CreateLink";
+
 // import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 // Import guards
@@ -115,6 +119,18 @@ function App() {
           <Route path="profile">
             <Route index element={<Profile />} />
           </Route>
+
+          <Route path="create-link">
+            <Route index element={<CreateLink />} />
+          </Route>
+          <Route path="partners">
+            <Route index element={<Partners />} />
+          </Route>
+          <Route path="posts">
+            <Route index element={<Posts />} />
+          </Route>
+
+
         </Route>
 
         {/* Catch all route - redirect to home */}
