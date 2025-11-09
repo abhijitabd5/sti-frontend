@@ -7,7 +7,7 @@ function FloatingSocialButtons() {
     <div className="space-y-3">
       {/* Facebook Button */}
       <a
-        href="https://www.facebook.com"
+        href="https://facebook.com/share/14vkpKdoPz/?mibextid=wwXIfr"
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center w-14 h-14 bg-white hover:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
@@ -22,7 +22,7 @@ function FloatingSocialButtons() {
 
       {/* Instagram Button */}
       <a
-        href="https://www.instagram.com" 
+        href="https://instagram.com/shahabuddin_training_institute/?igsh=MWp6NXZ3cndlbzk1OQ%3D%3D&utm_source=qr#" 
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center w-14 h-14 bg-white hover:bg-pink-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
@@ -37,7 +37,7 @@ function FloatingSocialButtons() {
 
       {/* YouTube Button */}
       <a
-        href="https://www.youtube.com"
+        href="https://youtube.com/@shahabuddinshajahan9112"
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center w-14 h-14 bg-white hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"

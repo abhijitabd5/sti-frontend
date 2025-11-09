@@ -158,14 +158,14 @@ const WebsiteHeader = () => {
                   <span className="absolute inset-0 animate-ping opacity-75">Call Now</span>
                 </span>
                 <a 
-                  href="tel:09175113022"
+                  href="tel:06206832852"
                   className={`text-sm font-bold transition-all duration-200 hover:scale-105 ${
                     isSticky
                       ? 'text-gray-900 dark:text-white hover:text-orange-500'
                       : 'text-gray-900 dark:text-white hover:text-orange-500 dark:hover:text-yellow-400'
                   }`}
                 >
-                  09175113022
+                  06206832852
                 </a>
               </div>
             </div>
@@ -173,7 +173,7 @@ const WebsiteHeader = () => {
             {/* Mobile Call Icon */}
             {isMobile && (
               <a
-                href="tel:09175113022"
+                href="tel:06206832852"
                 className={`sm:hidden p-2 rounded-full transition-all duration-200 hover:scale-110 ${
                   isSticky
                     ? 'bg-orange-500 hover:bg-orange-600 text-white'
@@ -245,7 +245,7 @@ const WebsiteHeader = () => {
             
             {/* Mobile Call Now */}
             <a
-              href="tel:09175113022"
+              href="tel:06206832852"
               className={`flex items-center justify-center space-x-2 px-4 py-3 text-base font-medium rounded-lg mx-2 transition-all duration-200 ${
                 isSticky
                   ? 'bg-orange-500 hover:bg-orange-600 text-white'
@@ -255,7 +255,7 @@ const WebsiteHeader = () => {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              <span>Call Now: 09175113022</span>
+              <span>Call Now: 06206832852</span>
             </a>
           </div>
         </div>
