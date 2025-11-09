@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authApi, saveAuthData } from '@/services/api/authApi';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -293,14 +295,24 @@ const Login = () => {
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300"
+                <button
+                  type="button"
+                  onClick={() => setIsEnrollModalOpen(true)}
+                  className="font-medium text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300 cursor-pointer"
                 >
                   Apply for enrollment
-                </Link>
+                </button>
               </p>
             </div>
+
+            {/* Enrollment Modal */}
+            <EnrollModal
+              isOpen={isEnrollModalOpen}
+              onClose={() => setIsEnrollModalOpen(false)}
+              onSuccess={() => {
+                console.log('Enquiry submitted successfully');
+              }}
+            />
           </div>
         </div>
       </div>

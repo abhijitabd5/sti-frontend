@@ -18,7 +18,7 @@ const Videos = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_video');
+      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_videos');
       
       if (response.success && response.data) {
         setGalleryVideos(response.data);
