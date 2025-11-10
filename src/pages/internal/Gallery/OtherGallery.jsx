@@ -38,7 +38,7 @@ function OtherGallery() {
 
   const loadPages = async () => {
     try {
-      const response = await galleryApi.getPages();
+      const response = await galleryApi.getAllPages();
       if (response.success) {
         setPages(response.data);
         if (response.data.length > 0) {
