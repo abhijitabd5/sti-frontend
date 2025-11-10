@@ -2,25 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authApi, saveAuthData } from '@/services/api/authApi';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    login: '', // Can be mobile or email
+    login: '',
     password: '',
     rememberMe: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Check if user is already logged in
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // Redirect to intended page or dashboard
       const redirectTo = location.state?.from?.pathname || '/admin/dashboard';
       navigate(redirectTo, { replace: true });
     }
@@ -32,7 +32,6 @@ const Login = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
@@ -48,17 +47,13 @@ const Login = () => {
       });
 
       if (response.success) {
-        // Save auth data - handle both old and new token formats
-        const tokens = response.data.tokens || response.data.token;
+        const tokens = response.data.token || response.data.tokens;
         saveAuthData(tokens, response.data.user);
 
-        // Show success message briefly
         const successMessage = `Welcome back, ${response.data.user.first_name}!`;
         
-        // Redirect based on user role
         const redirectTo = location.state?.from?.pathname || response.data.redirect_url;
         
-        // Small delay to show success state
         setTimeout(() => {
           navigate(redirectTo, { 
             replace: true,
@@ -103,8 +98,8 @@ const Login = () => {
                   </svg>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">Earth Movers</h2>
-                  <p className="text-white/90 text-sm">Training Academy</p>
+                  <h2 className="text-2xl font-bold">Shahabuddin</h2>
+                  <p className="text-white/90 text-sm">Training Institute</p>
                 </div>
               </div>
 
@@ -155,7 +150,7 @@ const Login = () => {
                   <div className="text-sm text-white/80">Job Placement</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold mb-1">15+</div>
+                  <div className="text-3xl font-bold mb-1">7+</div>
                   <div className="text-sm text-white/80">Years Experience</div>
                 </div>
               </div>
@@ -174,16 +169,6 @@ const Login = () => {
               <p className="text-gray-600 dark:text-gray-400">
                 Enter your credentials to access your dashboard
               </p>
-            </div>
-
-            {/* Demo Credentials Info */}
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">Demo Credentials:</h3>
-              <div className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
-                <div><strong>Super Admin:</strong> 9175113022 / 12345678</div>
-                <div><strong>Account:</strong> 9300333444 / 12345678</div>
-                <div><strong>Student:</strong> 9834892082 / 12345678</div>
-              </div>
             </div>
 
             {/* Error Message */}
@@ -310,14 +295,24 @@ const Login = () => {
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}
-                <Link
-                  to="/register"
-                  className="font-medium text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300"
+                <button
+                  type="button"
+                  onClick={() => setIsEnrollModalOpen(true)}
+                  className="font-medium text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300 cursor-pointer"
                 >
                   Apply for enrollment
-                </Link>
+                </button>
               </p>
             </div>
+
+            {/* Enrollment Modal */}
+            <EnrollModal
+              isOpen={isEnrollModalOpen}
+              onClose={() => setIsEnrollModalOpen(false)}
+              onSuccess={() => {
+                console.log('Enquiry submitted successfully');
+              }}
+            />
           </div>
         </div>
       </div>

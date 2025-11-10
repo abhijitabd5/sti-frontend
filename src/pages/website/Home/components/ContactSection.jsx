@@ -7,10 +7,13 @@ const ContactSection = () => {
     email: '',
     phone: '',
     subject: '',
-    message: ''
+    message: '',
+    course_id: '',
+    course_name: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,26 +25,48 @@ const ContactSection = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setErrors({});
     setSubmitStatus({ type: '', message: '' });
 
+    // Validation
+    const newErrors = {};
+    if (formData.message.trim().length < 5) {
+      newErrors.message = 'Message must be at least 5 characters long';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      const response = await enquiryApi.createEnquiry(formData);
+      const response = await enquiryApi.createEnquiry({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        message: formData.message.trim(),
+        course_id: formData.course_id || null,
+        course_name: formData.course_name || null
+      });
       setSubmitStatus({
         type: 'success',
-        message: response.message
+        message: response.message || 'Your enquiry has been submitted successfully. We will get back to you soon!'
       });
       setFormData({
         name: '',
         email: '',
         phone: '',
         subject: '',
-        message: ''
+        message: '',
+        course_id: '',
+        course_name: ''
       });
     } catch (error) {
       setSubmitStatus({
         type: 'error',
-        message: 'Sorry, there was an error sending your message. Please try again or call us directly.'
+        message: error.response?.data?.message || 'Sorry, there was an error sending your message. Please try again or call us directly.'
       });
     } finally {
       setIsSubmitting(false);
@@ -58,9 +83,7 @@ const ContactSection = () => {
       ),
       title: 'Visit Us',
       details: [
-        '1234 Heavy Equipment Way',
-        'Industrial City, IC 12345',
-        'United States'
+'Near Mahabar Mood,', 'Barkattha, Barhi, Hazaribagh,', 'Jharkhand (825405)',
       ]
     },
     {
@@ -71,9 +94,8 @@ const ContactSection = () => {
       ),
       title: 'Call Us',
       details: [
-        'Main: (555) 123-4567',
-        'Admissions: (555) 123-4568',
-        'Mon-Fri: 8:00 AM - 6:00 PM'
+        'Main: +91 6206832852',
+        'Alternate: +91 9431374996',
       ]
     },
     {
@@ -84,9 +106,7 @@ const ContactSection = () => {
       ),
       title: 'Email Us',
       details: [
-        'info@earthmovers.edu',
-        'admissions@earthmovers.edu',
-        'We reply within 24 hours'
+        'shahabuddintraining@gmail.com',
       ]
     }
   ];
@@ -108,7 +128,7 @@ const ContactSection = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 h-fit">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Send us a Message
             </h3>
@@ -184,9 +204,16 @@ const ContactSection = () => {
                   rows={5}
                   value={formData.message}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors resize-none"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-800 dark:text-white transition-colors resize-none ${
+                    errors.message 
+                      ? 'border-red-500 dark:border-red-500' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Tell us about your interest in our training programs..."
                 ></textarea>
+                {errors.message && (
+                  <p className="text-red-500 text-sm mt-2">{errors.message}</p>
+                )}
               </div>
 
               <button
@@ -211,12 +238,11 @@ const ContactSection = () => {
             </form>
           </div>
 
-          {/* Contact Info & Map */}
-          <div className="space-y-8">
-            {/* Contact Information */}
-            <div className="grid grid-cols-1 gap-8">
+          {/* Contact Information */}
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8">
+            <div className="space-y-8">
               {contactInfo.map((info, index) => (
-                <div key={index} className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                <div key={index} className="border-b border-gray-200 dark:border-gray-700 pb-6 last:border-b-0 last:pb-0">
                   <div className="flex items-start">
                     <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center text-white">
                       {info.icon}
@@ -237,59 +263,45 @@ const ContactSection = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
 
-            {/* Map Placeholder */}
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-              <div className="h-64 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center relative">
-                {/* Map placeholder - In production, replace with actual map */}
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    Find Us Here
-                  </h4>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">
-                    Interactive map will be loaded here
-                  </p>
-                </div>
-                
-                {/* Directions Button */}
-                <button className="absolute bottom-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium">
-                  Get Directions
-                </button>
-              </div>
+        {/* Map Embed - Full Width */}
+        <div className="mt-12 bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="relative w-full h-96">
+            <iframe
+              src="https://www.google.com/maps?q=24.1805183,85.5845335&z=17&output=embed"
+              width="100%"
+              height="100%"
+              style={{
+                border: 0,
+                borderRadius: '8px'
+              }}
+              allowFullScreen={true}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              title="Earth Movers Training Academy Location"
+            />
+          </div>
+          
+          {/* Directions Button */}
+          <div className="p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-800 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Location: 24.1805183°N, 85.5845335°E</p>
             </div>
-
-            {/* Quick Actions */}
-            <div className="bg-gradient-to-r from-orange-500 to-red-600 rounded-lg p-6 text-white">
-              <h4 className="text-xl font-bold mb-4">Ready to Get Started?</h4>
-              <div className="space-y-3">
-                <a
-                  href="tel:+15551234567"
-                  className="flex items-center p-3 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                >
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  Call Now: (555) 123-4567
-                </a>
-                <button className="w-full flex items-center justify-center p-3 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
-                  <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a1 1 0 011-1h6a1 1 0 011 1v4m-6 8h6m-6-4h6m2 5l-8 8-8-8m16-8v8a2 2 0 01-2 2H4a2 2 0 01-2-2v-8a2 2 0 012-2h16a2 2 0 012 2z" />
-                  </svg>
-                  Schedule a Tour
-                </button>
-              </div>
-            </div>
+            <a
+              href="https://www.google.com/maps?q=24.1805183,85.5845335"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm font-medium"
+            >
+              Get Directions
+            </a>
           </div>
         </div>
 
         {/* Additional Info */}
-        <div className="mt-16 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 text-center">
+        {/* <div className="mt-16 bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 text-center">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Visit Our Campus
           </h3>
@@ -326,7 +338,7 @@ const ContactSection = () => {
               <p className="text-gray-600 dark:text-gray-400">Equipment demo & Q&A</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

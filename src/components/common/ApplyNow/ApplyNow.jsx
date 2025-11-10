@@ -1,9 +1,10 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import EnrollModal from '@/components/common/Modal/EnrollModal';
 
 const ApplyNow = () => {
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-red-600 py-6">
+    <div className="bg-linear-to-r from-blue-500 via-cyan-500 to-teal-500 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
           {/* Left Section - Certification Info */}
@@ -27,7 +28,7 @@ const ApplyNow = () => {
               </div>
               <div>
                 <div className="text-sm font-medium">Call Now</div>
-                <div className="text-lg font-bold">+91 9175-113-022</div>
+                <div className="text-lg font-bold">+91 6206832852, +91 9431374996</div>
               </div>
             </div>
 
@@ -40,18 +41,18 @@ const ApplyNow = () => {
 
           {/* Right Section - Apply Button */}
           <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-            <Link
-              to="/apply"
+            <button
+              onClick={() => setIsEnrollModalOpen(true)}
               className="inline-flex items-center px-8 py-3 bg-white text-orange-600 font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-lg"
             >
               Apply Now
               <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
-            </Link>
+            </button>
             
             <a
-              href="tel:+919175113022"
+              href="tel:+91 6206832852"
               className="inline-flex items-center px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-orange-600 transition-all duration-300"
             >
               <svg className="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,12 +86,21 @@ const ApplyNow = () => {
                 Flexible Payment Options
               </div>
             </div>
-            <div className="text-right">
+            {/* <div className="text-right">
               <div className="font-medium">Next Batch Starts: March 15, 2024</div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
+
+      {/* Enroll Modal */}
+      <EnrollModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => setIsEnrollModalOpen(false)}
+        onSuccess={() => {
+          console.log('Enquiry submitted successfully');
+        }}
+      />
     </div>
   );
 };

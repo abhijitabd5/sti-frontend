@@ -52,18 +52,16 @@ const Courses = () => {
   };
 
   const categories = [
-    { id: 'all', name: 'All Courses' },
-    { id: 'excavator', name: 'Excavator Training' },
-    { id: 'crane', name: 'Crane Operations' },
-    { id: 'bulldozer', name: 'Bulldozer Training' },
-    { id: 'loader', name: 'Loader Operations' },
-    { id: 'package', name: 'Complete Package' }
+    { id: 'all', name: 'All Courses', courseType: null },
+    { id: 'operator_training', name: 'Operator Training Courses', courseType: 'operator_training' },
+    { id: 'technician_training', name: 'Technician Training Courses', courseType: 'technician_training' }
   ];
 
   const filteredCourses = courses.filter(course => {
-    const categoryMatch = selectedCategory === 'all' || 
-      course.title?.toLowerCase().includes(selectedCategory);
-    return categoryMatch;
+    if (selectedCategory === 'all') {
+      return true;
+    }
+    return course.course_type === selectedCategory;
   });
 
   if (loading) {

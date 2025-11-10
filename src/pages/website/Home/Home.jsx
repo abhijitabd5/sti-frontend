@@ -7,6 +7,24 @@ import CoursesSection from '@/pages/website/Home/components/CoursesSection';
 import TestimonialsSection from '@/pages/website/Home/components/TestimonialsSection';
 import ContactSection from '@/pages/website/Home/components/ContactSection';
 import { websiteApi } from '@/services/api/websiteApi';
+import galleryApi from '@/services/api/galleryApi';
+import placeholderImage from "@/assets/images/placeholder-image.jpg";
+
+// Hero slide section slugs
+const HERO_SLIDE_SLUGS = [
+  'home-hero-slide-one',
+  'home-hero-slide-two',
+  'home-hero-slide-three'
+];
+
+// Default hero slide content for JCB training institute
+const DEFAULT_HERO_SLIDE = {
+  title: 'JCB & Heavy Equipment Training',
+  subtitle: 'Master the Skills, Build Your Future',
+  description: 'Industry-certified training programs designed to make you an expert operator. Hands-on experience with modern JCB equipment and expert instructors.',
+  ctaText: 'Get Started',
+  ctaLink: '/courses'
+};
 
 const Home = () => {
   const [loading, setLoading] = useState(true);
@@ -24,15 +42,54 @@ const Home = () => {
       try {
         setLoading(true);
         
-        // Load all data in parallel for better performance
+        // Load gallery items for hero carousel using specific section slugs
+        let heroSlides = [{
+          id: 0,
+          image: placeholderImage,
+          ...DEFAULT_HERO_SLIDE
+        }];
+
+        try {
+          const galleryResponse = await galleryApi.getPublicGalleryByPageSlug('home');
+          if (galleryResponse.data && galleryResponse.data.length > 0) {
+            // Map gallery items by section slug in order
+            heroSlides = HERO_SLIDE_SLUGS.map(slug => {
+              const item = galleryResponse.data.find(data => data.section_slug === slug);
+              if (item) {
+                return {
+                  id: item.id,
+                  image: item.media_url,
+                  title: item.title,
+                  subtitle: item.caption,
+                  description: item.description,
+                  ctaText: item.link_text || DEFAULT_HERO_SLIDE.ctaText,
+                  ctaLink: item.link_url || DEFAULT_HERO_SLIDE.ctaLink
+                };
+              }
+              return null;
+            }).filter(Boolean); // Remove null values
+
+            // If no slides found with slugs, use default
+            if (heroSlides.length === 0) {
+              heroSlides = [{
+                id: 0,
+                image: placeholderImage,
+                ...DEFAULT_HERO_SLIDE
+              }];
+            }
+          }
+        } catch (galleryError) {
+          console.warn('Gallery API failed, using default slide:', galleryError);
+          // heroSlides already set to default above
+        }
+        
+        // Load other page data in parallel
         const [
-          heroSlides,
           scrollingCourses,
           courses,
           testimonials,
           aboutInfo
         ] = await Promise.all([
-          websiteApi.getHeroSlides(),
           websiteApi.getScrollingCourses(),
           websiteApi.getCourses(6), // Limit to 6 courses for the main section
           websiteApi.getTestimonials(),
@@ -65,7 +122,7 @@ const Home = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-orange-500 mx-auto mb-4"></div>
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-              Loading Earth Movers Training Academy
+              Loading Shahabuddin Training Institute Website
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
               Please wait while we prepare your experience...
