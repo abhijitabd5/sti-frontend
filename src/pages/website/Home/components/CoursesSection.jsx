@@ -77,7 +77,7 @@ const CoursesSection = ({ courses = [] }) => {
               to="/contact"
               className="inline-flex items-center px-8 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-orange-600 transition-all duration-300"
             >
-              Schedule a Tour
+              Contact Us
             </Link>
           </div>
         </div>

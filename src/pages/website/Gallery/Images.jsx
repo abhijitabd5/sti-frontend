@@ -18,7 +18,7 @@ const Images = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_image');
+      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_images');
       
       if (response.success && response.data) {
         setGalleryImages(response.data);
