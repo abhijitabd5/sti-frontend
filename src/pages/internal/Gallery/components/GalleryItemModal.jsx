@@ -23,6 +23,9 @@ function GalleryItemModal({
   const [formData, setFormData] = useState({
     title: "",
     caption: "",
+    description: "",
+    link_text: "",
+    link_url: "",
     is_media_remote: false,
     is_thumbnail_remote: false,
     media_path: "",
@@ -33,14 +36,21 @@ function GalleryItemModal({
   const [loading, setLoading] = useState(false);
   const [mediaPreview, setMediaPreview] = useState("");
   const [thumbnailPreview, setThumbnailPreview] = useState("");
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
 
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Reset showMoreInfo toggle
+      setShowMoreInfo(false);
+      
       if (mode === "edit" && item) {
         setFormData({
           title: item.title || "",
           caption: item.caption || "",
+          description: item.description || "",
+          link_text: item.link_text || "",
+          link_url: item.link_url || "",
           is_media_remote: item.is_media_remote || false,
           is_thumbnail_remote: item.is_thumbnail_remote || false,
           media_path: item.is_media_remote ? item.media_path : "",
@@ -53,10 +63,18 @@ function GalleryItemModal({
         });
         setMediaPreview(item.media_url || "");
         setThumbnailPreview(item.thumbnail_url || "");
+        
+        // Auto-enable showMoreInfo if any of these fields have data
+        if (item.caption || item.description || item.link_text || item.link_url) {
+          setShowMoreInfo(true);
+        }
       } else {
         setFormData({
           title: "",
           caption: "",
+          description: "",
+          link_text: "",
+          link_url: "",
           is_media_remote: false,
           is_thumbnail_remote: false,
           media_path: "",
@@ -105,6 +123,9 @@ function GalleryItemModal({
       const submitData = new FormData();
       submitData.append("title", formData.title);
       submitData.append("caption", formData.caption);
+      submitData.append("description", formData.description);
+      submitData.append("link_text", formData.link_text);
+      submitData.append("link_url", formData.link_url);
       submitData.append("media_type", mediaType);
       submitData.append("page_slug", pageSlug);
       submitData.append("is_media_remote", formData.is_media_remote ? "true" : "false");
@@ -211,14 +232,46 @@ function GalleryItemModal({
                     </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Caption
-                    </label>
-                    <p className="text-sm text-gray-900 dark:text-gray-100">
-                      {item?.caption || "No caption"}
-                    </p>
-                  </div>
+                  {/* Show additional info if any field has data */}
+                  {(item?.caption || item?.description || item?.link_text || item?.link_url) && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Caption
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                          {item?.caption || "No caption"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Description
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                          {item?.description || "No description"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Link Text
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                          {item?.link_text || "No link text"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Link URL
+                        </label>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                          {item?.link_url || "No link URL"}
+                        </p>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -245,6 +298,28 @@ function GalleryItemModal({
               ) : (
                 // Create/Edit Mode
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Add More Info Toggle */}
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Add More Info
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreInfo(!showMoreInfo)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                        showMoreInfo
+                          ? 'bg-violet-600'
+                          : 'bg-gray-300 dark:bg-gray-600'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                          showMoreInfo ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Title <span className="text-red-500">*</span>
@@ -260,19 +335,66 @@ function GalleryItemModal({
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Caption
-                    </label>
-                    <textarea
-                      name="caption"
-                      value={formData.caption}
-                      onChange={handleInputChange}
-                      rows="3"
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                      placeholder="Enter media caption"
-                    />
-                  </div>
+                  {/* Conditionally show additional fields */}
+                  {showMoreInfo && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Caption
+                        </label>
+                        <textarea
+                          name="caption"
+                          value={formData.caption}
+                          onChange={handleInputChange}
+                          rows="3"
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          placeholder="Enter media caption"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Description
+                        </label>
+                        <textarea
+                          name="description"
+                          value={formData.description}
+                          onChange={handleInputChange}
+                          rows="4"
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          placeholder="Enter detailed description"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Link Text
+                        </label>
+                        <input
+                          type="text"
+                          name="link_text"
+                          value={formData.link_text}
+                          onChange={handleInputChange}
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          placeholder="e.g., Learn More, View Details"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Link URL
+                        </label>
+                        <input
+                          type="url"
+                          name="link_url"
+                          value={formData.link_url}
+                          onChange={handleInputChange}
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   {/* Media Remote Checkbox */}
                   <div className="flex items-center">

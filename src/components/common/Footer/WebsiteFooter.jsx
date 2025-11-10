@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import courseApi from '@/services/api/courseApi';
 
 const WebsiteFooter = () => {
   const currentYear = new Date().getFullYear();
+  const [courses, setCourses] = useState([]);
 
   const footerSections = {
     quickLinks: [
@@ -12,18 +14,33 @@ const WebsiteFooter = () => {
       { label: 'Gallery', path: '/gallery' },
       { label: 'Contact', path: '/contact' },
     ],
-    courses: [
-      { label: 'Excavator Training', path: '/courses/excavator' },
-      { label: 'Crane Operations', path: '/courses/crane' },
-      { label: 'Bulldozer Training', path: '/courses/bulldozer' },
-      { label: 'Heavy Equipment Package', path: '/courses/complete' },
-    ],
     legal: [
       { label: 'Privacy Policy', path: '/privacy' },
       { label: 'Terms and Conditions', path: '/terms' },
       { label: 'FAQ', path: '/faq' },
     ]
   };
+
+  // Fetch courses on component mount
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await courseApi.getCourses({ language: 'en' });
+        if (response.success && response.data) {
+          // Get 4 random courses
+          const shuffled = [...response.data].sort(() => 0.5 - Math.random());
+          const randomCourses = shuffled.slice(0, 4);
+          setCourses(randomCourses);
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        // Set empty array on error
+        setCourses([]);
+      }
+    };
+
+    fetchCourses();
+  }, []);
 
   const socialLinks = [
     {
@@ -129,16 +146,20 @@ const WebsiteFooter = () => {
           <div>
             <h3 className="font-semibold text-lg mb-4">Our Courses</h3>
             <ul className="space-y-2">
-              {footerSections.courses.map((course, index) => (
-                <li key={index}>
-                  <Link
-                    to={course.path}
-                    className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
-                  >
-                    {course.label}
-                  </Link>
-                </li>
-              ))}
+              {courses.length > 0 ? (
+                courses.map((course) => (
+                  <li key={course.id}>
+                    <Link
+                      to={`/courses/${course.id}`}
+                      className="text-gray-400 hover:text-white text-sm transition-colors duration-200"
+                    >
+                      {course.title}
+                    </Link>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-400 text-sm">Loading courses...</li>
+              )}
             </ul>
           </div>
 
