@@ -98,6 +98,17 @@ class GalleryApi {
     }
   }
 
+  //Get All Pages
+  async getAllPages() {
+    try {
+      const response = await httpClient.get(`/internal/pages`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching pages:', error);
+      throw error;
+    }
+  }
+
   // Get public gallery items by slug
   async getPublicGalleryItemBySlug(slug) {
     try {
