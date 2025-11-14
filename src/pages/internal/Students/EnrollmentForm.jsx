@@ -106,8 +106,24 @@ function EnrollmentForm() {
     formData.is_mess_opted, 
     formData.extra_discount_amount,
     formData.paid_amount,
-    formData.igst_applicable
+    formData.igst_applicable,
+    courses
   ]);
+
+  // Reset accommodation options when course changes
+  useEffect(() => {
+    if (formData.course_id) {
+      const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
+      if (selectedCourse) {
+        // Reset accommodation options if not available for selected course
+        setFormData(prev => ({
+          ...prev,
+          is_hostel_opted: selectedCourse.hostel_available ? prev.is_hostel_opted : false,
+          is_mess_opted: selectedCourse.mess_available ? prev.is_mess_opted : false
+        }));
+      }
+    }
+  }, [formData.course_id, courses]);
 
   const loadCourses = async () => {
     try {
@@ -143,14 +159,14 @@ function EnrollmentForm() {
       return;
     }
 
-    // Base course fee and discount
-    const baseFee = selectedCourse.original_fee || 0;
-    const discountPercentage = selectedCourse.discount_percentage || 0;
-    const discountedFee = baseFee - (baseFee * discountPercentage / 100);
+    // Base course fee and discount (using correct API response properties)
+    const baseFee = parseFloat(selectedCourse.base_course_fee) || 0;
+    const discountPercentage = parseFloat(selectedCourse.discount_percentage) || 0;
+    const discountedFee = parseFloat(selectedCourse.discounted_course_fee) || 0;
 
-    // Accommodation fees (these would come from settings/env)
-    const hostelFee = formData.is_hostel_opted ? 2000 : 0;
-    const messFee = formData.is_mess_opted ? 1500 : 0;
+    // Accommodation fees (use values from API response or defaults)
+    const hostelFee = formData.is_hostel_opted ? (parseFloat(selectedCourse.hostel_fee) || 0) : 0;
+    const messFee = formData.is_mess_opted ? (parseFloat(selectedCourse.mess_fee) || 0) : 0;
 
     // Pre-tax total
     const preTaxTotal = discountedFee + hostelFee + messFee - parseFloat(formData.extra_discount_amount || 0);
@@ -267,8 +283,16 @@ function EnrollmentForm() {
 
         // If documents are selected, upload them
         const documentsToUpload = documentRows.filter(row => row.file && row.type);
+        let documentUploadSuccess = true;
+        
         if (documentsToUpload.length > 0) {
-          await uploadDocuments(student_id, documentsToUpload);
+          try {
+            await uploadDocuments(student_id, documentsToUpload);
+            console.log('Documents uploaded successfully');
+          } catch (error) {
+            console.error('Document upload failed:', error);
+            documentUploadSuccess = false;
+          }
         }
 
         // Navigate to student list after delay
@@ -276,7 +300,9 @@ function EnrollmentForm() {
           setShowProgressModal(false);
           navigate('/admin/students', { 
             state: { 
-              message: 'Student enrolled successfully!',
+              message: documentUploadSuccess 
+                ? 'Student enrolled successfully!' 
+                : 'Student enrolled successfully! Note: Some documents may not have been uploaded.',
               studentId: student_id
             }
           });
@@ -294,18 +320,34 @@ function EnrollmentForm() {
     try {
       const formData = new FormData();
       
-      // Add document types (slugs)
-      const slugs = documentsToUpload.map(row => row.type);
-      formData.append('slugs', JSON.stringify(slugs));
-      
-      // Add files
+      // Add all files with field name 'documents' (as expected by multer)
       documentsToUpload.forEach((row) => {
         formData.append('documents', row.file);
       });
+      
+      // Add slugs array as JSON string (backend will parse it)
+      const slugs = documentsToUpload.map(row => row.type);
+      formData.append('slugs', JSON.stringify(slugs));
 
-      await studentApi.uploadDocuments(studentId, formData);
+      console.log('Uploading documents for student:', studentId);
+      console.log('Documents to upload:', documentsToUpload.map(row => ({ type: row.type, fileName: row.file.name })));
+      console.log('Slugs array:', slugs);
+      
+      // Log FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(key, value instanceof File ? `File: ${value.name}` : value);
+      }
+
+      const response = await studentApi.uploadDocuments(studentId, formData);
+      console.log('Document upload response:', response);
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Document upload failed');
+      }
     } catch (error) {
       console.error('Error uploading documents:', error);
+      // Don't throw the error to prevent blocking the enrollment success flow
     }
   };
 
@@ -549,7 +591,7 @@ function EnrollmentForm() {
             
             <div className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Course <span className="text-red-500">*</span>
                   </label>
@@ -563,10 +605,30 @@ function EnrollmentForm() {
                     <option value="">Select Course</option>
                     {courses.map((course) => (
                       <option key={course.id} value={course.id}>
-                        {course.title}
+                        {course.title} - ₹{parseFloat(course.discounted_course_fee).toLocaleString()}
                       </option>
                     ))}
                   </select>
+                  
+                  {/* Course Details Preview */}
+                  {formData.course_id && (() => {
+                    const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
+                    if (selectedCourse) {
+                      return (
+                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                            <p><strong>Base Fee:</strong> ₹{parseFloat(selectedCourse.base_course_fee).toLocaleString()}</p>
+                            <p><strong>Discount:</strong> {selectedCourse.discount_percentage}% (₹{(parseFloat(selectedCourse.base_course_fee) - parseFloat(selectedCourse.discounted_course_fee)).toLocaleString()} off)</p>
+                            <div className="flex space-x-4">
+                              <span>Hostel: {selectedCourse.hostel_available ? `₹${selectedCourse.hostel_fee}` : 'Not Available'}</span>
+                              <span>Mess: {selectedCourse.mess_available ? `₹${selectedCourse.mess_fee}` : 'Not Available'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 <div>
@@ -658,31 +720,45 @@ function EnrollmentForm() {
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Accommodation Options</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="is_hostel_opted"
-                        checked={formData.is_hostel_opted}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded"
-                      />
-                      <label className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
-                        Hostel Opted (+₹{feeCalculation.hostel_fee})
-                      </label>
-                    </div>
+                    {(() => {
+                      const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
+                      const hostelAvailable = selectedCourse?.hostel_available;
+                      const messAvailable = selectedCourse?.mess_available;
+                      const hostelFeeAmount = parseFloat(selectedCourse?.hostel_fee) || 0;
+                      const messFeeAmount = parseFloat(selectedCourse?.mess_fee) || 0;
 
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="is_mess_opted"
-                        checked={formData.is_mess_opted}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded"
-                      />
-                      <label className="ml-2 block text-sm text-gray-900 dark:text-gray-100">
-                        Mess Opted (+₹{feeCalculation.mess_fee})
-                      </label>
-                    </div>
+                      return (
+                        <>
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="is_hostel_opted"
+                              checked={formData.is_hostel_opted}
+                              onChange={handleInputChange}
+                              disabled={!hostelAvailable}
+                              className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
+                            />
+                            <label className={`ml-2 block text-sm ${!hostelAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                              Hostel Opted {hostelAvailable ? `(+₹${hostelFeeAmount})` : '(Not Available)'}
+                            </label>
+                          </div>
+
+                          <div className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="is_mess_opted"
+                              checked={formData.is_mess_opted}
+                              onChange={handleInputChange}
+                              disabled={!messAvailable}
+                              className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
+                            />
+                            <label className={`ml-2 block text-sm ${!messAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                              Mess Opted {messAvailable ? `(+₹${messFeeAmount})` : '(Not Available)'}
+                            </label>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -697,7 +773,7 @@ function EnrollmentForm() {
                     value={formData.extra_discount_amount}
                     onChange={handleInputChange}
                     min="0"
-                    className="block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
 
@@ -783,7 +859,7 @@ function EnrollmentForm() {
                         onChange={handleInputChange}
                         min="0"
                         max={feeCalculation.total_payable_fee}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
 

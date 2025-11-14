@@ -98,17 +98,22 @@ function AadhaarCheckModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
-        <div 
-          className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
+        <div
+          className="fixed inset-0 transition-opacity bg-gray-500/60 dark:bg-gray-900/70"
           aria-hidden="true"
           onClick={handleClose}
-        ></div>
+        />
 
         {/* Center modal */}
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+        >
+          &#8203;
+        </span>
 
         {/* Modal panel */}
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+        <div className="relative z-[10000] inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
           <div className="absolute top-0 right-0 pt-4 pr-4">
             <button
               type="button"
@@ -122,58 +127,66 @@ function AadhaarCheckModal({ isOpen, onClose }) {
           </div>
 
           <div className="sm:flex sm:items-start">
-            <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-violet-100 dark:bg-violet-900 sm:mx-0 sm:h-10 sm:w-10">
-              <IdentificationIcon className="h-6 w-6 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
-                Check Aadhaar Number
-              </h3>
-              <div className="mt-2">
+            <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
+              <div className="flex items-center mb-4">
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-violet-100 dark:bg-violet-900 sm:mx-0 sm:h-10 sm:w-10">
+                  <IdentificationIcon className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                </div>
+                <h3 className="ml-4 text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">
+                  Check Aadhaar Number
+                </h3>
+              </div>
+              
+              <div className="mb-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Enter the student's Aadhaar number to check if they are already registered in the system.
                 </p>
               </div>
               
-              <div className="mt-6">
-                <label htmlFor="aadhar" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Aadhaar Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="aadhar"
-                    value={aadharNumber}
-                    onChange={handleInputChange}
-                    onKeyPress={handleKeyPress}
-                    disabled={loading}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 disabled:opacity-50"
-                    placeholder="1234 5678 9012"
-                    maxLength="14" // 12 digits + 2 spaces
-                  />
-                  <IdentificationIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="aadhar" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Aadhaar Number <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="aadhar"
+                      value={aadharNumber}
+                      onChange={handleInputChange}
+                      onKeyPress={handleKeyPress}
+                      disabled={loading}
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 disabled:opacity-50"
+                      placeholder="1234 5678 9012"
+                      maxLength="14" // 12 digits + 2 spaces
+                    />
+                    <IdentificationIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  </div>
+                  
+                  {error && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                      {error}
+                    </p>
+                  )}
                 </div>
                 
-                {error && (
-                  <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                    {error}
-                  </p>
-                )}
-                
-                <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  <p>• If Aadhaar exists, you'll be taken to the enrollment form with pre-filled details</p>
-                  <p>• If Aadhaar is new, you'll create a new student profile</p>
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">What happens next?</h4>
+                  <div className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                    <p>• <strong>Existing Aadhaar:</strong> Enrollment form with pre-filled student details</p>
+                    <p>• <strong>New Aadhaar:</strong> Create a new student profile from scratch</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+          <div className="mt-5 sm:mt-6 sm:flex sm:flex-row-reverse gap-3">
             <button
               type="button"
               onClick={handleCheck}
               disabled={loading || !aadharNumber.trim()}
-              className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-base font-medium text-white hover:from-violet-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-base font-medium text-white hover:from-violet-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>

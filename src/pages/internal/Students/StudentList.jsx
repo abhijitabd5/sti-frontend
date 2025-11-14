@@ -11,7 +11,12 @@ import {
   PlusIcon,
   ExclamationTriangleIcon,
   DocumentTextIcon,
-  UserIcon
+  UserIcon,
+  MagnifyingGlassIcon,
+  ArrowDownTrayIcon,
+  FunnelIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 
 function StudentList() {
@@ -19,18 +24,53 @@ function StudentList() {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState({});
+  const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = useState({});
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(10);
+  const [filters, setFilters] = useState({
+    search: '',
+    dateFrom: '',
+    dateTo: '',
+  });
 
   // Load students
   useEffect(() => {
     loadStudents();
-  }, []);
+  }, [currentPage, recordsPerPage]);
 
   const loadStudents = async (params = {}) => {
     try {
       setLoading(true);
-      const response = await studentApi.getStudents(params);
+      
+      // Transform filter parameters to match API expectations
+      const queryParams = {
+        page: currentPage,
+        limit: recordsPerPage,
+      };
+
+      // Add search parameter if provided
+      if (params.search) {
+        queryParams.search = params.search;
+      }
+
+      // Add date filters with correct parameter names
+      if (params.dateFrom) {
+        queryParams.start_date = params.dateFrom;
+      }
+      if (params.dateTo) {
+        queryParams.end_date = params.dateTo;
+      }
+
+      // Add any other parameters
+      Object.keys(params).forEach(key => {
+        if (!['search', 'dateFrom', 'dateTo'].includes(key)) {
+          queryParams[key] = params[key];
+        }
+      });
+
+      const response = await studentApi.getStudents(queryParams);
       
       if (response.success) {
         setStudents(response.data);
@@ -90,23 +130,129 @@ function StudentList() {
     }
   };
 
-  const getCourseStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'ongoing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
-      case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
-      case 'not_started':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
-      case 'aborted':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
-    }
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
-  const formatStatus = (status) => {
-    return status?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
+  const handleRecordsPerPageChange = (records) => {
+    setRecordsPerPage(records);
+    setCurrentPage(1); // Reset to first page when changing records per page
+  };
+
+  const handleApplyFilters = () => {
+    // Validate date range
+    if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
+      alert('Start date cannot be after end date');
+      return;
+    }
+
+    setCurrentPage(1); // Reset to first page when applying filters
+    loadStudents(filters);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ search: '', dateFrom: '', dateTo: '' });
+    setCurrentPage(1);
+    loadStudents();
+  };
+
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      
+      // Prepare export parameters (only send non-empty filters)
+      const exportParams = {};
+      
+      // Add search filter if not empty
+      if (filters.search && filters.search.trim()) {
+        exportParams.search = filters.search.trim();
+      }
+      
+      // Add date filters if not empty
+      if (filters.dateFrom) {
+        exportParams.start_date = filters.dateFrom;
+      }
+      if (filters.dateTo) {
+        exportParams.end_date = filters.dateTo;
+      }
+
+      console.log('Exporting students with filters:', exportParams);
+      console.log('Note: No pagination - exporting ALL matching records');
+      
+      // Show user what filters are being applied
+      const filterCount = Object.keys(exportParams).length;
+      if (filterCount === 0) {
+        console.log('No filters applied - exporting ALL students');
+      } else {
+        console.log(`Applying ${filterCount} filter(s):`, exportParams);
+      }
+      
+      const response = await studentApi.exportStudents(exportParams);
+      
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { 
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Get filename from response headers or use default with timestamp
+      // Try different case variations for content-disposition header
+      const contentDisposition = response.headers['content-disposition'] || 
+                                response.headers['Content-Disposition'] ||
+                                response.headers['CONTENT-DISPOSITION'];
+      let filename = 'Student_Records_Export.xlsx';
+      
+      console.log('📋 All response headers:', response.headers);
+      console.log('🔍 Content-Disposition header:', contentDisposition);
+      
+      if (contentDisposition) {
+        // More robust regex to handle different filename formats
+        const filenameMatch = contentDisposition.match(/filename\s*=\s*"?([^";\n]+)"?/i);
+        console.log('🎯 Filename match result:', filenameMatch);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].trim();
+          console.log('✅ Extracted filename:', filename);
+        }
+      } else {
+        console.log('No Content-Disposition header found - generating timestamped filename');
+        
+        // Fallback: Generate timestamped filename using Indian timezone
+        const indianTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+        const day = String(indianTime.getDate()).padStart(2, '0');
+        const month = String(indianTime.getMonth() + 1).padStart(2, '0');
+        const year = indianTime.getFullYear();
+        const hours = String(indianTime.getHours()).padStart(2, '0');
+        const minutes = String(indianTime.getMinutes()).padStart(2, '0');
+        const seconds = String(indianTime.getSeconds()).padStart(2, '0');
+        
+        const timestamp = `${day}_${month}_${year}_${hours}_${minutes}_${seconds}`;
+        filename = `Student_Records_${timestamp}.xlsx`;
+        console.log('Generated fallback filename:', filename);
+      }
+      
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      const filterSummary = Object.keys(exportParams).length === 0 
+        ? 'all students' 
+        : `filtered students (${Object.keys(exportParams).length} filter(s) applied)`;
+      
+      console.log(`Export completed successfully: ${filename} containing ${filterSummary}`);
+      
+    } catch (error) {
+      console.error('Error exporting students:', error);
+      alert('Failed to export students. Please try again.');
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   if (loading) {
@@ -142,12 +288,105 @@ function StudentList() {
         </div>
       </div>
 
+      {/* Filters */}
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 mb-6">
+        <div className="px-4 py-4">
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                onKeyDown={(e) => e.key === 'Enter' && handleApplyFilters()}
+                placeholder="Search by name, mobile, student ID..."
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Date From */}
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Created From:</label>
+              <input
+                type="date"
+                value={filters.dateFrom}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
+                title="Filter students created from this date"
+              />
+            </div>
+
+            {/* Date To */}
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">To:</label>
+              <input
+                type="date"
+                value={filters.dateTo}
+                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
+                title="Filter students created up to this date (optional - defaults to today)"
+              />
+            </div>
+
+            {/* Apply Filter Button */}
+            <button
+              onClick={handleApplyFilters}
+              className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 whitespace-nowrap"
+            >
+              <FunnelIcon className="h-4 w-4 mr-2" />
+              Apply
+            </button>
+
+            {/* Clear Filters Button */}
+            {(filters.search || filters.dateFrom || filters.dateTo) && (
+              <button
+                onClick={handleClearFilters}
+                className="btn bg-gray-500 text-white hover:bg-gray-600 whitespace-nowrap"
+              >
+                Clear
+              </button>
+            )}
+
+            {/* Export Button */}
+            <button
+              onClick={handleExport}
+              disabled={exportLoading}
+              className="btn bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 whitespace-nowrap disabled:opacity-50"
+            >
+              {exportLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                  Export
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Students Table */}
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700/60">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700/60 flex justify-between items-center">
           <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-            All Students ({students.length})
+            All Students ({pagination.total || 0})
           </h3>
+          <div className="flex items-center space-x-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">Records per page:</label>
+            <select
+              value={recordsPerPage}
+              onChange={(e) => handleRecordsPerPageChange(Number(e.target.value))}
+              className="px-3 py-1 rounded border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
 
         {students.length === 0 ? (
@@ -168,6 +407,9 @@ function StudentList() {
               <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Created At
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Student ID
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -175,9 +417,6 @@ function StudentList() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Mobile
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Current Course(s)
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Fee Status
@@ -196,6 +435,9 @@ function StudentList() {
                     key={student.student_id}
                     className="border-b border-gray-200 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
+                    <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
+                      {student.created_at || '-'}
+                    </td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleViewStudent(student.student_id)}
@@ -220,18 +462,6 @@ function StudentList() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
                       {student.mobile}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col space-y-1">
-                        {student.courses?.map((course, index) => (
-                          <span
-                            key={index}
-                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCourseStatusColor(course.status)}`}
-                          >
-                            {course.title} - {formatStatus(course.status)}
-                          </span>
-                        ))}
-                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col space-y-1">
@@ -298,6 +528,74 @@ function StudentList() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.totalPages > 1 && (
+          <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
+            </div>
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => handlePageChange(pagination.page - 1)}
+                disabled={!pagination.hasPrev}
+                className={`flex items-center px-3 py-1 rounded border text-sm ${
+                  pagination.hasPrev
+                    ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                <ChevronLeftIcon className="h-4 w-4 mr-1" />
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.page <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.page >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.page - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`px-3 py-1 rounded text-sm ${
+                        pageNum === pagination.page
+                          ? 'bg-violet-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={() => handlePageChange(pagination.page + 1)}
+                disabled={!pagination.hasNext}
+                className={`flex items-center px-3 py-1 rounded border text-sm ${
+                  pagination.hasNext
+                    ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                Next
+                <ChevronRightIcon className="h-4 w-4 ml-1" />
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -74,7 +74,7 @@ class StudentApi {
   // Upload student documents
   async uploadDocuments(studentId, formData) {
     try {
-      const response = await httpClient.post(`/internal/student/students/${studentId}/documents`, formData, {
+      const response = await httpClient.post(`/internal/student/${studentId}/documents`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -115,6 +115,33 @@ class StudentApi {
       return response.data;
     } catch (error) {
       console.error('Error fetching courses:', error);
+      throw error;
+    }
+  }
+
+  // Export students data
+  async exportStudents(params = {}) {
+    try {
+      const response = await httpClient.get('/internal/student/export', { 
+        params,
+        responseType: 'blob' // Important for file downloads
+      });
+      return response;
+    } catch (error) {
+      console.error('Error exporting students:', error);
+      throw error;
+    }
+  }
+
+  // Verify student document
+  async verifyDocument(documentId, isVerified) {
+    try {
+      const response = await httpClient.patch(`/internal/student/documents/verify/${documentId}`, {
+        is_verified: isVerified
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error verifying document:', error);
       throw error;
     }
   }
