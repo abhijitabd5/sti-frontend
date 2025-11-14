@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import galleryApi from '@/services/api/galleryApi';
-import GalleryItemModal from './components/GalleryItemModal';
+import OtherGalleryItemModal from './components/OtherGalleryItemModal';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 
 // Icons
 import { 
@@ -12,7 +13,9 @@ import {
   PhotoIcon,
   VideoCameraIcon,
   TrashIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ClipboardIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 function OtherGallery() {
@@ -23,6 +26,14 @@ function OtherGallery() {
   const [loading, setLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState({});
   const [modal, setModal] = useState({ isOpen: false, mode: '', item: null });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
+  const [copiedSlug, setCopiedSlug] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Load pages
   useEffect(() => {
@@ -32,7 +43,8 @@ function OtherGallery() {
   // Load gallery items when tab or page changes
   useEffect(() => {
     if (selectedPage) {
-      loadGalleryItems();
+      setPagination(prev => ({ ...prev, page: 1 }));
+      loadGalleryItems(1);
     }
   }, [activeTab, selectedPage]);
 
@@ -40,9 +52,13 @@ function OtherGallery() {
     try {
       const response = await galleryApi.getAllPages();
       if (response.success) {
-        setPages(response.data);
-        if (response.data.length > 0) {
-          setSelectedPage(response.data[0].slug);
+        // Filter out gallery_image and gallery_video pages
+        const filteredPages = (response.data || []).filter(
+          page => page.slug !== 'gallery_images' && page.slug !== 'gallery_videos'
+        );
+        setPages(filteredPages);
+        if (filteredPages.length > 0) {
+          setSelectedPage(filteredPages[0].slug);
         }
       }
     } catch (error) {
@@ -50,21 +66,32 @@ function OtherGallery() {
     }
   };
 
-  const loadGalleryItems = async () => {
+  const loadGalleryItems = async (page = pagination.page) => {
     try {
       setLoading(true);
-      const mediaType = activeTab === 'images' ? 'photo' : 'video';
+      const mediaType = activeTab === 'images' ? 'image' : 'video';
       
       const response = await galleryApi.getGalleryItems({
         media_type: mediaType,
-        page_slug: selectedPage
+        page_slug: selectedPage,
+        page: page,
+        limit: pagination.limit,
       });
       
       if (response.success) {
-        setItems(response.data);
+        setItems(response.data || []);
+        if (response.pagination) {
+          setPagination({
+            page: response.pagination.page || page,
+            limit: response.pagination.limit || 10,
+            total: response.pagination.total || 0,
+            totalPages: response.pagination.totalPages || 0,
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading gallery items:', error);
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -117,16 +144,21 @@ function OtherGallery() {
     });
   };
 
-  const handleDelete = async (item) => {
-    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      try {
-        const response = await galleryApi.deleteGalleryItem(item.id);
-        if (response.success) {
-          loadGalleryItems();
-        }
-      } catch (error) {
-        console.error('Error deleting item:', error);
+  const handleDelete = (item) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    
+    try {
+      const response = await galleryApi.deleteGalleryItem(deleteTarget.id);
+      if (response.success) {
+        setDeleteTarget(null);
+        loadGalleryItems(pagination.page);
       }
+    } catch (error) {
+      console.error('Error deleting item:', error);
     }
   };
 
@@ -135,11 +167,11 @@ function OtherGallery() {
   };
 
   const handleModalSuccess = () => {
-    loadGalleryItems();
+    loadGalleryItems(pagination.page);
     handleModalClose();
   };
 
-  const currentMediaType = activeTab === 'images' ? 'photo' : 'video';
+  const currentMediaType = activeTab === 'images' ? 'image' : 'video';
   const selectedPageName = pages.find(page => page.slug === selectedPage)?.name || selectedPage;
 
   return (
@@ -255,13 +287,13 @@ function OtherGallery() {
                         ID
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Order
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Media
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Type
+                        Page Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Slug
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Status
@@ -278,11 +310,10 @@ function OtherGallery() {
                         className="border-b border-gray-200 dark:border-gray-700/60 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       >
                         <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">{item.id}</td>
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 font-medium">{item.display_order}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0">
-                              {item.media_type === 'photo' ? (
+                              {item.media_type === 'image' ? (
                                 <img 
                                   src={item.media_url} 
                                   alt={item.title}
@@ -311,24 +342,34 @@ function OtherGallery() {
                             </div>
                           </div>
                         </td>
+                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
+                          {item.page_name || selectedPageName}
+                        </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.media_type === 'photo' 
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
-                              : 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
-                          }`}>
-                            {item.media_type === 'photo' ? (
-                              <>
-                                <PhotoIcon className="h-3 w-3 mr-1" />
-                                Image
-                              </>
-                            ) : (
-                              <>
-                                <VideoCameraIcon className="h-3 w-3 mr-1" />
-                                Video
-                              </>
-                            )}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-800 dark:text-gray-100">
+                              {item.page_slug || selectedPage}
+                            </span>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(item.page_slug || selectedPage);
+                                  setCopiedSlug(item.id);
+                                  setTimeout(() => setCopiedSlug(null), 2000);
+                                } catch (err) {
+                                  console.error('Failed to copy:', err);
+                                }
+                              }}
+                              className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                              title={copiedSlug === item.id ? "Copied!" : "Copy slug"}
+                            >
+                              {copiedSlug === item.id ? (
+                                <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              ) : (
+                                <ClipboardIcon className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <button
@@ -382,12 +423,40 @@ function OtherGallery() {
                 </table>
               </div>
             )}
+
+            {/* Pagination */}
+            {!loading && items.length > 0 && (
+              <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Showing {items.length > 0 ? ((pagination.page - 1) * pagination.limit + 1) : 0} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} items
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => loadGalleryItems(pagination.page - 1)}
+                    disabled={pagination.page <= 1}
+                    className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-gray-700 dark:text-gray-200">
+                    Page {pagination.page} of {Math.max(1, pagination.totalPages)}
+                  </span>
+                  <button
+                    onClick={() => loadGalleryItems(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
 
       {/* Modal */}
-      <GalleryItemModal
+      <OtherGalleryItemModal
         isOpen={modal.isOpen}
         mode={modal.mode}
         item={modal.item}
@@ -395,6 +464,15 @@ function OtherGallery() {
         pageSlug={selectedPage}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Gallery Item"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
       />
     </AdminLayout>
   );

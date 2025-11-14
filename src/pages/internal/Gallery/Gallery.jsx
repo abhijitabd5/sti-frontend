@@ -4,6 +4,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import galleryApi from '@/services/api/galleryApi';
 import GalleryItemModal from './components/GalleryItemModal';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 
 // Icons
 import { 
@@ -161,6 +162,7 @@ function Gallery() {
   const [statusLoading, setStatusLoading] = useState({});
   const [modal, setModal] = useState({ isOpen: false, mode: '', item: null });
   const [saveOrderLoading, setSaveOrderLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Load gallery items
   useEffect(() => {
@@ -171,7 +173,7 @@ function Gallery() {
     try {
       setLoading(true);
       const mediaType = activeTab === 'images' ? 'image' : 'video';
-      const pageSlug = activeTab === 'images' ? 'gallery_image' : 'gallery_video';
+      const pageSlug = activeTab === 'images' ? 'gallery_images' : 'gallery_videos';
       
       const response = await galleryApi.getGalleryItems({
         media_type: mediaType,
@@ -276,16 +278,21 @@ function Gallery() {
     });
   };
 
-  const handleDelete = async (item) => {
-    if (window.confirm(`Are you sure you want to delete "${item.title}"?`)) {
-      try {
-        const response = await galleryApi.deleteGalleryItem(item.id);
-        if (response.success) {
-          loadGalleryItems();
-        }
-      } catch (error) {
-        console.error('Error deleting item:', error);
+  const handleDelete = (item) => {
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    
+    try {
+      const response = await galleryApi.deleteGalleryItem(deleteTarget.id);
+      if (response.success) {
+        setDeleteTarget(null);
+        loadGalleryItems();
       }
+    } catch (error) {
+      console.error('Error deleting item:', error);
     }
   };
 
@@ -309,7 +316,7 @@ function Gallery() {
   }
 
   const currentMediaType = activeTab === 'images' ? 'image' : 'video';
-  const currentPageSlug = activeTab === 'images' ? 'gallery_image' : 'gallery_video';
+  const currentPageSlug = activeTab === 'images' ? 'gallery_images' : 'gallery_videos';
 
   return (
     <AdminLayout>
@@ -448,6 +455,15 @@ function Gallery() {
         pageSlug={currentPageSlug}
         onClose={handleModalClose}
         onSuccess={handleModalSuccess}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Gallery Item"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
       />
     </AdminLayout>
   );

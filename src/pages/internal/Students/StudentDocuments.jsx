@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/common/Layouts/AdminLayout";
 import studentApi from "@/services/api/studentApi";
+import Toast from "@/components/ui/Internal/Toast/Toast";
+import ConfirmDeleteModal from "@/components/common/Modal/ConfirmDeleteModal";
 
 // Icons
 import {
@@ -12,6 +14,8 @@ import {
   TrashIcon,
   CheckCircleIcon,
   ClockIcon,
+  ShieldCheckIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 function StudentDocuments() {
@@ -20,10 +24,26 @@ function StudentDocuments() {
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [verifyingDocuments, setVerifyingDocuments] = useState({});
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [documentRows, setDocumentRows] = useState([
     { id: 1, type: "", file: null },
   ]);
+  
+  // Toast state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    type: 'info',
+    message: ''
+  });
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    documentId: null,
+    documentName: '',
+    loading: false
+  });
 
   // Available document types
   const documentTypes = [
@@ -100,7 +120,7 @@ function StudentDocuments() {
   const handleUploadDocuments = async () => {
     const documentsToUpload = documentRows.filter(row => row.file && row.type);
     if (documentsToUpload.length === 0) {
-      alert('Please select at least one document to upload.');
+      showToast('warning', 'Please select at least one document to upload.');
       return;
     }
 
@@ -124,28 +144,97 @@ function StudentDocuments() {
         setDocumentRows([{ id: 1, type: "", file: null }]);
         // Reload student details to show new documents
         await loadStudentDetails();
-        alert(`${response.data.uploadCount} document(s) uploaded successfully!`);
+        showToast('success', `${response.data.uploadCount} document(s) uploaded successfully!`);
       }
     } catch (error) {
       console.error("Error uploading documents:", error);
-      alert('Error uploading documents. Please try again.');
+      showToast('error', 'Error uploading documents. Please try again.');
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDeleteDocument = async (documentId) => {
-    if (window.confirm("Are you sure you want to delete this document?")) {
-      try {
-        const response = await studentApi.deleteDocument(documentId);
-        if (response.success) {
-          // Reload student details to refresh documents
-          loadStudentDetails();
-        }
-      } catch (error) {
-        console.error("Error deleting document:", error);
+  const handleDeleteDocument = (documentId, documentName) => {
+    setDeleteModal({
+      isOpen: true,
+      documentId,
+      documentName,
+      loading: false
+    });
+  };
+
+  const confirmDeleteDocument = async () => {
+    try {
+      setDeleteModal(prev => ({ ...prev, loading: true }));
+      
+      const response = await studentApi.deleteDocument(deleteModal.documentId);
+      if (response.success) {
+        // Reload student details to refresh documents
+        await loadStudentDetails();
+        showToast('success', 'Document deleted successfully');
       }
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      showToast('error', 'Failed to delete document');
+    } finally {
+      setDeleteModal({
+        isOpen: false,
+        documentId: null,
+        documentName: '',
+        loading: false
+      });
     }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModal({
+      isOpen: false,
+      documentId: null,
+      documentName: '',
+      loading: false
+    });
+  };
+
+  const handleVerifyDocument = async (documentId, isVerified) => {
+    try {
+      setVerifyingDocuments(prev => ({ ...prev, [documentId]: true }));
+      
+      const response = await studentApi.verifyDocument(documentId, isVerified);
+      
+      if (response.success) {
+        // Update the document in the current state
+        setStudent(prev => ({
+          ...prev,
+          documents: prev.documents.map(doc => 
+            doc.id === documentId 
+              ? { ...doc, is_verified: isVerified }
+              : doc
+          )
+        }));
+        
+        const message = isVerified 
+          ? 'Document verified successfully' 
+          : 'Document verification removed';
+        showToast('success', message);
+      }
+    } catch (error) {
+      console.error('Error verifying document:', error);
+      showToast('error', 'Failed to update document verification');
+    } finally {
+      setVerifyingDocuments(prev => ({ ...prev, [documentId]: false }));
+    }
+  };
+
+  const showToast = (type, message) => {
+    setToast({
+      isVisible: true,
+      type,
+      message
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
   };
 
   const formatDate = (dateString) => {
@@ -390,20 +479,55 @@ function StudentDocuments() {
                       Uploaded: {formatDate(document.uploaded_at)}
                     </div>
 
-                    <div className="flex items-center space-x-2">
+                    {/* Verification Toggle */}
+                    <div className="flex items-center justify-between mb-3 p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Document Verification
+                      </span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {document.is_verified ? 'Verified' : 'Pending'}
+                        </span>
+                        <button
+                          onClick={() => handleVerifyDocument(document.id, !document.is_verified)}
+                          disabled={verifyingDocuments[document.id]}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                            document.is_verified
+                              ? 'bg-green-600'
+                              : 'bg-gray-300 dark:bg-gray-600'
+                          } ${verifyingDocuments[document.id] ? 'opacity-50' : ''}`}
+                          title={document.is_verified ? 'Click to unverify' : 'Click to verify'}
+                        >
+                          {verifyingDocuments[document.id] ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            </div>
+                          ) : (
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                                document.is_verified ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center space-x-3">
                       <a
                         href={document.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500"
+                        className="flex items-center space-x-1 px-3 py-1 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-300 dark:hover:bg-blue-900/70 rounded transition-colors"
                       >
                         <EyeIcon className="h-4 w-4" />
-                        <span>View</span>
+                        <span>View Document</span>
                       </a>
 
                       <button
-                        onClick={() => handleDeleteDocument(document.id)}
-                        className="flex items-center space-x-1 text-xs text-red-600 dark:text-red-400 hover:text-red-500"
+                        onClick={() => handleDeleteDocument(document.id, document.file_name)}
+                        className="flex items-center space-x-1 px-3 py-1 text-xs bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/50 dark:text-red-300 dark:hover:bg-red-900/70 rounded transition-colors"
                       >
                         <TrashIcon className="h-4 w-4" />
                         <span>Delete</span>
@@ -426,6 +550,24 @@ function StudentDocuments() {
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDeleteDocument}
+        loading={deleteModal.loading}
+        title="Delete Document"
+        message={`Are you sure you want to delete "${deleteModal.documentName}"? This action cannot be undone.`}
+      />
     </AdminLayout>
   );
 }
