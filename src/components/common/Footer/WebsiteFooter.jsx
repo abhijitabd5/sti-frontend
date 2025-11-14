@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import courseApi from '@/services/api/courseApi';
+import { useAppData } from '@/contexts/AppDataContext';
 
 const WebsiteFooter = () => {
   const currentYear = new Date().getFullYear();
-  const [courses, setCourses] = useState([]);
+  const { courses } = useAppData();
+  const { data: allCourses, loading } = courses;
 
   const footerSections = {
     quickLinks: [
@@ -21,26 +22,12 @@ const WebsiteFooter = () => {
     ]
   };
 
-  // Fetch courses on component mount
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await courseApi.getCourses({ language: 'en' });
-        if (response.success && response.data) {
-          // Get 4 random courses
-          const shuffled = [...response.data].sort(() => 0.5 - Math.random());
-          const randomCourses = shuffled.slice(0, 4);
-          setCourses(randomCourses);
-        }
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        // Set empty array on error
-        setCourses([]);
-      }
-    };
-
-    fetchCourses();
-  }, []);
+  // Get 4 random courses (memoized to avoid re-shuffling on every render)
+  const footerCourses = useMemo(() => {
+    if (!allCourses || allCourses.length === 0) return [];
+    const shuffled = [...allCourses].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
+  }, [allCourses]);
 
   const socialLinks = [
     {
@@ -146,8 +133,10 @@ const WebsiteFooter = () => {
           <div>
             <h3 className="font-semibold text-lg mb-4">Our Courses</h3>
             <ul className="space-y-2">
-              {courses.length > 0 ? (
-                courses.map((course) => (
+              {loading ? (
+                <li className="text-gray-400 text-sm">Loading courses...</li>
+              ) : footerCourses.length > 0 ? (
+                footerCourses.map((course) => (
                   <li key={course.id}>
                     <Link
                       to={`/courses/${course.id}`}
@@ -158,7 +147,7 @@ const WebsiteFooter = () => {
                   </li>
                 ))
               ) : (
-                <li className="text-gray-400 text-sm">Loading courses...</li>
+                <li className="text-gray-400 text-sm">No courses available</li>
               )}
             </ul>
           </div>

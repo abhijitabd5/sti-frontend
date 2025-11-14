@@ -12,19 +12,92 @@ const Contact = () => {
     message: ''
   });
   
+  const [errors, setErrors] = useState({
+    fullName: '',
+    mobile: '',
+    message: ''
+  });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
 
+  const validateField = (name, value) => {
+    let error = '';
+    
+    switch (name) {
+      case 'fullName':
+        const alphabetCount = (value.match(/[a-zA-Z]/g) || []).length;
+        if (alphabetCount < 3) {
+          error = 'Name must contain at least 3 alphabetic characters';
+        }
+        break;
+        
+      case 'mobile':
+        const mobileRegex = /^[6-9]\d{9}$/;
+        if (!mobileRegex.test(value)) {
+          if (value.length === 0) {
+            error = 'Mobile number is required';
+          } else if (value.length !== 10) {
+            error = 'Mobile number must be exactly 10 digits';
+          } else if (!/^[6-9]/.test(value)) {
+            error = 'Mobile number must start with 6, 7, 8, or 9';
+          } else if (!/^\d+$/.test(value)) {
+            error = 'Mobile number must contain only digits';
+          }
+        }
+        break;
+        
+      case 'message':
+        const messageAlphabetCount = (value.match(/[a-zA-Z]/g) || []).length;
+        if (messageAlphabetCount < 5) {
+          error = 'Message must contain at least 5 alphabetic characters';
+        }
+        break;
+        
+      default:
+        break;
+    }
+    
+    return error;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Validate on change
+    if (name === 'fullName' || name === 'mobile' || name === 'message') {
+      const error = validateField(name, value);
+      setErrors(prev => ({
+        ...prev,
+        [name]: error
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate all fields before submission
+    const nameError = validateField('fullName', formData.fullName);
+    const mobileError = validateField('mobile', formData.mobile);
+    const messageError = validateField('message', formData.message);
+    
+    setErrors({
+      fullName: nameError,
+      mobile: mobileError,
+      message: messageError
+    });
+    
+    // If there are any errors, don't submit
+    if (nameError || mobileError || messageError) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setSubmitStatus(null);
 
@@ -44,6 +117,11 @@ const Contact = () => {
           fullName: '',
           mobile: '',
           email: '',
+          message: ''
+        });
+        setErrors({
+          fullName: '',
+          mobile: '',
           message: ''
         });
       } else {
@@ -214,9 +292,14 @@ const Contact = () => {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                    className={`w-full px-4 py-3 border ${errors.fullName ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors`}
                     placeholder="Enter your full name"
                   />
+                  {errors.fullName && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.fullName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -230,9 +313,15 @@ const Contact = () => {
                     value={formData.mobile}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                    maxLength="10"
+                    className={`w-full px-4 py-3 border ${errors.mobile ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors`}
                     placeholder="Enter your mobile number"
                   />
+                  {errors.mobile && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.mobile}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -261,9 +350,14 @@ const Contact = () => {
                     value={formData.message}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors resize-none"
+                    className={`w-full px-4 py-3 border ${errors.message ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors resize-none`}
                     placeholder="Tell us about your training goals, questions, or how we can help you..."
                   />
+                  {errors.message && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.message}
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit Status Messages */}
