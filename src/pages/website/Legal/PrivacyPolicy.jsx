@@ -1,8 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import WebsiteLayout from "@/components/common/Layouts/WebsiteLayout";
+import { useSEO } from '@/hooks/useSEO';
 
 const PrivacyPolicy = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('privacy-policy', 'en');
+  
   return (
     <WebsiteLayout className="pt-16 lg:pt-20">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">

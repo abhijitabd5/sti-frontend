@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import enquiryApi from '@/services/api/enquiryApi';
+import { useSEO } from '@/hooks/useSEO';
 
 const Contact = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('contact-us', 'en');
+  
   const [formData, setFormData] = useState({
     fullName: '',
     mobile: '',

@@ -11,6 +11,8 @@ import {
   CheckIcon,
   XMarkIcon,
   InformationCircleIcon,
+  CurrencyDollarIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 
 function AddCourseLanguage() {
@@ -25,8 +27,10 @@ function AddCourseLanguage() {
     title: "",
     summary: "",
     description: "",
+    features: "",
     syllabus_text: "",
     syllabus_file: null,
+    offer_badge_text: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -55,8 +59,10 @@ const loadBaseCourse = async () => {
             title: hindiCourse.title || "",
             summary: hindiCourse.summary || "",
             description: hindiCourse.description || "",
+            features: hindiCourse.features || "",
             syllabus_text: hindiCourse.syllabus_text || "",
             syllabus_file: null,
+            offer_badge_text: hindiCourse.offer_badge_text || "",
           });
         }
       // }
@@ -98,6 +104,13 @@ const loadBaseCourse = async () => {
     }
   };
 
+  const handleClearFile = (fieldName) => {
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: null,
+    }));
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -111,6 +124,10 @@ const loadBaseCourse = async () => {
 
     if (!formData.description.trim()) {
       newErrors.description = "Course description is required";
+    }
+
+    if (!formData.features.trim()) {
+      newErrors.features = "Course features is required";
     }
 
     setErrors(newErrors);
@@ -140,7 +157,7 @@ const loadBaseCourse = async () => {
         mess_available: baseCourse.mess_available,
         mess_fee: baseCourse.mess_fee || 0,
         show_offer_badge: baseCourse.show_offer_badge,
-        offer_badge_text: baseCourse.offer_badge_text,
+        offer_badge_text: formData.offer_badge_text || baseCourse.offer_badge_text,
         is_featured: baseCourse.is_featured,
         is_active: true,
         display_order: baseCourse.display_order,
@@ -152,8 +169,8 @@ const loadBaseCourse = async () => {
         // Update existing Hindi version
         response = await courseApi.updateCourse(hindiVersion.id, courseData);
       } else {
-        // Create new Hindi version
-        response = await courseApi.createCourse(courseData);
+        // Create new Hindi version using the variant endpoint
+        response = await courseApi.createCourseVariant(courseGroupId, courseData);
       }
 
       if (response.success) {
@@ -164,9 +181,14 @@ const loadBaseCourse = async () => {
               : "Hindi version added successfully!",
           },
         });
+      } else {
+        console.error('API returned success: false', response);
+        alert('Failed to save Hindi version: ' + (response.message || 'Unknown error'));
       }
     } catch (error) {
       console.error("Error saving Hindi version:", error);
+      console.error("Error response:", error.response?.data);
+      alert('Error saving Hindi version: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -335,6 +357,27 @@ const loadBaseCourse = async () => {
                     </p>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Course Features (Hindi) *
+                  </label>
+                  <textarea
+                    name="features"
+                    value={formData.features}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className={`form-input w-full ${
+                      errors.features ? "border-red-500" : ""
+                    }`}
+                    placeholder="कोर्स की विशेषताएं हिंदी में दर्ज करें (कॉमा से अलग करें, नई लाइन नहीं)"
+                  />
+                  {errors.features && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.features}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -368,18 +411,132 @@ const loadBaseCourse = async () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Syllabus PDF File (Hindi)
                   </label>
-                  <input
-                    type="file"
-                    name="syllabus_file"
-                    onChange={handleInputChange}
-                    className="form-input w-full"
-                    accept="application/pdf"
-                  />
-                  {formData.syllabus_file && (
-                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                      Selected: {formData.syllabus_file.name}
+                  {formData.syllabus_file ? (
+                    <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <DocumentTextIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-900 dark:text-green-300 truncate">
+                          {formData.syllabus_file.name}
+                        </p>
+                        <p className="text-xs text-green-700 dark:text-green-400">
+                          {(formData.syllabus_file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleClearFile('syllabus_file')}
+                        className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      type="file"
+                      name="syllabus_file"
+                      onChange={handleInputChange}
+                      className="form-input w-full"
+                      accept="application/pdf"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Offer Badge and Media - Side by Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Offer Badge */}
+              <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                    Offer Badge (Hindi)
+                  </h3>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="show_offer_badge"
+                      checked={baseCourse?.show_offer_badge || false}
+                      disabled
+                      className="rounded border-gray-300 text-violet-600 focus:ring-violet-500 opacity-50"
+                    />
+                    <label
+                      htmlFor="show_offer_badge"
+                      className="text-sm font-medium text-gray-500 dark:text-gray-400"
+                    >
+                      Show Offer Badge (inherited from English)
+                    </label>
+                  </div>
+
+                  {baseCourse?.show_offer_badge && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Badge Text (Hindi)
+                      </label>
+                      <input
+                        type="text"
+                        name="offer_badge_text"
+                        value={formData.offer_badge_text}
+                        onChange={handleInputChange}
+                        className="form-input w-full"
+                        placeholder="सीमित समय का ऑफर"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        English version: "{baseCourse.offer_badge_text}"
+                      </p>
+                    </div>
+                  )}
+
+                  {!baseCourse?.show_offer_badge && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Offer badge is not enabled for this course in the English version.
                     </p>
                   )}
+                </div>
+              </div>
+
+              {/* Media */}
+              <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
+                  <div className="flex items-center space-x-2">
+                    <PhotoIcon className="h-5 w-5 text-gray-400" />
+                    <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                      Media (Inherited)
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Thumbnail Image
+                    </label>
+                    {baseCourse?.thumbnail ? (
+                      <div className="space-y-2">
+                        <div className="relative inline-block">
+                          <img
+                            src={baseCourse.thumbnail}
+                            alt="Course thumbnail"
+                            className="h-32 w-full object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Same thumbnail will be used for Hindi version
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-32 w-full bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="text-center">
+                          <PhotoIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            No thumbnail set
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -387,126 +544,179 @@ const loadBaseCourse = async () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Auto-Inherited Fields */}
+            {/* Course Settings */}
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
                 <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                  Auto-Inherited Settings
+                  Course Settings
                 </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Inherited from English version
+                </p>
               </div>
 
-              <div className="p-6 space-y-3 text-sm">
-                <div className="flex items-start space-x-2">
-                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                      Duration
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {baseCourse.duration} weeks
-                    </p>
-                  </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Duration
+                  </label>
+                  <input
+                    type="text"
+                    value={`${baseCourse.duration} weeks`}
+                    readOnly
+                    className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  />
                 </div>
 
-                <div className="flex items-start space-x-2">
-                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                      Pricing
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      ₹
-                      {parseFloat(baseCourse.base_course_fee).toLocaleString(
-                        "en-IN"
-                      )}
-                      {baseCourse.is_discounted && (
-                        <span className="text-green-600 dark:text-green-400 block">
-                          After Discount: ₹
-                          {parseFloat(
-                            baseCourse.discounted_course_fee ||
-                              baseCourse.base_course_fee
-                          ).toLocaleString("en-IN")}
-                        </span>
-                      )}
-                    </p>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Order
+                  </label>
+                  <input
+                    type="text"
+                    value={`#${baseCourse.display_order}`}
+                    readOnly
+                    className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  />
                 </div>
 
-                {baseCourse.hostel_available && (
-                  <div className="flex items-start space-x-2">
-                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                        Hostel Fee
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        ₹
-                        {parseFloat(baseCourse.hostel_fee || 0).toLocaleString(
-                          "en-IN"
-                        )}
-                      </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Course Group ID
+                  </label>
+                  <input
+                    type="text"
+                    value={baseCourse.course_group_id}
+                    readOnly
+                    className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Status
+                  </label>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <CheckIcon className={`h-4 w-4 ${baseCourse.is_featured ? 'text-green-500' : 'text-gray-400'}`} />
+                      <span className="text-gray-600 dark:text-gray-400">Featured</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <CheckIcon className={`h-4 w-4 ${baseCourse.is_active ? 'text-green-500' : 'text-gray-400'}`} />
+                      <span className="text-gray-600 dark:text-gray-400">Active</span>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing */}
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
+                <div className="flex items-center space-x-2">
+                  <CurrencyDollarIcon className="h-5 w-5 text-gray-400" />
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                    Pricing
+                  </h3>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Inherited from English version
+                </p>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Base Course Fee
+                  </label>
+                  <input
+                    type="text"
+                    value={`₹${parseFloat(baseCourse.base_course_fee).toLocaleString("en-IN")}`}
+                    readOnly
+                    className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  />
+                </div>
+
+                {baseCourse.is_discounted && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Discount Percentage
+                      </label>
+                      <input
+                        type="text"
+                        value={`${baseCourse.discount_percentage}%`}
+                        readOnly
+                        className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Discount Amount
+                      </label>
+                      <input
+                        type="text"
+                        value={`₹${parseFloat(baseCourse.discount_amount || 0).toLocaleString("en-IN")}`}
+                        readOnly
+                        className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Final Price
+                      </label>
+                      <input
+                        type="text"
+                        value={`₹${parseFloat(baseCourse.discounted_course_fee || baseCourse.base_course_fee).toLocaleString("en-IN")}`}
+                        readOnly
+                        className="form-input w-full bg-gray-50 dark:bg-gray-700 text-green-600 dark:text-green-400 font-medium"
+                      />
+                    </div>
+                  </>
                 )}
 
-                {baseCourse.mess_available && (
-                  <div className="flex items-start space-x-2">
-                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                        Mess Fee
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        ₹
-                        {parseFloat(baseCourse.mess_fee || 0).toLocaleString(
-                          "en-IN"
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                )}
+                {/* Accommodation Options */}
+                {(baseCourse.hostel_available || baseCourse.mess_available) && (
+                  <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Accommodation Options
+                    </h4>
 
-                <div className="flex items-start space-x-2">
-                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                      Display Order
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      #{baseCourse.display_order}
-                    </p>
-                  </div>
-                </div>
+                    {baseCourse.hostel_available && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Hostel Fee
+                        </label>
+                        <input
+                          type="text"
+                          value={`₹${parseFloat(baseCourse.hostel_fee || 0).toLocaleString("en-IN")}`}
+                          readOnly
+                          className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                        />
+                      </div>
+                    )}
 
-                <div className="flex items-start space-x-2">
-                  <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                  <div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                      Thumbnail
-                    </span>
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {baseCourse.thumbnail
-                        ? "Same as English version"
-                        : "None"}
-                    </p>
-                  </div>
-                </div>
-
-                {baseCourse.show_offer_badge && (
-                  <div className="flex items-start space-x-2">
-                    <CheckIcon className="h-4 w-4 text-green-500 mt-0.5" />
-                    <div>
-                      <span className="font-medium text-gray-700 dark:text-gray-300 block">
-                        Offer Badge
-                      </span>
-                      <p className="text-gray-600 dark:text-gray-400">
-                        {baseCourse.offer_badge_text}
-                      </p>
-                    </div>
+                    {baseCourse.mess_available && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Mess Fee
+                        </label>
+                        <input
+                          type="text"
+                          value={`₹${parseFloat(baseCourse.mess_fee || 0).toLocaleString("en-IN")}`}
+                          readOnly
+                          className="form-input w-full bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
             </div>
+
+
           </div>
         </div>
 

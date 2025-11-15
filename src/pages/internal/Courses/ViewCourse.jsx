@@ -266,6 +266,141 @@ function ViewCourse() {
               )}
             </div>
           </div>
+
+          {/* Course Metadata and Media - Side by Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Course Metadata */}
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
+                <div className="flex items-center space-x-2">
+                  <CalendarIcon className="h-5 w-5 text-gray-400" />
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                    Course Metadata
+                  </h3>
+                </div>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Course ID
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">#{course.id}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Course Group ID
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">#{course.course_group_id}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Created Date
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {formatDate(course.createdAt)}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Updated
+                  </label>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {formatDate(course.updatedAt)}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Status
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      course.is_active 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                    }`}>
+                      {course.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                    {course.is_featured && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-100">
+                        Featured
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Media & Gallery */}
+            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
+                <div className="flex items-center space-x-2">
+                  <PhotoIcon className="h-5 w-5 text-gray-400" />
+                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+                    Media & Gallery
+                  </h3>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                {course.thumbnail ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Thumbnail Image
+                      </label>
+                      <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
+                        <img 
+                          src={course.thumbnail} 
+                          alt={course.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Course Features */}
+                    {course.features && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Course Features
+                        </label>
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {course.features}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg mx-auto mb-4">
+                      <PhotoIcon className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">No thumbnail image available</p>
+                    
+                    {/* Show features even without thumbnail */}
+                    {course.features && (
+                      <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Course Features
+                        </label>
+                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            {course.features}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -376,80 +511,7 @@ function ViewCourse() {
             </div>
           )}
 
-          {/* Media & Display */}
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-              <div className="flex items-center space-x-2">
-                <PhotoIcon className="h-5 w-5 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                  Media
-                </h3>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              {course.thumbnail ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Thumbnail Image
-                    </label>
-                    <div className="aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden">
-                      <img 
-                        src={course.thumbnail} 
-                        alt={course.title}
-                        className="w-full h-full object-cover"
-                        // onError={(e) => {
-                        //   e.target.src = '/api/placeholder/400/300';
-                        // }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-sm">No thumbnail image available</p>
-              )}
-            </div>
-          </div>
 
-          {/* Course Metadata */}
-          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-              <div className="flex items-center space-x-2">
-                <CalendarIcon className="h-5 w-5 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-                  Course Metadata
-                </h3>
-              </div>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Course ID
-                </label>
-                <p className="text-sm text-gray-600 dark:text-gray-400">#{course.id}</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Created Date
-                </label>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatDate(course.createdAt)}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Last Updated
-                </label>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatDate(course.updatedAt)}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </AdminLayout>

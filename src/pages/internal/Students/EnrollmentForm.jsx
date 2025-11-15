@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import ProgressModal from './components/ProgressModal';
+import { INDIAN_STATES } from '@/config/constants';
 
 // Icons
 import { 
@@ -463,14 +464,13 @@ function EnrollmentForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Mother Name <span className="text-red-500">*</span>
+                    Mother Name
                   </label>
                   <input
                     type="text"
                     name="mother_name"
                     value={formData.mother_name}
                     onChange={handleInputChange}
-                    required
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
                   />
                 </div>
@@ -539,14 +539,20 @@ function EnrollmentForm() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     State <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="state"
                     value={formData.state}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                  />
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                  >
+                    <option value="">Select State</option>
+                    {INDIAN_STATES.map(state => (
+                      <option key={state.value} value={state.value}>
+                        {state.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -948,11 +954,6 @@ function EnrollmentForm() {
                             !row.type ? 'opacity-50 cursor-not-allowed' : ''
                           }`}
                         />
-                        {row.file && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Selected: {row.file.name}
-                          </p>
-                        )}
                       </div>
                       
                       {/* Add More Button */}

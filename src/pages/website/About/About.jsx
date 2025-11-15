@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
+import { useSEO } from '@/hooks/useSEO';
 
 const About = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('about-us', 'en');
+  
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
 
   const stats = [

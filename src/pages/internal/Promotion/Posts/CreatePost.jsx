@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import promotionPostApi from '@/services/api/promotionPostApi';
 import promotionPartnerApi from '@/services/api/promotionPartnerApi';
-
-const SOURCES = ['facebook','instagram','youtube','tiktok','whatsapp','threads','offline','sms_campaign','other'];
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
+import { SOURCES } from '@/config/constants';
 
 function FieldLabel({ children }) {
   return <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">{children}</label>;
@@ -23,6 +24,7 @@ export default function CreatePost() {
     post_url: '',
   });
   const [errors, setErrors] = useState({});
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
   useEffect(()=>{
     (async() => {
@@ -72,10 +74,16 @@ export default function CreatePost() {
       };
       const res = await promotionPostApi.createPost(payload);
       if (res.success) {
-        navigate(`/admin/promotion/posts/${res.data?.id ?? ''}` || '/admin/promotion/posts');
+        showSuccess(res.message || 'Post created successfully!');
+        setTimeout(() => {
+          navigate(`/admin/promotion/posts/${res.data?.id ?? ''}` || '/admin/promotion/posts');
+        }, 1500);
+      } else {
+        showError(res.message || 'Failed to create post');
       }
     } catch (err) {
       console.error('Create post failed', err);
+      showError('An error occurred while creating the post');
     } finally {
       setSubmitting(false);
     }
@@ -95,11 +103,6 @@ export default function CreatePost() {
           <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Basic Information</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <FieldLabel>Post Title *</FieldLabel>
-              <input value={form.title} onChange={(e)=>setField('title', e.target.value)} placeholder="Enter post title" className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
-              {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
-            </div>
-            <div>
               <FieldLabel>Associated Partner *</FieldLabel>
               <select value={form.partner_id} onChange={(e)=>setField('partner_id', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm">
                 <option value="">Select Partner</option>
@@ -109,29 +112,28 @@ export default function CreatePost() {
               </select>
               {errors.partner_id && <p className="text-xs text-red-600 mt-1">{errors.partner_id}</p>}
             </div>
-            <div className="md:col-span-2">
-              <FieldLabel>Description</FieldLabel>
-              <textarea value={form.description} onChange={(e)=>setField('description', e.target.value)} placeholder="Enter post description..." rows={4} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
-              <div className="text-xs text-gray-500 mt-1">{form.description.length}/500</div>
-              {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 p-4">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Post Details</h3>
-          <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <FieldLabel>Post Source *</FieldLabel>
+              <FieldLabel>Source *</FieldLabel>
               <select value={form.post_platform} onChange={(e)=>setField('post_platform', e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm">
-                {SOURCES.map(s => <option key={s} value={s}>{s.replace('_',' ')}</option>)}
+                {SOURCES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               {errors.post_platform && <p className="text-xs text-red-600 mt-1">{errors.post_platform}</p>}
+            </div>
+            <div>
+              <FieldLabel>Post Title *</FieldLabel>
+              <input value={form.title} onChange={(e)=>setField('title', e.target.value)} placeholder="Enter post title" className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
+              {errors.title && <p className="text-xs text-red-600 mt-1">{errors.title}</p>}
             </div>
             <div>
               <FieldLabel>Post URL</FieldLabel>
               <input value={form.post_url} onChange={(e)=>setField('post_url', e.target.value)} placeholder="https://earthmoversacademy.com/courses" className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
               {errors.post_url && <p className="text-xs text-red-600 mt-1">{errors.post_url}</p>}
+            </div>
+            <div className="md:col-span-2">
+              <FieldLabel>Description</FieldLabel>
+              <textarea value={form.description} onChange={(e)=>setField('description', e.target.value)} placeholder="Enter post description..." rows={4} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
+              <div className="text-xs text-gray-500 mt-1">{form.description.length}/500</div>
+              {errors.description && <p className="text-xs text-red-600 mt-1">{errors.description}</p>}
             </div>
           </div>
         </div>
@@ -146,6 +148,13 @@ export default function CreatePost() {
           <button type="submit" disabled={submitting} className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600">{submitting ? 'Creating...' : 'Create Post'}</button>
         </div>
       </form>
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 }

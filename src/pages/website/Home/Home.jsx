@@ -9,6 +9,7 @@ import ContactSection from '@/pages/website/Home/components/ContactSection';
 import { websiteApi } from '@/services/api/websiteApi';
 import galleryApi from '@/services/api/galleryApi';
 import placeholderImage from "@/assets/images/placeholder-image.jpg";
+import { useSEO } from '@/hooks/useSEO';
 
 // Hero slide section slugs
 const HERO_SLIDE_SLUGS = [
@@ -27,6 +28,9 @@ const DEFAULT_HERO_SLIDE = {
 };
 
 const Home = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('home', 'en');
+  
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     heroSlides: [],

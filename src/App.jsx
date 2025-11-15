@@ -4,6 +4,7 @@ import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import "@/styles/globals.css";
 
 import "@/components/charts/config/chartConfig";
+import seoApi from "@/services/api/seoApi";
 
 // Import pages
 import Dashboard from "@/pages/internal/Dashboard/Dashboard";
@@ -38,8 +39,19 @@ import Reviews from "@/pages/internal/Reviews/Reviews";
 import Enquiries from "@/pages/internal/Enquiries/Enquiries";
 import Profile from "@/pages/internal/Profile/Profile";
 import Partners from "@/pages/internal/Promotion/Partners/Partners";
+import CreatePartner from "@/pages/internal/Promotion/Partners/CreatePartner";
+import EditPartner from "@/pages/internal/Promotion/Partners/EditPartner";
+import ViewPartner from "@/pages/internal/Promotion/Partners/ViewPartner";
 import Posts from "@/pages/internal/Promotion/Posts/Posts";
+import CreatePost from "@/pages/internal/Promotion/Posts/CreatePost";
+import EditPost from "@/pages/internal/Promotion/Posts/EditPost";
+import ViewPost from "@/pages/internal/Promotion/Posts/ViewPost";
 import CreateLink from "@/pages/internal/Promotion/Links/CreateLink";
+import Pages from "@/pages/internal/Pages/Pages";
+import CreatePage from "@/pages/internal/Pages/CreatePage";
+import EditPage from "@/pages/internal/Pages/EditPage";
+import ViewPage from "@/pages/internal/Pages/ViewPage";
+import PromotionReports from "@/pages/internal/Reports/PromotionReports";
 
 // import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
@@ -48,6 +60,13 @@ import { AdminRoute } from "@/guards/ProtectedRoute";
 
 function App() {
   const location = useLocation();
+
+  // Initialize SEO system
+  useEffect(() => {
+    // Preload critical SEO pages for better performance
+    seoApi.preloadCriticalPages('en');
+    console.log('SEO system initialized');
+  }, []);
 
   useEffect(() => {
     document.querySelector("html").style.scrollBehavior = "auto";
@@ -85,6 +104,13 @@ function App() {
             <Route path="add-language/:id" element={<AddCourseLanguage />} />
           </Route>
 
+          <Route path="pages">
+            <Route index element={<Pages />} />
+            <Route path="create" element={<CreatePage />} />
+            <Route path="view/:id" element={<ViewPage />} />
+            <Route path="edit/:id" element={<EditPage />} />
+          </Route>
+
           <Route
             path="transaction-categories"
             element={<TransactionCategories />}
@@ -120,14 +146,28 @@ function App() {
             <Route index element={<Profile />} />
           </Route>
 
-          <Route path="create-link">
-            <Route index element={<CreateLink />} />
+          <Route path="promotion">
+            <Route path="partners">
+              <Route index element={<Partners />} />
+              <Route path="create" element={<CreatePartner />} />
+              <Route path=":id" element={<ViewPartner />} />
+              <Route path=":id/edit" element={<EditPartner />} />
+            </Route>
+            
+            <Route path="posts">
+              <Route index element={<Posts />} />
+              <Route path="create" element={<CreatePost />} />
+              <Route path=":id" element={<ViewPost />} />
+              <Route path=":id/edit" element={<EditPost />} />
+            </Route>
+            
+            <Route path="links">
+              <Route path="create" element={<CreateLink />} />
+            </Route>
           </Route>
-          <Route path="partners">
-            <Route index element={<Partners />} />
-          </Route>
-          <Route path="posts">
-            <Route index element={<Posts />} />
+
+          <Route path="reports">
+            <Route path="promotion-analytics" element={<PromotionReports />} />
           </Route>
 
 
