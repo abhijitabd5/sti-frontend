@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useSEO } from '@/hooks/useSEO';
-import seoApi from '@/services/api/seoApi';
+// import seoApi from '@/services/api/seoApi'; // Commented out - using static data only
 
 // SEO Testing Component - For development only
+// UPDATED: API functionality disabled, now uses static data only
 function SEOTester() {
   const [selectedPage, setSelectedPage] = useState('courses');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
@@ -21,16 +22,17 @@ function SEOTester() {
   ];
 
   const handleClearCache = () => {
-    seoApi.clearCache();
+    // seoApi.clearCache(); // Commented out - using static data
     refreshSeo();
   };
 
   const handleToggleDataSource = () => {
-    seoApi.setDataSource(!seoApi.useStaticData);
+    // seoApi.setDataSource(!seoApi.useStaticData); // Commented out - always static
     refreshSeo();
   };
 
-  const cacheStats = seoApi.getCacheStats();
+  // const cacheStats = seoApi.getCacheStats(); // Commented out - using static data
+  const cacheStats = { totalEntries: 0, maxSize: 0, cacheDuration: 0 }; // Mock stats for static data
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 p-6">
@@ -47,9 +49,10 @@ function SEOTester() {
           </button>
           <button
             onClick={handleToggleDataSource}
-            className="px-3 py-1 text-xs bg-blue-100 text-blue-800 rounded hover:bg-blue-200"
+            className="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded cursor-not-allowed"
+            disabled
           >
-            {seoApi.useStaticData ? 'Switch to API' : 'Switch to Static'}
+            Static Data Only
           </button>
         </div>
       </div>
@@ -158,7 +161,7 @@ function SEOTester() {
         </h4>
         <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
           <p>Entries: {cacheStats.totalEntries} / {cacheStats.maxSize}</p>
-          <p>Data Source: {seoApi.useStaticData ? 'Static' : 'API'}</p>
+          <p>Data Source: Static (API requests disabled)</p>
           <p>Cache Duration: {Math.round(cacheStats.cacheDuration / 1000 / 60)} minutes</p>
         </div>
       </div>

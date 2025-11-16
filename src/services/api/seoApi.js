@@ -1,10 +1,16 @@
 import { staticSeoData, staticSeoDataHindi } from '@/data/staticSeoData';
-import httpClient from '@/services/utils/httpClient';
+// import httpClient from '@/services/utils/httpClient'; // Commented out - not making API requests
+
+/**
+ * SEO API Service - Currently configured to use static data only
+ * All dynamic API request methods have been commented out
+ * The application will always use data from staticSeoData.js
+ */
 
 class SeoApi {
   constructor() {
     // Feature flag to switch between static and dynamic data
-    this.useStaticData = true; // Set to false when backend is ready
+    this.useStaticData = true; // Always use static data - API requests commented out
     
     // Cache for SEO data
     this.cache = new Map();
@@ -35,13 +41,13 @@ class SeoApi {
 
     console.log(`SEO cache miss, fetching: ${cacheKey}`);
 
-    // Fetch data based on current mode
+    // Always use static data - dynamic requests commented out
     let data;
-    if (this.useStaticData) {
+    // if (this.useStaticData) {
       data = await this.getStaticPageSeo(slug, language);
-    } else {
-      data = await this.getDynamicPageSeo(slug, language);
-    }
+    // } else {
+    //   data = await this.getDynamicPageSeo(slug, language);
+    // }
 
     // Cache the result
     this.setCacheData(cacheKey, data);
@@ -55,11 +61,12 @@ class SeoApi {
    * @returns {Promise<Object>} All SEO data response
    */
   async getAllPagesSeo(language = 'en') {
-    if (this.useStaticData) {
+    // Always use static data - dynamic requests commented out
+    // if (this.useStaticData) {
       return this.getStaticAllPagesSeo(language);
-    } else {
-      return this.getDynamicAllPagesSeo(language);
-    }
+    // } else {
+    //   return this.getDynamicAllPagesSeo(language);
+    // }
   }
 
   /**
@@ -121,37 +128,37 @@ class SeoApi {
     };
   }
 
-  // Dynamic data methods (for future backend integration)
-  async getDynamicPageSeo(slug, language) {
-    try {
-      const response = await httpClient.get(`/seo/pages/${slug}?language=${language}`);
-      return {
-        ...response.data,
-        source: 'dynamic'
-      };
-    } catch (error) {
-      console.error('Error fetching dynamic SEO data:', error);
-      
-      // Fallback to static data on error
-      console.log('Falling back to static SEO data');
-      return this.getStaticPageSeo(slug, language);
-    }
-  }
+  // Dynamic data methods (for future backend integration) - COMMENTED OUT
+  // async getDynamicPageSeo(slug, language) {
+  //   try {
+  //     const response = await httpClient.get(`/seo/pages/${slug}?language=${language}`);
+  //     return {
+  //       ...response.data,
+  //       source: 'dynamic'
+  //     };
+  //   } catch (error) {
+  //     console.error('Error fetching dynamic SEO data:', error);
+  //     
+  //     // Fallback to static data on error
+  //     console.log('Falling back to static SEO data');
+  //     return this.getStaticPageSeo(slug, language);
+  //   }
+  // }
 
-  async getDynamicAllPagesSeo(language) {
-    try {
-      const response = await httpClient.get(`/seo/pages?language=${language}`);
-      return {
-        ...response.data,
-        source: 'dynamic'
-      };
-    } catch (error) {
-      console.error('Error fetching dynamic SEO data:', error);
-      
-      // Fallback to static data on error
-      return this.getStaticAllPagesSeo(language);
-    }
-  }
+  // async getDynamicAllPagesSeo(language) {
+  //   try {
+  //     const response = await httpClient.get(`/seo/pages?language=${language}`);
+  //     return {
+  //       ...response.data,
+  //       source: 'dynamic'
+  //     };
+  //   } catch (error) {
+  //     console.error('Error fetching dynamic SEO data:', error);
+  //     
+  //     // Fallback to static data on error
+  //     return this.getStaticAllPagesSeo(language);
+  //   }
+  // }
 
   // Cache management methods
   setCacheData(key, data) {
@@ -188,14 +195,14 @@ class SeoApi {
   }
 
   /**
-   * Switch between static and dynamic data sources
+   * Switch between static and dynamic data sources - COMMENTED OUT (always static)
    * @param {boolean} useStatic - Whether to use static data
    */
-  setDataSource(useStatic) {
-    this.useStaticData = useStatic;
-    this.clearCache(); // Clear cache when switching modes
-    console.log(`SEO data source switched to: ${useStatic ? 'static' : 'dynamic'}`);
-  }
+  // setDataSource(useStatic) {
+  //   this.useStaticData = useStatic;
+  //   this.clearCache(); // Clear cache when switching modes
+  //   console.log(`SEO data source switched to: ${useStatic ? 'static' : 'dynamic'}`);
+  // }
 
   /**
    * Get cache statistics for debugging

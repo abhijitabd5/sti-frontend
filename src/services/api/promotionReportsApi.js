@@ -131,6 +131,8 @@ class PromotionReportsApi {
       throw error;
     }
   }
+
+
 }
 
 export default new PromotionReportsApi();

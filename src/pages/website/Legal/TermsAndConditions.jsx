@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import WebsiteLayout from "@/components/common/Layouts/WebsiteLayout";
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const TermsAndConditions = () => {
   return (
@@ -140,7 +141,7 @@ const TermsAndConditions = () => {
                 </li>
                 <li>प्रशिक्षकों की सभी सुरक्षा हिदायतों का पालन करें</li>
                 <li>
-                  दुर्घटना के लिए Earth Movers Training Academy जिम्मेदार नहीं
+                  दुर्घटना के लिए {INSTITUTION_INFO.name} जिम्मेदार नहीं
                   है अगर आप सुरक्षा नियमों का पालन नहीं करते
                 </li>
                 <li>हम आपको दुर्घटना बीमा लेने की सलाह देते हैं</li>
@@ -151,8 +152,8 @@ const TermsAndConditions = () => {
             <section>
               <h2 className="h3 mb-4">कोर्स सामग्री</h2>
               <p className="text-base leading-relaxed">
-                सभी कोर्स सामग्री, व्याख्यान नोट्स, और प्रशिक्षण सामग्री Earth
-                Movers Training Academy की संपत्ति है। आप इसे सिर्फ व्यक्तिगत
+                सभी कोर्स सामग्री, व्याख्यान नोट्स, और प्रशिक्षण सामग्री {INSTITUTION_INFO.name}
+                की संपत्ति है। आप इसे सिर्फ व्यक्तिगत
                 उपयोग के लिए कॉपी कर सकते हैं। किसी को भी इसे बिना अनुमति के
                 बेचने, साझा करने या प्रकाशित करने की अनुमति नहीं है।
               </p>
@@ -185,13 +186,12 @@ const TermsAndConditions = () => {
               </p>
               <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
                 <p className="font-semibold mb-2">
-                  Earth Movers Training Academy
+                  {INSTITUTION_INFO.name}
                 </p>
-                <p>फोन: +91 9175113022</p>
-                <p>ईमेल: shahabuddintraining@gmail.com</p>
+                <p>फोन: {INSTITUTION_INFO.contact.mobile.primary}, {INSTITUTION_INFO.contact.mobile.secondary}</p>
+                <p>ईमेल: {INSTITUTION_INFO.contact.email}</p>
                 <p>
-                  पता: Beside NH-2 At Barkatha, Barhi, Hazaribagh, Jharkhand
-                  (825323)
+                  पता: {INSTITUTION_INFO.contact.address}
                 </p>
               </div>
             </section>

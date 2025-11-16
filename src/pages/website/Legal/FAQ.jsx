@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import WebsiteLayout from "@/components/common/Layouts/WebsiteLayout";
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const FAQ = () => {
   const [expandedId, setExpandedId] = useState(null);
@@ -161,14 +162,13 @@ const FAQ = () => {
             </p>
             <div className="space-y-2 text-sm">
               <p className="text-gray-700 dark:text-gray-300">
-                📞 <strong>फोन:</strong> +91 9175113022
+                📞 <strong>फोन:</strong> {INSTITUTION_INFO.contact.mobile.primary}, {INSTITUTION_INFO.contact.mobile.secondary}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
-                📧 <strong>ईमेल:</strong> shahabuddintraining@gmail.com
+                📧 <strong>ईमेल:</strong> {INSTITUTION_INFO.contact.email}
               </p>
               <p className="text-gray-700 dark:text-gray-300">
-                📍 <strong>पता:</strong> Beside NH-2 At Barkatha, Barhi,
-                Hazaribagh, Jharkhand (825323)
+                📍 <strong>पता:</strong> {INSTITUTION_INFO.contact.address}
               </p>
             </div>
           </div>

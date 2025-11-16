@@ -1,5 +1,45 @@
 // Dropdown constants for the application
 
+// Institution Information
+export const INSTITUTION_INFO = {
+  name: 'Shahabuddin Training Institute',
+  establishedYear: 2018,
+  experience: '7+', // years
+  studentsTrained: '2500+',
+  partners: '150+',
+  placementRate: '95%',
+  contact: {
+    address: 'Near Mahabar Mood, Barkattha, Barhi, Hazaribagh, Jharkhand (825405)',
+    mobile: {
+      primary: '+91 6206832852',
+      secondary: '+91 9431374996'
+    },
+    email: 'shahabuddintraining@gmail.com'
+  }
+};
+
+// About Section Information
+export const ABOUT_INFO = {
+  title: INSTITUTION_INFO.name,
+  subtitle: 'Building Careers, Transforming Lives',
+  description: `Since ${INSTITUTION_INFO.establishedYear}, ${INSTITUTION_INFO.name} has been the premier destination for heavy equipment training. We've trained over ${INSTITUTION_INFO.studentsTrained} students and maintain a ${INSTITUTION_INFO.placementRate} job placement rate.`,
+  mission: 'To provide world-class heavy equipment training that prepares students for successful careers in construction, mining, and related industries.',
+  features: [
+    'State-of-the-art training facility',
+    'Experienced industry instructors',
+    'Modern fleet of training equipment',
+    'Job placement assistance',
+    'Industry-recognized certifications',
+    'Flexible scheduling options'
+  ],
+  stats: [
+    { label: 'Students Trained', value: INSTITUTION_INFO.studentsTrained },
+    { label: 'Job Placement Rate', value: INSTITUTION_INFO.placementRate },
+    { label: 'Years of Experience', value: INSTITUTION_INFO.experience },
+    { label: 'Industry Partners', value: INSTITUTION_INFO.partners }
+  ]
+};
+
 // Social media and promotion sources
 export const SOURCES = [
   { value: 'facebook', label: 'Facebook' },
@@ -63,6 +103,12 @@ export const getSourceLabel = (value) => {
 export const getStateLabel = (value) => {
   const state = INDIAN_STATES.find(s => s.value === value);
   return state ? state.label : value;
+};
+
+// Convert state slug to display name (for backend data)
+export const getStateDisplayName = (stateSlug) => {
+  const state = INDIAN_STATES.find(s => s.value === stateSlug);
+  return state ? state.label : stateSlug;
 };
 
 // Get array of just values (for backend compatibility)

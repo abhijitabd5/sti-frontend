@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import enquiryApi from '@/services/api/enquiryApi';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const ContactSection = () => {
   const [formData, setFormData] = useState({
@@ -142,7 +143,7 @@ const ContactSection = () => {
       ),
       title: 'Visit Us',
       details: [
-'Near Mahabar Mood,', 'Barkattha, Barhi, Hazaribagh,', 'Jharkhand (825405)',
+        INSTITUTION_INFO.contact.address
       ]
     },
     {
@@ -153,8 +154,8 @@ const ContactSection = () => {
       ),
       title: 'Call Us',
       details: [
-        'Main: +91 6206832852',
-        'Alternate: +91 9431374996',
+        `Main: ${INSTITUTION_INFO.contact.mobile.primary}`,
+        `Alternate: ${INSTITUTION_INFO.contact.mobile.secondary}`,
       ]
     },
     {
@@ -165,7 +166,7 @@ const ContactSection = () => {
       ),
       title: 'Email Us',
       details: [
-        'shahabuddintraining@gmail.com',
+        INSTITUTION_INFO.contact.email,
       ]
     }
   ];
@@ -350,7 +351,7 @@ const ContactSection = () => {
               allowFullScreen={true}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Earth Movers Training Academy Location"
+              title={`${INSTITUTION_INFO.name} Location`}
             />
           </div>
           

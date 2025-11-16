@@ -4,6 +4,7 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
 import { useSEO } from '@/hooks/useSEO';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const About = () => {
   // SEO Management
@@ -12,10 +13,10 @@ const About = () => {
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
 
   const stats = [
-    { number: '5000+', label: 'Graduates Trained' },
-    { number: '95%', label: 'Job Placement Rate' },
-    { number: '25+', label: 'Years of Experience' },
-    { number: '15+', label: 'Industry Partners' }
+    { number: INSTITUTION_INFO.studentsTrained, label: 'Students Trained' },
+    { number: INSTITUTION_INFO.placementRate, label: 'Job Placement Rate' },
+    { number: INSTITUTION_INFO.experience, label: 'Years of Experience' },
+    { number: INSTITUTION_INFO.partners, label: 'Industry Partners' }
   ];
 
   const values = [
@@ -74,34 +75,34 @@ const About = () => {
 
   const timeline = [
     {
-      year: '1998',
+      year: INSTITUTION_INFO.establishedYear.toString(),
       title: 'Founded',
-      description: 'Started as a small local training center with a vision to provide quality heavy equipment training.'
+      description: `${INSTITUTION_INFO.name} was established with a vision to provide quality heavy equipment training.`
     },
     {
-      year: '2005',
-      title: 'Expanded Facility',
-      description: 'Opened our current 50-acre training facility with state-of-the-art equipment and classrooms.'
-    },
-    {
-      year: '2010',
-      title: 'Industry Partnerships',
-      description: 'Established partnerships with major construction companies for job placement programs.'
-    },
-    {
-      year: '2015',
-      title: '1000th Graduate',
-      description: 'Celebrated training our 1000th student, marking a major milestone in our journey.'
+      year: '2019',
+      title: 'First Batch Success',
+      description: 'Successfully trained and placed our first batch of students with 100% placement rate.'
     },
     {
       year: '2020',
-      title: 'Digital Innovation',
-      description: 'Integrated advanced simulation technology and online learning components.'
+      title: 'Facility Expansion',
+      description: 'Expanded our training facility with modern equipment and enhanced safety protocols.'
+    },
+    {
+      year: '2021',
+      title: 'Industry Recognition',
+      description: 'Gained recognition from major construction companies for quality training standards.'
+    },
+    {
+      year: '2022',
+      title: '1000+ Students',
+      description: 'Celebrated training over 1000 students with excellent placement records.'
     },
     {
       year: '2024',
-      title: 'Continued Excellence',
-      description: 'Today, we continue to be the leading heavy equipment training institute in the region.'
+      title: 'Continued Growth',
+      description: `Today, we have trained ${INSTITUTION_INFO.studentsTrained} students and maintain partnerships with ${INSTITUTION_INFO.partners} companies.`
     }
   ];
 
@@ -122,10 +123,10 @@ const About = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            About Our Training Institute
+            About {INSTITUTION_INFO.name}
           </h1>
           <p className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed">
-            For over 25 years, we've been transforming careers through comprehensive heavy equipment training programs, preparing skilled operators for success in the construction and mining industries.
+            Since {INSTITUTION_INFO.establishedYear}, we've been transforming careers through comprehensive heavy equipment training programs, preparing skilled operators for success in the construction and mining industries.
           </p>
         </div>
       </section>

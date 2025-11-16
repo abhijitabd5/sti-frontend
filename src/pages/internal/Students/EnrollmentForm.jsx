@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import ProgressModal from './components/ProgressModal';
-import { INDIAN_STATES } from '@/config/constants';
+import { INDIAN_STATES, getStateDisplayName } from '@/config/constants';
 
 // Icons
 import { 
@@ -268,10 +268,14 @@ function EnrollmentForm() {
       // Prepare enrollment data
       const enrollmentData = {
         ...formData,
+        state_slug: formData.state, // Send state slug instead of state
         extra_discount_amount: parseFloat(formData.extra_discount_amount) || 0,
         paid_amount: parseFloat(formData.paid_amount) || 0,
         course_id: parseInt(formData.course_id)
       };
+      
+      // Remove the original state field to avoid confusion
+      delete enrollmentData.state;
 
       // Create enrollment
       const response = await studentApi.createEnrollment(enrollmentData);

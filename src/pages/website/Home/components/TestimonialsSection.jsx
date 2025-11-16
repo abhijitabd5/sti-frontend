@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { reviewApi } from '@/services/api/reviewApi';
 import defaultProfile from '@/assets/icons/user-profile.png';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const TestimonialsSection = ({ testimonials = [] }) => {
   const [fetchedReviews, setFetchedReviews] = useState([]);
@@ -272,19 +273,19 @@ const TestimonialsSection = ({ testimonials = [] }) => {
         {/* Trust Indicators */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">95%</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.placementRate}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Job Placement Rate</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">2,500+</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Graduates Trained</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.studentsTrained}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Students Trained</div>
           </div>
           <div>
             <div className="text-3xl font-bold text-orange-500 mb-2">4.9/5</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Average Rating</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">15+</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.experience}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Years Experience</div>
           </div>
         </div>

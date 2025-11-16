@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import LineChart from '@/components/charts/LineChart';
-import { createChartAreaGradient } from '@/components/charts/config/chartUtils';
+import { createChartAreaGradient } from '@/components/charts/config/extras/chartUtils';
 import EditMenu from '@/components/ui/Internal/Dropdown/DropdownEditMenu';
 
 // Import utilities

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
+import { getStateDisplayName } from '@/config/constants';
 
 // Icons
 import { 
@@ -226,7 +227,7 @@ function StudentDetail() {
                       {student.student_info.address}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {student.student_info.city}, {student.student_info.state} - {student.student_info.pincode}
+                      {student.student_info.city}, {getStateDisplayName(student.student_info.state)} - {student.student_info.pincode}
                     </p>
                   </div>
                 </div>

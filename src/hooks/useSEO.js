@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import seoApi from '@/services/api/seoApi';
+// import seoApi from '@/services/api/seoApi'; // Commented out - using static data directly
+import { staticSeoData } from '@/data/staticSeoData';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 /**
  * Custom hook for managing SEO data
+ * UPDATED: Now uses static SEO data directly instead of making API requests
+ * All API calls have been commented out for better performance
+ * 
  * @param {string} customSlug - Custom slug override (optional)
  * @param {string} language - Language code (default: 'en')
  * @param {Object} fallbackSeo - Fallback SEO data (optional)
@@ -33,14 +38,15 @@ export const useSEO = (customSlug = null, language = 'en', fallbackSeo = null) =
       console.log(`Loading SEO data for: ${slug} (${language})`);
 
       try {
-        const response = await seoApi.getPageSeo(slug, language);
+        // Use static SEO data directly instead of API call
+        const page = staticSeoData.data.find(item => item.slug === slug);
         
-        if (response.success && response.data) {
-          setSeoData(response.data);
-          applySeoToDocument(response.data);
-          console.log(`SEO applied for: ${slug}`, response.data);
+        if (page) {
+          setSeoData(page);
+          applySeoToDocument(page);
+          console.log(`Static SEO applied for: ${slug}`, page);
         } else {
-          console.warn(`No SEO data found for: ${slug}`);
+          console.warn(`No static SEO data found for: ${slug}`);
           
           // Apply fallback SEO if provided
           if (fallbackSeo) {
@@ -51,7 +57,7 @@ export const useSEO = (customSlug = null, language = 'en', fallbackSeo = null) =
           }
         }
       } catch (err) {
-        console.error('Error loading SEO data:', err);
+        console.error('Error loading static SEO data:', err);
         setError(err);
         
         // Apply fallback or default SEO on error
@@ -75,7 +81,7 @@ export const useSEO = (customSlug = null, language = 'en', fallbackSeo = null) =
     error,
     // Utility functions
     refreshSeo: () => {
-      seoApi.clearCache(customSlug || getSlugFromPath(location.pathname), language);
+      // seoApi.clearCache(customSlug || getSlugFromPath(location.pathname), language); // Commented out - using static data
       // Trigger reload by changing a dependency
       setLoading(true);
     }
@@ -126,7 +132,7 @@ const getSlugFromPath = (pathname) => {
  */
 const applySeoToDocument = (seoData) => {
   // Update document title
-  document.title = seoData.meta_title || seoData.page_title || 'Earth Movers Training Academy';
+  document.title = seoData.meta_title || seoData.page_title || INSTITUTION_INFO.name;
   
   // Update meta description
   if (seoData.meta_description) {
@@ -180,7 +186,7 @@ const applySeoToDocument = (seoData) => {
  */
 const applyDefaultSeo = (slug) => {
   const defaultSeo = {
-    meta_title: 'Earth Movers Training Academy | Heavy Equipment Training',
+    meta_title: `${INSTITUTION_INFO.name} | Heavy Equipment Training`,
     meta_description: 'Professional heavy equipment training academy offering certified courses for excavator, bulldozer, and crane operators.',
     meta_keywords: 'heavy equipment training, excavator certification, bulldozer training, crane operator course'
   };
@@ -239,10 +245,11 @@ const updateLinkTag = (rel, href) => {
 export const usePreloadSEO = (slug, language = 'en') => {
   useEffect(() => {
     if (slug) {
-      // Preload SEO data in background
-      seoApi.getPageSeo(slug, language).catch(error => {
-        console.warn(`Failed to preload SEO for ${slug}:`, error);
-      });
+      // Preload SEO data in background - using static data, no need for actual preloading
+      // seoApi.getPageSeo(slug, language).catch(error => {
+      //   console.warn(`Failed to preload SEO for ${slug}:`, error);
+      // });
+      console.log(`SEO preload requested for ${slug} - using static data, no action needed`);
     }
   }, [slug, language]);
 };
