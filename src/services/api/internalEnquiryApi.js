@@ -1,11 +1,18 @@
 import httpClient from '@/services/utils/httpClient';
 
 class InternalEnquiryApi {
-  // Get all enquiries with pagination
-  async getEnquiries(page = 1, limit = 10) {
+  // Get all enquiries with pagination and optional filters
+  async getEnquiries(page = 1, limit = 10, filters = {}) {
     try {
+      const params = { page, limit };
+      if (filters.enquiry_type) {
+        params.enquiry_type = filters.enquiry_type;
+      }
+      if (filters.status) {
+        params.status = filters.status;
+      }
       const response = await httpClient.get(`/internal/enquiry`, {
-        params: { page, limit }
+        params
       });
       return response.data;
     } catch (error) {
@@ -87,6 +94,26 @@ class InternalEnquiryApi {
       return response.data;
     } catch (error) {
       console.error('Error deleting enquiry:', error);
+      throw error;
+    }
+  }
+
+  // Create offline enquiry
+  async createOfflineEnquiry(enquiryData) {
+    try {
+      const response = await httpClient.post(`/internal/enquiry/create`, {
+        name: enquiryData.name,
+        phone: enquiryData.phone,
+        email: enquiryData.email,
+        course_id: enquiryData.course_id,
+        course_name: enquiryData.course_name,
+        message: enquiryData.message || '',
+        enquiry_type: 'offline',
+        source: 'website'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating offline enquiry:', error);
       throw error;
     }
   }

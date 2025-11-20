@@ -13,11 +13,17 @@ import {
 
 export default function DatePickerWithRange({
   className,
+  date: externalDate,
+  setDate: externalSetDate,
 }) {
-  const [date, setDate] = React.useState({
+  const [internalDate, setInternalDate] = React.useState({
     from: new Date(2022, 0, 20),
     to: addDays(new Date(2022, 0, 20), 20),
-  })
+  });
+
+  // Use external date/setDate if provided, otherwise use internal state
+  const date = externalDate || internalDate;
+  const setDate = externalSetDate || setInternalDate;
 
   return (
     <div className={mergeClasses("grid gap-2", className)}>

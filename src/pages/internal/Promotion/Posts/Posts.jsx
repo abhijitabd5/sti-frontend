@@ -6,6 +6,7 @@ import promotionPartnerApi from '@/services/api/promotionPartnerApi';
 
 import { EyeIcon, PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, LinkIcon } from '@heroicons/react/24/outline';
 import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
+import { getSourceLabel } from '@/config/constants';
 
 const platformBadge = (platform) => {
   const map = {
@@ -22,6 +23,8 @@ const platformBadge = (platform) => {
   return map[platform] || map.other;
 };
 
+
+
 const StatusBadge = ({ is_active, status }) => {
   const effective = status || (is_active ? 'active' : 'inactive');
   const map = {
@@ -32,57 +35,7 @@ const StatusBadge = ({ is_active, status }) => {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${map[effective] || map.inactive}`}>{effective.charAt(0).toUpperCase()+effective.slice(1)}</span>;
 };
 
-function CopyLinkModal({ open, onClose, post, partner }) {
-  const [platform, setPlatform] = useState(post?.post_platform || 'facebook');
-  useEffect(()=>{ if(open){ setPlatform(post?.post_platform || 'facebook'); } }, [open, post]);
-  const base = typeof window !== 'undefined' ? window.location.origin : '';
-  const link = useMemo(()=>{
-    const code = partner?.referral_code || '';
-    const postId = post?.id || '';
-    const src = platform || '';
-    return `${base}/ref?code=${encodeURIComponent(code)}&post=${encodeURIComponent(postId)}&source=${encodeURIComponent(src)}`;
-  }, [base, partner, post, platform]);
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity bg-gray-500/60 dark:bg-gray-900/70" aria-hidden="true" onClick={onClose} />
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        <div className="relative z-[10000] inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white inline-flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" /> Copy Referral Link
-            </h3>
-          </div>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Select Source Platform</label>
-              <select value={platform} onChange={(e)=>setPlatform(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm">
-                <option value="facebook">Facebook</option>
-                <option value="instagram">Instagram</option>
-                <option value="youtube">YouTube</option>
-                <option value="tiktok">TikTok</option>
-                <option value="whatsapp">WhatsApp</option>
-                <option value="threads">Threads</option>
-                <option value="offline">Offline</option>
-                <option value="sms_campaign">SMS Campaign</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Generated Link</label>
-              <input value={link} readOnly className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-gray-50 dark:bg-gray-900/60 text-sm" />
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end gap-2">
-            <button onClick={onClose} className="btn">Cancel</button>
-            <button onClick={async()=>{ try{ await navigator.clipboard.writeText(link); }catch{}; onClose(); }} className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700">Copy Link</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+
 
 export default function Posts() {
   const navigate = useNavigate();
@@ -95,8 +48,7 @@ export default function Posts() {
   const [status, setStatus] = useState('');
   const [source, setSource] = useState('');
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [copyTarget, setCopyTarget] = useState(null);
-  const [copyPartner, setCopyPartner] = useState(null);
+  const [copiedPostId, setCopiedPostId] = useState(null);
 
   const fetchPartners = async () => {
     try {
@@ -144,13 +96,22 @@ export default function Posts() {
 
   const serialStart = useMemo(() => (pagination.page - 1) * pagination.limit, [pagination.page, pagination.limit]);
 
-  const openCopyModal = async (post) => {
-    setCopyTarget(post);
+  const copyLink = async (post) => {
     try {
       const res = await promotionPartnerApi.getPartner(post.partner_id);
-      if (res.success) setCopyPartner(res.data);
-      else setCopyPartner(null);
-    } catch { setCopyPartner(null); }
+      const partner = res.success ? res.data : null;
+      const base = typeof window !== 'undefined' ? window.location.origin : '';
+      const code = partner?.referral_code || '';
+      const postId = post.id || '';
+      const src = post.post_platform || '';
+      const link = `${base}/ref?code=${encodeURIComponent(code)}&post=${encodeURIComponent(postId)}&source=${encodeURIComponent(src)}`;
+      
+      await navigator.clipboard.writeText(link);
+      setCopiedPostId(post.id);
+      setTimeout(() => setCopiedPostId(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+    }
   };
 
   return (
@@ -206,6 +167,7 @@ export default function Posts() {
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created At</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Partner</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Source</th>
@@ -216,17 +178,18 @@ export default function Posts() {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700/60">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Loading...</td></tr>
               ) : posts.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No posts found</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No posts found</td></tr>
               ) : (
                 posts.map((post) => (
                   <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{post.created_at ? new Date(post.created_at).toLocaleDateString() : '-'}</td>
                     <td className="px-4 py-3 text-sm text-blue-600 dark:text-blue-400 hover:underline cursor-pointer" onClick={()=>navigate(`/admin/promotion/posts/${post.id}`)}>{post.title}</td>
                     <td className="px-4 py-3 text-sm">
                       <button className="text-gray-800 dark:text-gray-100 hover:underline" onClick={()=>navigate(`/admin/promotion/partners/${post.partner_id}`)}>{post.partner_name}</button>
                     </td>
-                    <td className="px-4 py-3 text-sm"><span className={`px-2 py-0.5 rounded text-xs font-medium ${platformBadge(post.post_platform)}`}>{post.post_platform}</span></td>
+                    <td className="px-4 py-3 text-sm"><span className={`px-2 py-0.5 rounded text-xs font-medium ${platformBadge(post.post_platform)}`}>{getSourceLabel(post.post_platform)}</span></td>
                     <td className="px-4 py-3 text-sm"><StatusBadge is_active={post.is_active} status={post.status} /></td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{post.stats?.clicks ?? '-'}</td>
                     <td className="px-4 py-3">
@@ -240,9 +203,16 @@ export default function Posts() {
                         <button onClick={() => setDeleteTarget(post)} className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400" title="Delete">
                           <TrashIcon className="h-4 w-4" />
                         </button>
-                        <button onClick={() => openCopyModal(post)} className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" title="Copy Link">
-                          <LinkIcon className="h-4 w-4" />
-                        </button>
+                        <div className="relative">
+                          <button onClick={() => copyLink(post)} className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" title={copiedPostId === post.id ? "Copied!" : "Copy Link"}>
+                            <LinkIcon className="h-4 w-4" />
+                          </button>
+                          {copiedPostId === post.id && (
+                            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                              Copied!
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -272,7 +242,7 @@ export default function Posts() {
         message="Are you sure you want to delete this post? This action cannot be undone."
       />
 
-      <CopyLinkModal open={!!copyTarget} onClose={()=>{ setCopyTarget(null); setCopyPartner(null); }} post={copyTarget} partner={copyPartner} />
+
     </AdminLayout>
   );
 }

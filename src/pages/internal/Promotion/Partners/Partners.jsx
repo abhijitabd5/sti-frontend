@@ -6,7 +6,7 @@ import promotionPartnerApi from '@/services/api/promotionPartnerApi';
 // Icons
 import { EyeIcon, PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, ClipboardIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 
-const StatusBadge = ({ status, is_active }) => {
+const StatusBadge = ({ is_active, status }) => {
   const effective = status || (is_active ? 'active' : 'inactive');
   const map = {
     active: 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-300',
@@ -148,10 +148,6 @@ function Partners() {
             <input type="date" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
             <input type="date" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
             <button onClick={() => fetchList(1)} className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700">Apply</button>
-            <button onClick={exportCsv} className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700">Export CSV</button>
-            <button onClick={() => navigate('/admin/promotion/partners/create')} className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600">
-              <PlusIcon className="h-4 w-4 mr-2" /> Add Partner
-            </button>
           </div>
         </div>
 
@@ -160,6 +156,7 @@ function Partners() {
             <thead className="bg-gray-50 dark:bg-gray-700/50">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">#</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created At</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Mobile</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Referral Code</th>
@@ -169,13 +166,14 @@ function Partners() {
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700/60">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Loading...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Loading...</td></tr>
               ) : partners.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No partners found</td></tr>
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">No partners found</td></tr>
               ) : (
                 partners.map((p, idx) => (
                   <tr key={p.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                     <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">{serialStart + idx + 1}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 font-medium">{p.name}</td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{p.mobile}</td>
                     <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
@@ -186,7 +184,7 @@ function Partners() {
                         </button>
                       </div>
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={p.status} is_active={p.is_active} /></td>
+                    <td className="px-4 py-3"><StatusBadge is_active={p.is_active} status={p.status} /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center space-x-2">
                         <button onClick={() => navigate(`/admin/promotion/partners/${p.id}`)} className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" title="View">

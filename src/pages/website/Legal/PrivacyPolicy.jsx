@@ -1,8 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import WebsiteLayout from "@/components/common/Layouts/WebsiteLayout";
+import { useSEO } from '@/hooks/useSEO';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const PrivacyPolicy = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('privacy-policy', 'en');
+  
   return (
     <WebsiteLayout className="pt-16 lg:pt-20">
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
@@ -17,7 +22,7 @@ const PrivacyPolicy = () => {
             <section>
               <h2 className="h3 mb-4">हमारे बारे में</h2>
               <p className="text-base leading-relaxed">
-                Earth Movers Training Academy में आपका स्वागत है। हम एक छोटा,
+                {INSTITUTION_INFO.name} में आपका स्वागत है। हम एक छोटा,
                 विश्वस्त प्रशिक्षण संस्थान हैं जो भारी मशीनरी ऑपरेटर्स को
                 प्रशिक्षण देते हैं। हम आपकी निजी जानकारी को सुरक्षित रखने के लिए
                 प्रतिबद्ध हैं।
@@ -116,13 +121,12 @@ const PrivacyPolicy = () => {
               </p>
               <div className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
                 <p className="font-semibold mb-2">
-                  Earth Movers Training Academy
+                  {INSTITUTION_INFO.name}
                 </p>
-                <p>फोन: +91 9175113022</p>
-                <p>ईमेल: shahabuddintraining@gmail.com</p>
+                <p>फोन: {INSTITUTION_INFO.contact.mobile.primary}, {INSTITUTION_INFO.contact.mobile.secondary}</p>
+                <p>ईमेल: {INSTITUTION_INFO.contact.email}</p>
                 <p>
-                  पता: Beside NH-2 At Barkatha, Barhi, Hazaribagh, Jharkhand
-                  (825323)
+                  पता: {INSTITUTION_INFO.contact.address}
                 </p>
               </div>
             </section>

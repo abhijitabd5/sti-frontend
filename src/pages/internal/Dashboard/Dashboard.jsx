@@ -1,89 +1,61 @@
 import React from "react";
 
 import AdminLayout from "@/components/common/Layouts/AdminLayout";
-import FilterButton from "@/components/ui/Internal/Dropdown/DropdownFilter";
-import Datepicker from "@/components/ui/Internal/DatePicker/Datepicker";
-import DashboardStatCard from "@/pages/internal/Dashboard/components/DashboardStatCard";
-import DashboardBarChart from "@/pages/internal/Dashboard/components/DashboardBarChart";
-import DashboardDoughnutChart from "@/pages/internal/Dashboard/components/DashboardDoughnutChart";
+
+import DashboardStatsCards from "@/pages/internal/Dashboard/components/DashboardStatsCards";
+import DashboardIncomeVsExpenses from "@/pages/internal/Dashboard/components/DashboardIncomeVsExpenses";
+import DashboardExpensesByCategory from "@/pages/internal/Dashboard/components/DashboardExpensesByCategory";
 import DashboardSocialTraffic from "@/pages/internal/Dashboard/components/DashboardSocialTraffic";
-import DashboardRecentActivity from "@/pages/internal/Dashboard/components/DashboardRecentActivity";
+import DashboardStudentsPerState from "@/pages/internal/Dashboard/components/DashboardStudentsPerState";
+
+
 
 function Dashboard() {
-  const resData = {
-    students: {
-      title: "Total Students",
-      value: "2,780",
-      percentage: "+49%",
-      links: {
-        link1Text: "After Aug 2025",
-        link2Text: "Before Aug 2025",
-      },
-    },
-    faculty: {
-      title: "Total Faculty",
-      value: "150",
-      percentage: "+12%",
-      links: {
-        link1Text: "Active Faculty",
-        link2Text: "Retired Faculty",
-      },
-    },
-    enrollments: {
-      title: "New Enrollments",
-      value: "800",
-      percentage: "+25%",
-      links: {
-        link1Text: "Current Year",
-        link2Text: "Next Year",
-      },
-    },
-  };
 
   return (
     <AdminLayout>
-      {/* Dashboard actions */}
-      <div className="sm:flex sm:justify-between sm:items-center mb-8">
-        {/* Left: Title */}
-        <div className="mb-4 sm:mb-0">
-          <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-            Dashboard
-          </h1>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-          {/* Filter button */}
-          <FilterButton align="right" />
-          {/* Datepicker built with React Day Picker */}
-          <Datepicker align="right" />
-          {/* Add view button */}
-          <button className="btn bg-gray-900 text-gray-100 hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-800 dark:hover:bg-white">
-            <svg
-              className="fill-current shrink-0 xs:hidden"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-            >
-              <path d="M15 7H9V1c0-.6-.4-1-1-1S7 .4 7 1v6H1c-.6 0-1 .4-1 1s.4 1 1 1h6v6c0 .6.4 1 1 1s1-.4 1-1V9h6c.6 0 1-.4 1-1s-.4-1-1-1z" />
-            </svg>
-            <span className="max-xs:sr-only">Add View</span>
-          </button>
-        </div>
+      {/* Dashboard Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
+          Dashboard
+        </h1>
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-12 gap-6">
-        {/*  */}
-        <DashboardStatCard data={resData.faculty} />
-        {/*  */}
-        <DashboardBarChart />
-        {/*  */}
-        <DashboardDoughnutChart />
-        {/* */}
-        <DashboardSocialTraffic />
-        {/**/}
-        <DashboardRecentActivity />
+      {/* Dashboard Layout */}
+      <div className="space-y-6">
+        {/* Row 1: Stats Cards (Left) + Students per State Chart (Right) */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left Side - Stats Cards */}
+          <div className="col-span-12 lg:col-span-4 flex">
+            <DashboardStatsCards />
+          </div>
+          
+          {/* Right Side - Students per State Chart */}
+          <div className="col-span-12 lg:col-span-8 flex">
+            <DashboardStudentsPerState />
+          </div>
+        </div>
+
+        {/* Row 2: Income vs Expenses Bar Chart - Full Width */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12">
+            <DashboardIncomeVsExpenses />
+          </div>
+        </div>
+
+        {/* Row 3: Social Traffic - Full Width */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12">
+            <DashboardSocialTraffic />
+          </div>
+        </div>
+
+        {/* Row 4: Expenses by Category - Full Width */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12">
+            <DashboardExpensesByCategory />
+          </div>
+        </div>
       </div>
     </AdminLayout>
   );

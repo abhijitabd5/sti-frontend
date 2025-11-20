@@ -3,8 +3,12 @@ import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import galleryApi from '@/services/api/galleryApi';
+import { useSEO } from '@/hooks/useSEO';
 
 const Videos = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('gallery-videos', 'en');
+  
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [galleryVideos, setGalleryVideos] = useState([]);

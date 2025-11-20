@@ -28,7 +28,8 @@ class EnquiryApi {
         email: enquiryData.email,
         course_id: enquiryData.course_id,
         course_name: enquiryData.course_name,
-        message: enquiryData.message || ''
+        message: enquiryData.message || '',
+        enquiry_type: enquiryData.enquiry_type || 'contact_us'
       });
       return response.data;
     } catch (error) {

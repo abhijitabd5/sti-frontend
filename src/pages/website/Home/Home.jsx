@@ -3,12 +3,14 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import HeroSection from '@/pages/website/Home/components/HeroSection';
 import CoursesMarquee from '@/pages/website/Home/components/CoursesMarquee';
 import AboutSection from '@/pages/website/Home/components/AboutSection';
-import CoursesSection from '@/pages/website/Home/components/CoursesSection';
+import CallToActionSection from '@/pages/website/Home/components/CallToActionSection';
 import TestimonialsSection from '@/pages/website/Home/components/TestimonialsSection';
 import ContactSection from '@/pages/website/Home/components/ContactSection';
 import { websiteApi } from '@/services/api/websiteApi';
 import galleryApi from '@/services/api/galleryApi';
 import placeholderImage from "@/assets/images/placeholder-image.jpg";
+import { useSEO } from '@/hooks/useSEO';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 // Hero slide section slugs
 const HERO_SLIDE_SLUGS = [
@@ -17,23 +19,25 @@ const HERO_SLIDE_SLUGS = [
   'home-hero-slide-three'
 ];
 
-// Default hero slide content for JCB training institute
+// Default hero slide content for the training institute
 const DEFAULT_HERO_SLIDE = {
-  title: 'JCB & Heavy Equipment Training',
+  title: 'Heavy Equipment Training Excellence',
   subtitle: 'Master the Skills, Build Your Future',
-  description: 'Industry-certified training programs designed to make you an expert operator. Hands-on experience with modern JCB equipment and expert instructors.',
+  description: `Industry-certified training programs designed to make you an expert operator. Hands-on experience with modern equipment and expert instructors at ${INSTITUTION_INFO.name}.`,
   ctaText: 'Get Started',
   ctaLink: '/courses'
 };
 
 const Home = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('home', 'en');
+  
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
     heroSlides: [],
     scrollingCourses: [],
     courses: [],
-    testimonials: [],
-    aboutInfo: null
+    testimonials: []
   });
   const [error, setError] = useState(null);
 
@@ -87,21 +91,18 @@ const Home = () => {
         const [
           scrollingCourses,
           courses,
-          testimonials,
-          aboutInfo
+          testimonials
         ] = await Promise.all([
           websiteApi.getScrollingCourses(),
           websiteApi.getCourses(6), // Limit to 6 courses for the main section
-          websiteApi.getTestimonials(),
-          websiteApi.getAboutInfo()
+          websiteApi.getTestimonials()
         ]);
 
         setData({
           heroSlides,
           scrollingCourses,
           courses,
-          testimonials,
-          aboutInfo
+          testimonials
         });
       } catch (err) {
         console.error('Error loading page data:', err);
@@ -122,7 +123,7 @@ const Home = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-4 border-orange-500 mx-auto mb-4"></div>
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-              Loading Shahabuddin Training Institute Website
+              Loading {INSTITUTION_INFO.name} Website
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
               Please wait while we prepare your experience...
@@ -174,10 +175,10 @@ const Home = () => {
       <CoursesMarquee/>
       
       {/* About Section */}
-      <AboutSection aboutInfo={data.aboutInfo} />
+      <AboutSection />
       
-      {/* Main Courses Section */}
-      <CoursesSection courses={data.courses} />
+      {/* Call to Action Section */}
+      <CallToActionSection />
       
       {/* Testimonials Section */}
       <TestimonialsSection testimonials={data.testimonials} />

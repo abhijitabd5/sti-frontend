@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import galleryApi from "@/services/api/galleryApi";
 import placeholderImage from "@/assets/images/placeholder-image.jpg";
 import placeholderVideo from "@/assets/videos/placeholder-video.mp4";
+import { INSTITUTION_INFO, ABOUT_INFO } from '@/config/constants';
 
-const AboutSection = ({ aboutInfo }) => {
+const AboutSection = () => {
   const [galleryImage, setGalleryImage] = useState(null);
   const [imageError, setImageError] = useState(false);
   const [galleryVideo, setGalleryVideo] = useState(null);
@@ -35,26 +36,7 @@ const AboutSection = ({ aboutInfo }) => {
 
     loadGalleryMedia();
   }, []);
-  if (!aboutInfo) {
-    return (
-      <section className="py-16 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/3 mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-2/3 mx-auto mb-8"></div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="space-y-4">
-                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
-                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-5/6"></div>
-                <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-4/5"></div>
-              </div>
-              <div className="h-64 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
+
 
   return (
     <section className="py-16 bg-white dark:bg-gray-900">
@@ -62,10 +44,10 @@ const AboutSection = ({ aboutInfo }) => {
         {/* Section Header */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            {aboutInfo.title}
+            {ABOUT_INFO.title}
           </h2>
           <p className="text-xl text-orange-500 dark:text-orange-400 font-semibold mb-6">
-            {aboutInfo.subtitle}
+            {ABOUT_INFO.subtitle}
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 mx-auto"></div>
         </div>
@@ -74,7 +56,7 @@ const AboutSection = ({ aboutInfo }) => {
           {/* Content */}
           <div className="space-y-6">
             <p className="text-lg text-gray-600 dark:text-gray-400 leading-relaxed">
-              {aboutInfo.description}
+              {ABOUT_INFO.description}
             </p>
 
             <div className="bg-orange-50 dark:bg-orange-900/20 p-6 rounded-lg border-l-4 border-orange-500">
@@ -82,7 +64,7 @@ const AboutSection = ({ aboutInfo }) => {
                 Our Mission
               </h3>
               <p className="text-gray-700 dark:text-gray-300">
-                {aboutInfo.mission}
+                {ABOUT_INFO.mission}
               </p>
             </div>
 
@@ -92,7 +74,7 @@ const AboutSection = ({ aboutInfo }) => {
                 Why Choose Us?
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {aboutInfo.features.map((feature, index) => (
+                {ABOUT_INFO.features.map((feature, index) => (
                   <div key={index} className="flex items-start space-x-3">
                     <div className="flex-shrink-0 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
                       <svg
@@ -150,7 +132,7 @@ const AboutSection = ({ aboutInfo }) => {
             <div className="relative overflow-hidden rounded-lg shadow-xl">
               <img
                 src={imageError ? placeholderImage : (galleryImage || placeholderImage)}
-                alt="Earth Movers Training Academy Facility"
+                alt={`${INSTITUTION_INFO.name} Facility`}
                 className="w-full h-96 object-cover"
                 onError={() => {
                   setImageError(true);
@@ -182,7 +164,7 @@ const AboutSection = ({ aboutInfo }) => {
                 </div>
                 <div>
                   <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    95%
+                    {INSTITUTION_INFO.placementRate}
                   </div>
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Job Placement Rate
@@ -199,7 +181,7 @@ const AboutSection = ({ aboutInfo }) => {
             Our Track Record
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {aboutInfo.stats.map((stat, index) => (
+            {ABOUT_INFO.stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl md:text-4xl font-bold text-orange-500 mb-2">
                   {stat.value}

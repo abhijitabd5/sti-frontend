@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { getProfile, updateProfile } from '@/services/api/profileApi';
+import { useAuth } from '@/hooks/useAuth';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import ProfileView from './ProfileView';
 import ProfileForm from './ProfileForm';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 
 const Profile = () => {
+  const { updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +55,8 @@ const Profile = () => {
       
       if (response.success) {
         setProfile(response.data);
+        // Update the auth context with the new user data
+        updateUser(response.data);
         setIsEditing(false);
         showToast('success', response.message || 'Profile updated successfully');
       } else {

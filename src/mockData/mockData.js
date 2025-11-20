@@ -1,3 +1,5 @@
+import { ABOUT_INFO } from '@/config/constants';
+
 const MOCK_DATA = {
   heroSlides: [
     {
@@ -141,26 +143,7 @@ const MOCK_DATA = {
     }
   ],
 
-  aboutInfo: {
-    title: "Earth Movers Training Academy",
-    subtitle: "Building Careers, Moving Earth",
-    description: "For over 15 years, Earth Movers Training Academy has been the premier destination for heavy equipment training. We've trained over 2,500 students and maintain a 95% job placement rate.",
-    mission: "To provide world-class heavy equipment training that prepares students for successful careers in construction, mining, and related industries.",
-    features: [
-      "State-of-the-art training facility",
-      "Experienced industry instructors",
-      "Modern fleet of training equipment",
-      "Job placement assistance",
-      "Industry-recognized certifications",
-      "Flexible scheduling options"
-    ],
-    stats: [
-      { label: "Students Trained", value: "2,500+" },
-      { label: "Job Placement Rate", value: "95%" },
-      { label: "Years of Experience", value: "15+" },
-      { label: "Industry Partners", value: "150+" }
-    ]
-  }
+  aboutInfo: ABOUT_INFO
 };
 
 export default MOCK_DATA;

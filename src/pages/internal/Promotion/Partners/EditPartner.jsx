@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import promotionPartnerApi from '@/services/api/promotionPartnerApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 function PartnerForm({ initial = {}, onSubmit, submitting }) {
   const [form, setForm] = useState({
@@ -113,6 +115,7 @@ export default function EditPartner() {
   const [loading, setLoading] = useState(true);
   const [partner, setPartner] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
   useEffect(() => {
     (async () => {
@@ -128,8 +131,18 @@ export default function EditPartner() {
     setSubmitting(true);
     try {
       const res = await promotionPartnerApi.updatePartner(id, payload);
-      if (res.success) navigate(`/admin/promotion/partners/${id}`);
-    } catch (e) { console.error('Update failed', e); }
+      if (res.success) {
+        showSuccess(res.message || 'Partner updated successfully!');
+        setTimeout(() => {
+          navigate(`/admin/promotion/partners/${id}`);
+        }, 1500);
+      } else {
+        showError(res.message || 'Failed to update partner');
+      }
+    } catch (e) { 
+      console.error('Update failed', e);
+      showError('An error occurred while updating the partner');
+    }
     finally { setSubmitting(false); }
   };
 
@@ -159,6 +172,13 @@ export default function EditPartner() {
           <p className="text-xs text-gray-500 mt-4">Last Updated: {new Date(partner.updatedAt).toLocaleString()}</p>
         )}
       </div>
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 }
