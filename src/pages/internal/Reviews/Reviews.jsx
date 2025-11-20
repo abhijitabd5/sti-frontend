@@ -209,10 +209,8 @@ function Reviews() {
       const response = await reviewApi.reorderReviews(reviewOrders);
       if (response.success) {
         setHasOrderChanged(false);
-        console.log('Review order saved successfully');
       }
     } catch (error) {
-      console.error('Error saving review order:', error);
       loadReviews();
       setHasOrderChanged(false);
     } finally {

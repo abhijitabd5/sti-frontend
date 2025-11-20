@@ -176,16 +176,11 @@ function StudentList() {
       if (filters.dateTo) {
         exportParams.end_date = filters.dateTo;
       }
-
-      console.log('Exporting students with filters:', exportParams);
-      console.log('Note: No pagination - exporting ALL matching records');
       
       // Show user what filters are being applied
       const filterCount = Object.keys(exportParams).length;
       if (filterCount === 0) {
-        console.log('No filters applied - exporting ALL students');
       } else {
-        console.log(`Applying ${filterCount} filter(s):`, exportParams);
       }
       
       const response = await studentApi.exportStudents(exportParams);
@@ -206,24 +201,18 @@ function StudentList() {
                                 response.headers['CONTENT-DISPOSITION'];
       let filename = 'Student_Records_Export.xlsx';
       
-      console.log('📋 All response headers:', response.headers);
-      console.log('🔍 Content-Disposition header:', contentDisposition);
       
       if (contentDisposition) {
         // More robust regex to handle different filename formats
         const filenameMatch = contentDisposition.match(/filename\s*=\s*"?([^";\n]+)"?/i);
-        console.log('🎯 Filename match result:', filenameMatch);
         if (filenameMatch && filenameMatch[1]) {
           filename = filenameMatch[1].trim();
-          console.log('✅ Extracted filename:', filename);
         }
       } else {
-        console.log('No Content-Disposition header found - generating timestamped filename');
         
         // Fallback: Generate timestamped filename using Indian timezone
         const timestamp = getTimestamp();
         filename = `Student_Records_${timestamp}.xlsx`;
-        console.log('Generated fallback filename:', filename);
       }
       
       link.setAttribute('download', filename);
@@ -237,8 +226,6 @@ function StudentList() {
       const filterSummary = Object.keys(exportParams).length === 0 
         ? 'all students' 
         : `filtered students (${Object.keys(exportParams).length} filter(s) applied)`;
-      
-      console.log(`Export completed successfully: ${filename} containing ${filterSummary}`);
       
     } catch (error) {
       console.error('Error exporting students:', error);

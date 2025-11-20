@@ -32,8 +32,6 @@ function FlexibleBarChart({ data, width, height, useTimeScale = false }) {
   const legend = useRef(null);
   const { currentTheme } = useThemeProvider();
 
-  console.log('FlexibleBarChart rendered with:', { data, useTimeScale });
-
   // Resolve theme colors once per render
   const {
     textColor,

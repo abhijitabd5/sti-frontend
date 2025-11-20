@@ -19,7 +19,7 @@ const formatRole = (role) => {
   return roleMap[role] || role.charAt(0).toUpperCase() + role.slice(1);
 };
 
-const ProfileView = ({ profile, onEdit }) => {
+const ProfileView = ({ profile, onEdit, onResetPassword }) => {
   if (!profile) {
     return (
       <div className="text-center text-gray-500">
@@ -134,8 +134,14 @@ const ProfileView = ({ profile, onEdit }) => {
           </div>
         </div>
 
-        {/* Footer with Edit Button */}
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700/60 flex justify-end">
+        {/* Footer with Action Buttons */}
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700/60 flex justify-end gap-3">
+          <button
+            onClick={onResetPassword}
+            className="btn border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Reset Password
+          </button>
           <button
             onClick={onEdit}
             className="btn bg-gradient-to-r from-violet-500 to-violet-600 text-white hover:from-violet-600 hover:to-violet-700 shadow-lg"

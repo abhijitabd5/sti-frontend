@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { getProfile, updateProfile } from '@/services/api/profileApi';
+import { getProfile, updateProfile, resetPassword } from '@/services/api/profileApi';
 import { useAuth } from '@/hooks/useAuth';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import ProfileView from './ProfileView';
 import ProfileForm from './ProfileForm';
+import ResetPasswordForm from './ResetPasswordForm';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 
 const Profile = () => {
@@ -11,6 +12,7 @@ const Profile = () => {
   const [profile, setProfile] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState({
     isVisible: false,
@@ -48,6 +50,14 @@ const Profile = () => {
     setIsEditing(false);
   };
 
+  const handleResetPassword = () => {
+    setIsResettingPassword(true);
+  };
+
+  const handleCancelResetPassword = () => {
+    setIsResettingPassword(false);
+  };
+
   const handleSubmitProfile = async (formData) => {
     try {
       setIsSaving(true);
@@ -64,6 +74,25 @@ const Profile = () => {
       }
     } catch (error) {
       const errorMessage = error?.message || 'An error occurred while updating profile';
+      showToast('error', errorMessage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmitResetPassword = async (passwordData) => {
+    try {
+      setIsSaving(true);
+      const response = await resetPassword(passwordData);
+      
+      if (response.success) {
+        setIsResettingPassword(false);
+        showToast('success', response.message || 'Password reset successfully');
+      } else {
+        showToast('error', response.message || 'Failed to reset password');
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'An error occurred while resetting password';
       showToast('error', errorMessage);
     } finally {
       setIsSaving(false);
@@ -119,11 +148,13 @@ const Profile = () => {
       <div className="sm:flex sm:justify-between sm:items-center mb-8">
         <div className="mb-4 sm:mb-0">
           <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-            {isEditing ? 'Edit Profile' : 'My Profile'}
+            {isEditing ? 'Edit Profile' : isResettingPassword ? 'Reset Password' : 'My Profile'}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {isEditing
               ? 'Update your profile information'
+              : isResettingPassword
+              ? 'Change your account password'
               : 'View and manage your profile details'}
           </p>
         </div>
@@ -137,8 +168,18 @@ const Profile = () => {
           onCancel={handleCancelEdit}
           isLoading={isSaving}
         />
+      ) : isResettingPassword ? (
+        <ResetPasswordForm
+          onSubmit={handleSubmitResetPassword}
+          onCancel={handleCancelResetPassword}
+          isLoading={isSaving}
+        />
       ) : (
-        <ProfileView profile={profile} onEdit={handleEditProfile} />
+        <ProfileView 
+          profile={profile} 
+          onEdit={handleEditProfile}
+          onResetPassword={handleResetPassword}
+        />
       )}
 
       {/* Toast Notification */}

@@ -208,7 +208,6 @@ const AddEditTransaction = () => {
         type: transactionType,
       };
 
-      console.log("Form submission data:", finalFormData);
 
       let response;
       if (isEdit) {

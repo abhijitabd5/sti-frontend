@@ -13,7 +13,6 @@ import {
   MagnifyingGlassIcon,
   LanguageIcon,
   ExclamationTriangleIcon,
-  DocumentDuplicateIcon,
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
@@ -95,22 +94,11 @@ function Pages() {
     navigate(`/admin/pages/edit/${pageId}`);
   };
 
-  const handleDuplicate = async (pageId) => {
-    try {
-      const response = await pageApi.duplicatePage(pageId);
-      if (response.success) {
-        loadPages(); // Refresh the list
-        // You could show a success toast here
-      }
-    } catch (error) {
-      console.error('Error duplicating page:', error);
-      // You could show an error toast here
-    }
-  };
+
 
   const getLanguageInfo = (language) => {
     const languageMap = {
-      'en': { name: 'English', flag: '🇺🇸', color: 'blue' },
+      'en': { name: 'English', flag: '', color: 'blue' },
       'hi': { name: 'Hindi', flag: '🇮🇳', color: 'green' },
       'mar': { name: 'Marathi', flag: '🇮🇳', color: 'orange' }
     };
@@ -304,7 +292,7 @@ function Pages() {
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${langInfo.color}-100 text-${langInfo.color}-800 dark:bg-${langInfo.color}-900 dark:text-${langInfo.color}-200`}>
-                          <span className="mr-1">{langInfo.flag}</span>
+                          {langInfo.flag && <span className="mr-1">{langInfo.flag}</span>}
                           {langInfo.name}
                         </span>
                       </td>
@@ -336,25 +324,6 @@ function Pages() {
                           >
                             <PencilIcon className="h-4 w-4" />
                           </button>
-                          
-                          <button
-                            onClick={() => handleDuplicate(page.id)}
-                            className="p-1 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                            title="Duplicate Page"
-                          >
-                            <DocumentDuplicateIcon className="h-4 w-4" />
-                          </button>
-                          
-                          {/* Delete button - commented out as requested */}
-                          {/* 
-                          <button
-                            onClick={() => handleDelete(page.id)}
-                            className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                            title="Delete Page"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                          */}
                         </div>
                       </td>
                     </tr>

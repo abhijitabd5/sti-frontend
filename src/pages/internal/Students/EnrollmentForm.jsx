@@ -293,9 +293,7 @@ function EnrollmentForm() {
         if (documentsToUpload.length > 0) {
           try {
             await uploadDocuments(student_id, documentsToUpload);
-            console.log('Documents uploaded successfully');
           } catch (error) {
-            console.error('Document upload failed:', error);
             documentUploadSuccess = false;
           }
         }
@@ -334,18 +332,7 @@ function EnrollmentForm() {
       const slugs = documentsToUpload.map(row => row.type);
       formData.append('slugs', JSON.stringify(slugs));
 
-      console.log('Uploading documents for student:', studentId);
-      console.log('Documents to upload:', documentsToUpload.map(row => ({ type: row.type, fileName: row.file.name })));
-      console.log('Slugs array:', slugs);
-      
-      // Log FormData contents for debugging
-      console.log('FormData contents:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value instanceof File ? `File: ${value.name}` : value);
-      }
-
       const response = await studentApi.uploadDocuments(studentId, formData);
-      console.log('Document upload response:', response);
       
       if (!response.success) {
         throw new Error(response.message || 'Document upload failed');
