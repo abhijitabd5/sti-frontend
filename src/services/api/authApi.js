@@ -1,48 +1,4 @@
 import httpClient from '../utils/httpClient';
-import { API_ENDPOINTS } from '../utils/apiEndpoints';
-
-// Mock user data based on seeder file
-const MOCK_USERS = [
-  {
-    id: 1,
-    first_name: "Abhijit",
-    last_name: "Abd",
-    mobile: "9175113022",
-    role: "super_admin",
-    password: "12345678",
-    is_active: true,
-    email: "abhijit@earthmovers.edu", // Added for login
-    full_name: "Abhijit Abd",
-    permissions: ["all"], // Super admin has all permissions
-    profile_image: "/api/placeholder/80/80"
-  },
-  {
-    id: 2,
-    first_name: "Account",
-    last_name: "Dept",
-    mobile: "9300333444",
-    role: "account",
-    password: "12345678",
-    is_active: true,
-    email: "account@earthmovers.edu",
-    full_name: "Account Dept",
-    permissions: ["finance", "reports", "students"],
-    profile_image: "/api/placeholder/80/80"
-  },
-  {
-    id: 3,
-    first_name: "Saif",
-    last_name: "Sheikh",
-    mobile: "9834892082",
-    role: "student",
-    password: "12345678",
-    is_active: true,
-    email: "saif@earthmovers.edu",
-    full_name: "Saif Sheikh",
-    permissions: ["profile", "courses", "certificates"],
-    profile_image: "/api/placeholder/80/80"
-  }
-];
 
 // Role-based redirect URLs
 const ROLE_REDIRECTS = {
@@ -96,91 +52,11 @@ export const authApi = {
     }
   },
 
-  // Get current user profile
-  getProfile: async () => {
-    try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.get('/auth/profile');
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const token = localStorage.getItem('token');
-          const storedUser = localStorage.getItem('user');
-          
-          if (token && storedUser) {
-            try {
-              const user = JSON.parse(storedUser);
-              resolve({
-                success: true,
-                data: { user }
-              });
-            } catch {
-              reject({
-                response: {
-                  data: {
-                    success: false,
-                    message: 'Invalid user data'
-                  }
-                }
-              });
-            }
-          } else {
-            reject({
-              response: {
-                data: {
-                  success: false,
-                  message: 'No valid session found'
-                }
-              }
-            });
-          }
-        }, 300);
-      });
-    } catch (error) {
-      console.error('Profile fetch error:', error);
-      throw error;
-    }
-  },
-
   // Forgot password
   forgotPassword: async (identifier) => {
     try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.post(API_ENDPOINTS.FORGOT_PASSWORD, { identifier });
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const user = MOCK_USERS.find(u => 
-            u.mobile === identifier || u.email === identifier
-          );
-
-          if (user) {
-            resolve({
-              success: true,
-              message: 'Password reset instructions have been sent to your registered mobile/email.',
-              data: {
-                reset_token: `mock_reset_token_${Date.now()}`
-              }
-            });
-          } else {
-            reject({
-              response: {
-                data: {
-                  success: false,
-                  message: 'No account found with this mobile/email',
-                  errors: {
-                    identifier: ['Account not found']
-                  }
-                }
-              }
-            });
-          }
-        }, 800);
-      });
+      const response = await httpClient.post('/auth/forgot-password', { identifier });
+      return response.data;
     } catch (error) {
       console.error('Forgot password error:', error);
       throw error;
@@ -190,19 +66,8 @@ export const authApi = {
   // Reset password
   resetPassword: async (resetData) => {
     try {
-      // In production, uncomment the line below:
-      // const response = await httpClient.post(API_ENDPOINTS.RESET_PASSWORD, resetData);
-      // return response.data;
-
-      // Mock response for development
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            success: true,
-            message: 'Password has been reset successfully. You can now login with your new password.'
-          });
-        }, 1000);
-      });
+      const response = await httpClient.post('/auth/reset-password', resetData);
+      return response.data;
     } catch (error) {
       console.error('Reset password error:', error);
       throw error;
@@ -210,7 +75,7 @@ export const authApi = {
   },
 
   // Verify token
-  verifyToken: async (token) => {
+  verifyToken: async () => {
     try {
       const response = await httpClient.get('/auth/me');
       return response.data;

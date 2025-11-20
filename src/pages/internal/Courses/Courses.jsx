@@ -191,7 +191,6 @@ function Courses() {
   };
 
   const handleAddLanguage = (courseGroupId) => {
-    console.log('Navigating to add-language with courseId:', courseGroupId);
     navigate(`/admin/courses/add-language/${courseGroupId}`);
   };
 
@@ -207,10 +206,8 @@ function Courses() {
       if (response.success) {
         setHasOrderChanged(false);
         // Show success message (you can add a toast notification here)
-        console.log('Course order saved successfully');
       }
     } catch (error) {
-      console.error('Error saving course order:', error);
       // Revert on error
       loadCourses();
       setHasOrderChanged(false);

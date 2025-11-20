@@ -14,8 +14,7 @@ import {
   GlobeAltIcon,
   PhotoIcon,
   XMarkIcon,
-  CheckIcon,
-  DocumentDuplicateIcon
+  CheckIcon
 } from '@heroicons/react/24/outline';
 
 function ViewPage() {
@@ -55,22 +54,11 @@ function ViewPage() {
     navigate(`/admin/pages/edit/${page.id}`);
   };
 
-  const handleDuplicate = async () => {
-    try {
-      const response = await pageApi.duplicatePage(page.id);
-      if (response.success) {
-        navigate('/admin/pages', {
-          state: { message: 'Page duplicated successfully!' }
-        });
-      }
-    } catch (error) {
-      console.error('Error duplicating page:', error);
-    }
-  };
+
 
   const getLanguageInfo = (language) => {
     const languages = {
-      'en': { name: 'English', flag: '🇺🇸', color: 'blue' },
+      'en': { name: 'English', flag: '', color: 'blue' },
       'hi': { name: 'Hindi', flag: '🇮🇳', color: 'green' },
       'mar': { name: 'Marathi', flag: '🇮🇳', color: 'orange' }
     };
@@ -134,13 +122,6 @@ function ViewPage() {
 
         <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
           <button
-            onClick={handleDuplicate}
-            className="btn bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg"
-          >
-            <DocumentDuplicateIcon className="h-4 w-4 mr-2" />
-            Duplicate
-          </button>
-          <button
             onClick={handleEdit}
             className="btn bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 text-white hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 shadow-lg"
           >
@@ -159,7 +140,7 @@ function ViewPage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-2xl">{languageInfo.flag}</span>
+                    {languageInfo.flag && <span className="text-2xl">{languageInfo.flag}</span>}
                     <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                       {page.name}
                     </h2>

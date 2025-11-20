@@ -33,7 +33,6 @@ function App() {
   useEffect(() => {
     // Preload critical SEO pages for better performance
     seoApi.preloadCriticalPages('en');
-    console.log('SEO system initialized');
   }, []);
 
   useEffect(() => {

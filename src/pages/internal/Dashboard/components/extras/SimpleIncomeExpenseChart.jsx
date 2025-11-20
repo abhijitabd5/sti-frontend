@@ -25,14 +25,11 @@ function SimpleIncomeExpenseChart() {
       const response = await transactionsApi.getIncomeVsExpense(params);
 
       if (response.success && response.data && response.data.chart_data) {
-        console.log(`SimpleChart - ${selectedPeriod} data:`, response.data.chart_data);
         setChartData(response.data.chart_data);
       } else {
-        console.log(`SimpleChart - No data for ${selectedPeriod}`);
         setChartData([]);
       }
     } catch (error) {
-      console.error('Error fetching income vs expense data:', error);
       setChartData([]);
     } finally {
       setLoading(false);

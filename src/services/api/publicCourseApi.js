@@ -20,7 +20,6 @@ export const publicCourseApi = {
     const response = await httpClient.get('/public/courses', {
       params: { language, sortBy, sortOrder },
     });
-    console.log(extractData(response));
     return extractData(response);
   },
 
@@ -28,7 +27,6 @@ export const publicCourseApi = {
   async getCourseById(id) {
     if (!id) throw new Error('Course ID is required');
     const response = await httpClient.get(`/public/courses/view/${id}`);
-    console.log(extractData(response));
     return extractData(response);
   },
 };

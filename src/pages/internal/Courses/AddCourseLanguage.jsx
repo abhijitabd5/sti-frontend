@@ -43,7 +43,6 @@ function AddCourseLanguage() {
 const loadBaseCourse = async () => {
   try {
     setInitialLoading(true);
-    console.log("Course Group Id is ", courseGroupId);
 
     const response = await courseApi.getCourseVariantsByGroupId(courseGroupId);
     if (response.success) {

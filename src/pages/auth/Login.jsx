@@ -310,7 +310,6 @@ const Login = () => {
               isOpen={isEnrollModalOpen}
               onClose={() => setIsEnrollModalOpen(false)}
               onSuccess={() => {
-                console.log('Enquiry submitted successfully');
               }}
             />
           </div>
