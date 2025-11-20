@@ -27,7 +27,6 @@ const CoursesMarquee = ({ courses = [] }) => {
           sortBy: "display_order",
           sortOrder: "ASC",
         });
-        console.log(data);
         if (!active) return;
         setFetchedCourses(Array.isArray(data) ? data : []);
       } catch (e) {

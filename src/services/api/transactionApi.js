@@ -113,13 +113,7 @@ class TransactionApi {
           }
         }
       });
-      
-      // Debug logging
-      console.log('Creating transaction with data:', transactionData);
-      console.log('FormData entries:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, ':', value instanceof File ? `File: ${value.name}` : value);
-      }
+
       
       const response = await httpClient.post('/internal/transactions/create', formData, {
         headers: {
@@ -273,16 +267,13 @@ class TransactionApi {
         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
         if (filenameMatch && filenameMatch[1]) {
           filename = filenameMatch[1];
-          console.log('Extracted filename from header:', filename);
         }
       }
       
       // Fallback: Generate timestamped filename using Indian timezone
       if (!filename) {
-        console.log('No Content-Disposition header found - generating timestamped filename');
         const timestamp = getTimestamp();
         filename = `${params.type || 'income'}_transactions_export_${timestamp}.xlsx`;
-        console.log('Generated fallback filename:', filename);
       }
       
       // Create blob and download

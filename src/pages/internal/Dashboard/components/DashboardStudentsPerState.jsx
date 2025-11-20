@@ -128,22 +128,17 @@ function DashboardStudentsPerState() {
         // Using Mock Data
         const { getMockStudentsPerStateData } = await import('@/data/mockStudentsPerStateData');
         response = await getMockStudentsPerStateData();
-        console.log('📊 Using MOCK data for Students per State');
       } else {
         // Using Real API
         response = await dashboardApi.getStudentsPerState();
-        console.log('🌐 Using REAL API data for Students per State');
       }
 
       if (response.success && response.data && response.data.states) {
         setAllStatesData(response.data.states);
-        console.log(`✅ Loaded ${response.data.states.length} states data`);
       } else {
         setAllStatesData([]);
-        console.warn('⚠️ No states data received');
       }
     } catch (error) {
-      console.error('❌ Error fetching students per state data:', error);
       setAllStatesData([]);
     } finally {
       setLoading(false);

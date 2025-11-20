@@ -243,10 +243,8 @@ function Gallery() {
       
       if (response.success) {
         // Success feedback could be added here
-        console.log('Order saved successfully');
       }
     } catch (error) {
-      console.error('Error saving order:', error);
       // Revert on error
       loadGalleryItems();
     } finally {

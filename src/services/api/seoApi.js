@@ -20,7 +20,6 @@ class SeoApi {
     // Critical pages to preload
     this.preloadedPages = new Set(['home', 'courses']);
     
-    console.log('SeoApi initialized with static data mode:', this.useStaticData);
   }
 
   /**
@@ -35,11 +34,8 @@ class SeoApi {
     // Check cache first
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      console.log(`SEO cache hit for: ${cacheKey}`);
       return cached.data;
     }
-
-    console.log(`SEO cache miss, fetching: ${cacheKey}`);
 
     // Always use static data - dynamic requests commented out
     let data;
@@ -74,7 +70,6 @@ class SeoApi {
    * @param {string} language - Language code
    */
   async preloadCriticalPages(language = 'en') {
-    console.log(`Preloading critical SEO pages for language: ${language}`);
     
     const promises = Array.from(this.preloadedPages).map(slug => 
       this.getPageSeo(slug, language).catch(error => {
@@ -86,9 +81,7 @@ class SeoApi {
     try {
       const results = await Promise.all(promises);
       const successful = results.filter(result => result !== null).length;
-      console.log(`SEO preload completed: ${successful}/${this.preloadedPages.size} pages loaded`);
     } catch (error) {
-      console.warn('SEO preload failed:', error);
     }
   }
 
@@ -167,7 +160,6 @@ class SeoApi {
       // Remove oldest entry
       const oldestKey = this.cache.keys().next().value;
       this.cache.delete(oldestKey);
-      console.log(`SEO cache size limit reached, removed: ${oldestKey}`);
     }
 
     this.cache.set(key, {
@@ -175,7 +167,6 @@ class SeoApi {
       timestamp: Date.now()
     });
 
-    console.log(`SEO data cached: ${key} (cache size: ${this.cache.size})`);
   }
 
   /**
@@ -187,10 +178,8 @@ class SeoApi {
     if (slug && language) {
       const cacheKey = `${slug}-${language}`;
       this.cache.delete(cacheKey);
-      console.log(`SEO cache cleared for: ${cacheKey}`);
     } else {
       this.cache.clear();
-      console.log('All SEO cache cleared');
     }
   }
 

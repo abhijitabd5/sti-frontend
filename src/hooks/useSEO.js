@@ -30,12 +30,9 @@ export const useSEO = (customSlug = null, language = 'en', fallbackSeo = null) =
       
       // Skip SEO for admin pages or unrecognized routes
       if (!slug) {
-        console.log(`Skipping SEO for admin/internal page: ${location.pathname}`);
         setLoading(false);
         return;
       }
-      
-      console.log(`Loading SEO data for: ${slug} (${language})`);
 
       try {
         // Use static SEO data directly instead of API call
@@ -44,9 +41,7 @@ export const useSEO = (customSlug = null, language = 'en', fallbackSeo = null) =
         if (page) {
           setSeoData(page);
           applySeoToDocument(page);
-          console.log(`Static SEO applied for: ${slug}`, page);
         } else {
-          console.warn(`No static SEO data found for: ${slug}`);
           
           // Apply fallback SEO if provided
           if (fallbackSeo) {
@@ -190,8 +185,7 @@ const applyDefaultSeo = (slug) => {
     meta_description: 'Professional heavy equipment training academy offering certified courses for excavator, bulldozer, and crane operators.',
     meta_keywords: 'heavy equipment training, excavator certification, bulldozer training, crane operator course'
   };
-  
-  console.log(`Applying default SEO for: ${slug}`);
+
   applySeoToDocument(defaultSeo);
 };
 
@@ -249,7 +243,6 @@ export const usePreloadSEO = (slug, language = 'en') => {
       // seoApi.getPageSeo(slug, language).catch(error => {
       //   console.warn(`Failed to preload SEO for ${slug}:`, error);
       // });
-      console.log(`SEO preload requested for ${slug} - using static data, no action needed`);
     }
   }, [slug, language]);
 };

@@ -95,17 +95,14 @@ const TransactionCategories = () => {
 
   // Modal handlers
   const openCreateModal = () => {
-    console.log('Create Modal Function Triggered');
     setModalState({ isOpen: true, category: null, loading: false });
   };
   
   const openEditModal = (category) => {
-    console.log('Edit Modal Function Triggered');
     setModalState({ isOpen: true, category, loading: false });
   };
   
   const closeModal = () => {
-    console.log('Close Modal Function Triggered');
     setModalState({ isOpen: false, category: null, loading: false });
   };
 
