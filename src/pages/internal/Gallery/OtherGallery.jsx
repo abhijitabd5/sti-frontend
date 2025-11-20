@@ -290,7 +290,7 @@ function OtherGallery() {
                         Media
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Page Name
+                        Title
                       </th>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Slug
@@ -311,64 +311,63 @@ function OtherGallery() {
                       >
                         <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">{item.id}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0">
-                              {item.media_type === 'image' ? (
+                          <div className="flex-shrink-0">
+                            {item.media_type === 'image' ? (
+                              <img 
+                                src={item.media_url} 
+                                alt={item.title}
+                                className="h-12 w-12 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <div className="relative">
                                 <img 
-                                  src={item.media_url} 
+                                  src={item.thumbnail_url || item.media_url} 
                                   alt={item.title}
                                   className="h-12 w-12 rounded-lg object-cover"
                                 />
-                              ) : (
-                                <div className="relative">
-                                  <img 
-                                    src={item.thumbnail_url || item.media_url} 
-                                    alt={item.title}
-                                    className="h-12 w-12 rounded-lg object-cover"
-                                  />
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
-                                    <VideoCameraIcon className="h-5 w-5 text-white" />
-                                  </div>
+                                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-lg">
+                                  <VideoCameraIcon className="h-5 w-5 text-white" />
                                 </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-                                {item.title}
-                              </p>
-                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                                {item.caption}
-                              </p>
-                            </div>
+                              </div>
+                            )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
-                          {item.page_name || selectedPageName}
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                            {item.title}
+                          </p>
+                          {item.caption && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                              {item.caption}
+                            </p>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-800 dark:text-gray-100">
-                              {item.page_slug || selectedPage}
+                              {item.slug || '-'}
                             </span>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(item.page_slug || selectedPage);
-                                  setCopiedSlug(item.id);
-                                  setTimeout(() => setCopiedSlug(null), 2000);
-                                } catch (err) {
-                                  console.error('Failed to copy:', err);
-                                }
-                              }}
-                              className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors rounded hover:bg-gray-100 dark:hover:bg-gray-700"
-                              title={copiedSlug === item.id ? "Copied!" : "Copy slug"}
-                            >
-                              {copiedSlug === item.id ? (
-                                <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
-                              ) : (
-                                <ClipboardIcon className="h-4 w-4" />
-                              )}
-                            </button>
+                            {item.slug && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await navigator.clipboard.writeText(item.slug);
+                                    setCopiedSlug(item.id);
+                                    setTimeout(() => setCopiedSlug(null), 2000);
+                                  } catch (err) {
+                                    console.error('Failed to copy:', err);
+                                  }
+                                }}
+                                className="p-1 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                                title={copiedSlug === item.id ? "Copied!" : "Copy slug"}
+                              >
+                                {copiedSlug === item.id ? (
+                                  <CheckIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                                ) : (
+                                  <ClipboardIcon className="h-4 w-4" />
+                                )}
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3">

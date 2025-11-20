@@ -3,15 +3,21 @@ import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
+import DirectorsDesk from './components/DirectorsDesk';
+import { useSEO } from '@/hooks/useSEO';
+import { INSTITUTION_INFO } from '@/config/constants';
 
 const About = () => {
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('about-us', 'en');
+  
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
 
   const stats = [
-    { number: '5000+', label: 'Graduates Trained' },
-    { number: '95%', label: 'Job Placement Rate' },
-    { number: '25+', label: 'Years of Experience' },
-    { number: '15+', label: 'Industry Partners' }
+    { number: INSTITUTION_INFO.studentsTrained, label: 'Students Trained' },
+    { number: INSTITUTION_INFO.placementRate, label: 'Job Placement Rate' },
+    { number: INSTITUTION_INFO.experience, label: 'Years of Experience' },
+    { number: INSTITUTION_INFO.partners, label: 'Industry Partners' }
   ];
 
   const values = [
@@ -37,67 +43,38 @@ const About = () => {
     }
   ];
 
-  const teamMembers = [
-    {
-      name: 'John Mitchell',
-      position: 'CEO & Lead Instructor',
-      experience: '30+ years experience',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      bio: 'Former construction site supervisor with extensive experience in heavy equipment operations and safety training.'
-    },
-    {
-      name: 'Sarah Rodriguez',
-      position: 'Training Director',
-      experience: '20+ years experience',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b77c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      bio: 'Certified safety instructor specializing in OSHA compliance and heavy equipment safety protocols.'
-    },
-    {
-      name: 'Mike Thompson',
-      position: 'Equipment Operations Specialist',
-      experience: '25+ years experience',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      bio: 'Master operator with expertise in all types of heavy machinery and advanced equipment technologies.'
-    },
-    {
-      name: 'Lisa Chen',
-      position: 'Career Services Manager',
-      experience: '15+ years experience',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-      bio: 'Dedicated to connecting graduates with career opportunities and providing ongoing professional support.'
-    }
-  ];
+
 
   const timeline = [
     {
-      year: '1998',
+      year: INSTITUTION_INFO.establishedYear.toString(),
       title: 'Founded',
-      description: 'Started as a small local training center with a vision to provide quality heavy equipment training.'
+      description: `${INSTITUTION_INFO.name} was established with a vision to provide quality heavy equipment training.`
     },
     {
-      year: '2005',
-      title: 'Expanded Facility',
-      description: 'Opened our current 50-acre training facility with state-of-the-art equipment and classrooms.'
-    },
-    {
-      year: '2010',
-      title: 'Industry Partnerships',
-      description: 'Established partnerships with major construction companies for job placement programs.'
-    },
-    {
-      year: '2015',
-      title: '1000th Graduate',
-      description: 'Celebrated training our 1000th student, marking a major milestone in our journey.'
+      year: '2019',
+      title: 'First Batch Success',
+      description: 'Successfully trained and placed our first batch of students with 100% placement rate.'
     },
     {
       year: '2020',
-      title: 'Digital Innovation',
-      description: 'Integrated advanced simulation technology and online learning components.'
+      title: 'Facility Expansion',
+      description: 'Expanded our training facility with modern equipment and enhanced safety protocols.'
+    },
+    {
+      year: '2021',
+      title: 'Industry Recognition',
+      description: 'Gained recognition from major construction companies for quality training standards.'
+    },
+    {
+      year: '2022',
+      title: '1000+ Students',
+      description: 'Celebrated training over 1000 students with excellent placement records.'
     },
     {
       year: '2024',
-      title: 'Continued Excellence',
-      description: 'Today, we continue to be the leading heavy equipment training institute in the region.'
+      title: 'Continued Growth',
+      description: `Today, we have trained ${INSTITUTION_INFO.studentsTrained} students and maintain partnerships with ${INSTITUTION_INFO.partners} companies.`
     }
   ];
 
@@ -118,10 +95,10 @@ const About = () => {
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            About Our Training Institute
+            About {INSTITUTION_INFO.name}
           </h1>
           <p className="text-xl md:text-2xl text-gray-200 max-w-4xl mx-auto leading-relaxed">
-            For over 25 years, we've been transforming careers through comprehensive heavy equipment training programs, preparing skilled operators for success in the construction and mining industries.
+            Since {INSTITUTION_INFO.establishedYear}, we've been transforming careers through comprehensive heavy equipment training programs, preparing skilled operators for success in the construction and mining industries.
           </p>
         </div>
       </section>
@@ -192,8 +169,11 @@ const About = () => {
         </div>
       </section>
 
+      {/* Director's Desk Section */}
+      <DirectorsDesk />
+
       {/* Values Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -224,51 +204,8 @@ const About = () => {
         </div>
       </section>
 
-      {/* Team Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Meet Our Expert Team
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-              Our experienced instructors and staff are dedicated to providing you with the best training experience possible.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {teamMembers.map((member, index) => (
-              <div key={index} className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group">
-                <div className="relative overflow-hidden">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                    {member.name}
-                  </h3>
-                  <p className="text-orange-500 font-semibold mb-2">
-                    {member.position}
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                    {member.experience}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
-                    {member.bio}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Timeline Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -311,7 +248,7 @@ const About = () => {
       </section>
 
       {/* Facilities Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
+      <section className="py-16 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4">

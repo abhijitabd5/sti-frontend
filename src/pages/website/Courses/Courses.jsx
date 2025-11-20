@@ -5,10 +5,14 @@ import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import { publicCourseApi } from '@/services/api/publicCourseApi';
 import { useLanguage } from '@/contexts/LanguageContext';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
+import { useSEO } from '@/hooks/useSEO';
 
 const Courses = () => {
   const { getCurrentLanguageObj } = useLanguage();
   const languageCode = useMemo(() => getCurrentLanguageObj()?.code || 'en', [getCurrentLanguageObj]);
+
+  // SEO Management
+  const { seoData, loading: seoLoading } = useSEO('courses', languageCode);
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);

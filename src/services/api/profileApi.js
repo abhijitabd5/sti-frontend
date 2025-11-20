@@ -45,3 +45,20 @@ export const updateProfile = async (profileData) => {
     throw error.response?.data || error;
   }
 };
+
+/**
+ * Reset user password
+ * @param {Object} passwordData - Password reset data
+ * @param {string} passwordData.old_password - Current password
+ * @param {string} passwordData.new_password - New password
+ * @param {string} passwordData.confirm_password - Confirm new password
+ * @returns {Promise} Success response
+ */
+export const resetPassword = async (passwordData) => {
+  try {
+    const response = await httpClient.put(`/auth/reset-password`, passwordData);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};

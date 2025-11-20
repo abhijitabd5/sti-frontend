@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import promotionPartnerApi from '@/services/api/promotionPartnerApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 function PartnerForm({ initial = {}, onSubmit, submitting }) {
   const [form, setForm] = useState({
@@ -91,16 +93,23 @@ function PartnerForm({ initial = {}, onSubmit, submitting }) {
 export default function CreatePartner() {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
   const handleCreate = async (payload) => {
     setSubmitting(true);
     try {
       const res = await promotionPartnerApi.createPartner(payload);
       if (res.success) {
-        navigate('/admin/promotion/partners');
+        showSuccess(res.message || 'Partner created successfully!');
+        setTimeout(() => {
+          navigate('/admin/promotion/partners');
+        }, 1500);
+      } else {
+        showError(res.message || 'Failed to create partner');
       }
     } catch (e) {
       console.error('Create failed', e);
+      showError('An error occurred while creating the partner');
     } finally {
       setSubmitting(false);
     }
@@ -119,6 +128,13 @@ export default function CreatePartner() {
         <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-4">Personal Information</h3>
         <PartnerForm onSubmit={handleCreate} submitting={submitting} />
       </div>
+
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 }

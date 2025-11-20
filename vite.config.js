@@ -29,6 +29,7 @@ export default defineConfig({
             "@radix-ui/react-select",
           ],
           utils: ["axios", "date-fns", "framer-motion"],
+          charts: ["chart.js", "react-chartjs-2"],
         },
       },
     },

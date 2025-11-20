@@ -121,7 +121,8 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
         email: formData.email || undefined,
         course_id: parseInt(formData.course_id),
         course_name: formData.course_name,
-        message: formData.message
+        message: formData.message,
+        enquiry_type: 'course'
       });
 
       if (response.success) {

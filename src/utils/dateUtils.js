@@ -11,11 +11,11 @@ export const getIndianTime = () => {
 };
 
 /**
- * Format date for filename in DD_MM_YYYY_HH:MM:SS format using Indian timezone
+ * Get timestamp in DD_MM_YYYY_HH_MM_SS format using Indian timezone
  * @param {Date} date - Optional date object, defaults to current Indian time
- * @returns {string} Formatted date string for filename
+ * @returns {string} Timestamp string (e.g., "19_11_2025_14_30_45")
  */
-export const formatDateForFilename = (date = null) => {
+export const getTimestamp = (date = null) => {
   const indianTime = date ? new Date(date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })) : getIndianTime();
   
   const day = String(indianTime.getDate()).padStart(2, '0');
@@ -25,7 +25,7 @@ export const formatDateForFilename = (date = null) => {
   const minutes = String(indianTime.getMinutes()).padStart(2, '0');
   const seconds = String(indianTime.getSeconds()).padStart(2, '0');
   
-  return `${day}_${month}_${year}_${hours}:${minutes}:${seconds}`;
+  return `${day}_${month}_${year}_${hours}_${minutes}_${seconds}`;
 };
 
 /**

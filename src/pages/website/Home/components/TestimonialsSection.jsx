@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { reviewApi } from '@/services/api/reviewApi';
 import defaultProfile from '@/assets/icons/user-profile.png';
+import { INSTITUTION_INFO } from '@/config/constants';
+import AddReviewModal from './AddReviewModal';
+import { PlusIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 
 const TestimonialsSection = ({ testimonials = [] }) => {
   const [fetchedReviews, setFetchedReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // Fetch reviews from backend
   useEffect(() => {
     let active = true;
-    const loadReviews = async () => {
+    const fetchReviews = async () => {
       try {
         setLoading(true);
         const response = await reviewApi.getPublicReviews({ limit: 5 });
@@ -26,7 +32,7 @@ const TestimonialsSection = ({ testimonials = [] }) => {
         if (active) setLoading(false);
       }
     };
-    loadReviews();
+    fetchReviews();
     return () => {
       active = false;
     };
@@ -45,6 +51,39 @@ const TestimonialsSection = ({ testimonials = [] }) => {
 
     return () => clearInterval(interval);
   }, [currentTestimonial, isAutoPlaying, reviews.length]);
+
+  const handleSubmitReview = async (reviewData) => {
+    try {
+      setIsSubmitting(true);
+      await reviewApi.createPublicReview(reviewData);
+      setSubmitSuccess(true);
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSubmitSuccess(false);
+        // Optionally reload reviews
+        loadReviews();
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to submit review:', error);
+      alert('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const loadReviews = async () => {
+    try {
+      setLoading(true);
+      const response = await reviewApi.getPublicReviews({ limit: 5 });
+      const reviewData = response?.data || response;
+      setFetchedReviews(Array.isArray(reviewData) ? reviewData : []);
+    } catch (error) {
+      console.error('Failed to load reviews:', error);
+      setFetchedReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderStars = (rating) => {
     return [...Array(5)].map((_, index) => (
@@ -197,7 +236,7 @@ const TestimonialsSection = ({ testimonials = [] }) => {
 
         {/* All Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {reviews.map((review, index) => (
+          {reviews.map((review) => (
             <div
               key={review.id}
               className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1"
@@ -246,7 +285,68 @@ const TestimonialsSection = ({ testimonials = [] }) => {
               </div>
             </div>
           ))}
+
+          {/* Add Your Review Card */}
+          <div
+            onClick={() => setIsModalOpen(true)}
+            className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-gray-800 dark:to-gray-700 rounded-lg p-6 border-2 border-dashed border-orange-300 dark:border-orange-600 hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group"
+          >
+            <div className="flex flex-col items-center justify-center h-full min-h-[280px] text-center">
+              {/* Icon */}
+              <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                <PencilSquareIcon className="w-8 h-8 text-white" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                Share Your Story
+              </h3>
+
+              {/* Description */}
+              <p className="text-gray-600 dark:text-gray-400 mb-4 px-4">
+                Your experience matters! Help others by sharing your training journey with us.
+              </p>
+
+              {/* Button */}
+              <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white font-semibold rounded-lg group-hover:from-orange-600 group-hover:to-red-700 transition-all shadow-md">
+                <PlusIcon className="w-5 h-5 mr-2" />
+                Add Your Review
+              </div>
+
+              {/* Stars decoration */}
+              <div className="flex items-center space-x-1 mt-4 opacity-50">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className="w-4 h-4 text-yellow-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Add Review Modal */}
+        <AddReviewModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleSubmitReview}
+          isLoading={isSubmitting}
+        />
+
+        {/* Success Toast */}
+        {submitSuccess && (
+          <div className="fixed bottom-8 right-8 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 animate-slide-up z-50">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="font-medium">Thank you! Your review has been submitted successfully.</span>
+          </div>
+        )}
 
         {/* Call-to-Action */}
         <div className="text-center bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
@@ -272,19 +372,19 @@ const TestimonialsSection = ({ testimonials = [] }) => {
         {/* Trust Indicators */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">95%</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.placementRate}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Job Placement Rate</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">2,500+</div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">Graduates Trained</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.studentsTrained}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Students Trained</div>
           </div>
           <div>
             <div className="text-3xl font-bold text-orange-500 mb-2">4.9/5</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Average Rating</div>
           </div>
           <div>
-            <div className="text-3xl font-bold text-orange-500 mb-2">15+</div>
+            <div className="text-3xl font-bold text-orange-500 mb-2">{INSTITUTION_INFO.experience}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Years Experience</div>
           </div>
         </div>

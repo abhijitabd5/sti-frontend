@@ -34,7 +34,6 @@ class CourseApi {
   async createCourse(courseData) {
     try {
       const formData = new FormData();
-      // formData.append('course_group_id',500);
       
       // Add all fields to form data
       Object.keys(courseData).forEach(key => {
@@ -133,16 +132,55 @@ class CourseApi {
     }
   }
 
-  // Replace getHindiVersion with this
-async getCourseVariantsByGroupId(courseGroupId) {
-  try {
-    const response = await httpClient.get(`/internal/courses/variants/${courseGroupId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching course variants:', error);
-    return { success: false, data: null };
+  // Get course variants by group ID
+  async getCourseVariantsByGroupId(courseGroupId) {
+    try {
+      const response = await httpClient.get(`/internal/courses/variants/${courseGroupId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching course variants:', error);
+      return { success: false, data: null };
+    }
   }
-}
+
+  // Create course variant (for language versions)
+  async createCourseVariant(courseGroupId, courseData) {
+    try {
+      const formData = new FormData();
+      
+      // Add all fields to form data
+      Object.keys(courseData).forEach(key => {
+        if (courseData[key] !== null && courseData[key] !== undefined) {
+          // Handle boolean values as strings
+          if (typeof courseData[key] === 'boolean') {
+            formData.append(key, courseData[key] ? 'true' : 'false');
+          }
+          // Handle file uploads - syllabus file should be sent with 'syllabus' key
+          else if (key === 'syllabus_file' && courseData[key] instanceof File) {
+            formData.append('syllabus', courseData[key]);
+          }
+          // Handle thumbnail file
+          else if (key === 'thumbnail' && courseData[key] instanceof File) {
+            formData.append('thumbnail', courseData[key]);
+          }
+          // Handle regular fields
+          else if (!(courseData[key] instanceof File)) {
+            formData.append(key, courseData[key]);
+          }
+        }
+      });
+
+      const response = await httpClient.post(`/internal/courses/variants/create/${courseGroupId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating course variant:', error);
+      throw error;
+    }
+  }
 
   // Delete course
   async deleteCourse(id) {

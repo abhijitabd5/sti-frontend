@@ -9,7 +9,6 @@ class PromotionPartnerApi {
         limit: params.limit || 10,
         search: params.search || '',
         status: params.status || '',
-        is_active: params.is_active ?? '',
         date_from: params.date_from || '',
         date_to: params.date_to || '',
       });

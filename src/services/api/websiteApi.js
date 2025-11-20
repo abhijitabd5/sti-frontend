@@ -1,6 +1,7 @@
 import httpClient from '../utils/httpClient';
 import { API_ENDPOINTS } from '../utils/apiEndpoints';
 import MOCK_DATA from '@/mockData/mockData';
+import { ABOUT_INFO } from '@/config/constants';
 
 
 // API service functions
@@ -91,13 +92,13 @@ export const websiteApi = {
       // const response = await httpClient.get(API_ENDPOINTS.ABOUT);
       // return response.data;
       
-      // Mock response for development
+      // Return constants directly instead of mock data
       return new Promise((resolve) => {
-        setTimeout(() => resolve(MOCK_DATA.aboutInfo), 250);
+        setTimeout(() => resolve(ABOUT_INFO), 250);
       });
     } catch (error) {
       console.error('Error fetching about info:', error);
-      return MOCK_DATA.aboutInfo;
+      return ABOUT_INFO;
     }
   },
 

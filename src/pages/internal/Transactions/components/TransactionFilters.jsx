@@ -1,60 +1,52 @@
-import React from 'react';
-import { MagnifyingGlassIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react';
+import { MagnifyingGlassIcon, CalendarIcon, FunnelIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 
 const TransactionFilters = ({ 
   filters, 
   onFilterChange, 
   categories, 
   categoriesLoading, 
-  transactionType 
+  transactionType,
+  onExport 
 }) => {
+  const [localFilters, setLocalFilters] = useState(filters);
   
   const handleInputChange = (field, value) => {
-    onFilterChange({
-      ...filters,
+    setLocalFilters({
+      ...localFilters,
       [field]: value
     });
   };
 
+  const applyFilters = () => {
+    onFilterChange(localFilters);
+  };
+
   const clearFilters = () => {
-    onFilterChange({
+    const clearedFilters = {
       search: '',
       category_id: '',
       date_from: '',
       date_to: ''
-    });
+    };
+    setLocalFilters(clearedFilters);
+    onFilterChange(clearedFilters);
   };
 
-  const hasActiveFilters = filters.search || filters.category_id || filters.date_from || filters.date_to;
+  const hasActiveFilters = localFilters.search || localFilters.category_id || localFilters.date_from || localFilters.date_to;
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 mb-6">
       <div className="p-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Search */}
-          <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Search
-            </label>
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder={`Search ${transactionType} transactions...`}
-                value={filters.search}
-                onChange={(e) => handleInputChange('search', e.target.value)}
-                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-              />
-            </div>
-          </div>
-
+        {/* First Row: Category and Date Range */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Category
             </label>
             <select
-              value={filters.category_id}
+              value={localFilters.category_id}
               onChange={(e) => handleInputChange('category_id', e.target.value)}
               className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
               disabled={categoriesLoading}
@@ -75,10 +67,10 @@ const TransactionFilters = ({
             </label>
             <div className="grid grid-cols-2 gap-2">
               <div className="relative">
-                <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                 <input
                   type="date"
-                  value={filters.date_from}
+                  value={localFilters.date_from}
                   onChange={(e) => handleInputChange('date_from', e.target.value)}
                   className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                   placeholder="From"
@@ -86,12 +78,51 @@ const TransactionFilters = ({
               </div>
               <input
                 type="date"
-                value={filters.date_to}
+                value={localFilters.date_to}
                 onChange={(e) => handleInputChange('date_to', e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
                 placeholder="To"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Second Row: Search and Action Buttons */}
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* Search */}
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Search
+            </label>
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder={`Search ${transactionType} transactions...`}
+                value={localFilters.search}
+                onChange={(e) => handleInputChange('search', e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
+                className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-end gap-2">
+            <button
+              onClick={applyFilters}
+              className="btn bg-violet-500 hover:bg-violet-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+            >
+              <FunnelIcon className="h-4 w-4 mr-2" />
+              Apply
+            </button>
+            <button
+              onClick={onExport}
+              className="btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+              Export
+            </button>
           </div>
         </div>
 

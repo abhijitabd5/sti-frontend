@@ -156,6 +156,17 @@ const AddEditTransaction = () => {
       newErrors.payment_mode = "Payment mode is required";
     }
 
+    // Payer/Payee name validation based on transaction type
+    if (transactionType === "income") {
+      if (!formData.payer_name || formData.payer_name.trim() === "") {
+        newErrors.payer_name = "Payer name is required for income transactions";
+      }
+    } else if (transactionType === "expense") {
+      if (!formData.payee_name || formData.payee_name.trim() === "") {
+        newErrors.payee_name = "Receiver name is required for expense transactions";
+      }
+    }
+
     // Payment reference validation (if provided, payment_ref_type is required)
     if (formData.payment_ref_num && !formData.payment_ref_type) {
       newErrors.payment_ref_type =
@@ -217,6 +228,7 @@ const AddEditTransaction = () => {
           1000
         );
       } else {
+        console.error('Transaction save failed:', response);
         showError(response.message || "Failed to save transaction");
       }
     } catch (error) {
@@ -305,7 +317,7 @@ const AddEditTransaction = () => {
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Category *
+                  Category <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.category_id}
@@ -336,7 +348,7 @@ const AddEditTransaction = () => {
               {/* Amount */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Amount ($) *
+                  Amount (₹) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="number"
@@ -361,7 +373,7 @@ const AddEditTransaction = () => {
               {/* Transaction Date */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Transaction Date *
+                  Transaction Date <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -388,7 +400,7 @@ const AddEditTransaction = () => {
               {/* Payment Mode */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Payment Mode *
+                  Payment Mode <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.payment_mode}
@@ -420,7 +432,7 @@ const AddEditTransaction = () => {
               {/* Person Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {getPersonLabel()} Name *
+                  {getPersonLabel()} Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -493,7 +505,7 @@ const AddEditTransaction = () => {
                   {formData.payment_ref_num && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Payment Reference Type *
+                        Payment Reference Type <span className="text-red-500">*</span>
                       </label>
                       <select
                         value={formData.payment_ref_type}
@@ -689,7 +701,7 @@ const AddEditTransaction = () => {
                     {formData.attachment && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Attachment Type *
+                          Attachment Type <span className="text-red-500">*</span>
                         </label>
                         <select
                           value={formData.attachment_type}
