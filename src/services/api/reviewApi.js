@@ -17,6 +17,12 @@ export const reviewApi = {
     return extractData(response);
   },
 
+  // Create public review (from website)
+  async createPublicReview(reviewData) {
+    const response = await httpClient.post('/public/review/create', reviewData);
+    return extractData(response);
+  },
+
   // Internal API - Get all reviews with optional filter
   async getReviews({ is_approved } = {}) {
     const params = {};

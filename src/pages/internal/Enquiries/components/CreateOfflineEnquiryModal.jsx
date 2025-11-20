@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import enquiryApi from '@/services/api/enquiryApi';
+import internalEnquiryApi from '@/services/api/internalEnquiryApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
 
-const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) => {
+const CreateOfflineEnquiryModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
-    course_id: selectedCourseId ? String(selectedCourseId) : '',
+    course_id: '',
     course_name: '',
     name: '',
     phone: '',
@@ -16,26 +18,13 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
+  const [toast, setToast] = useState({ isVisible: false, type: '', message: '' });
 
   useEffect(() => {
     if (isOpen) {
       loadCourses();
     }
   }, [isOpen]);
-
-  // Auto-select course when selectedCourseId changes and courses are loaded
-  useEffect(() => {
-    if (selectedCourseId && courses.length > 0) {
-      const selectedCourse = courses.find(course => course.id === parseInt(selectedCourseId));
-      if (selectedCourse) {
-        setFormData(prev => ({
-          ...prev,
-          course_id: String(selectedCourseId),
-          course_name: selectedCourse.title
-        }));
-      }
-    }
-  }, [selectedCourseId, courses]);
 
   const loadCourses = async () => {
     try {
@@ -87,9 +76,6 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.course_id) {
-      newErrors.course_id = 'Please select a course';
-    }
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
@@ -115,17 +101,25 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
 
     try {
       setSubmitting(true);
-      const response = await enquiryApi.createEnquiry({
+      setErrors({});
+      
+      const response = await internalEnquiryApi.createOfflineEnquiry({
         name: formData.name,
         phone: formData.phone,
         email: formData.email || undefined,
-        course_id: parseInt(formData.course_id),
-        course_name: formData.course_name,
-        message: formData.message,
-        enquiry_type: 'course'
+        course_id: formData.course_id ? parseInt(formData.course_id) : null,
+        course_name: formData.course_name || null,
+        message: formData.message
       });
 
       if (response.success) {
+        // Show success toast
+        setToast({
+          isVisible: true,
+          type: 'success',
+          message: response.message || 'Offline enquiry created successfully!'
+        });
+
         // Reset form
         setFormData({
           course_id: '',
@@ -137,14 +131,25 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
         });
         setErrors({});
         
-        if (onSuccess) {
-          onSuccess();
-        }
-        onClose();
+        // Close modal and refresh list after a short delay
+        setTimeout(() => {
+          if (onSuccess) {
+            onSuccess();
+          }
+        }, 1000);
       }
     } catch (error) {
-      console.error('Error submitting enquiry:', error);
-      setErrors({ submit: error.response?.data?.message || 'Failed to submit enquiry. Please try again.' });
+      console.error('Error creating offline enquiry:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create enquiry. Please try again.';
+      
+      // Show error toast
+      setToast({
+        isVisible: true,
+        type: 'error',
+        message: errorMessage
+      });
+      
+      setErrors({ submit: errorMessage });
     } finally {
       setSubmitting(false);
     }
@@ -153,7 +158,17 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <>
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={() => setToast({ ...toast, isVisible: false })}
+        autoClose={true}
+        duration={4000}
+      />
+      
+      <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
         <div
@@ -187,21 +202,16 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
           <div className="sm:flex sm:items-start">
             <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
               <h3 className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100 mb-4">
-                Enroll Now
+                Create Offline Enquiry
               </h3>
 
-              {/* Error Alert */}
-              {errors.submit && (
-                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-800 dark:text-red-200">{errors.submit}</p>
-                </div>
-              )}
+
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Course Selection */}
+                {/* Course Selection (Optional) */}
                 <div>
                   <label htmlFor="course_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Select Course <span className="text-red-500">*</span>
+                    Select Course <span className="text-gray-500 text-xs">(Optional)</span>
                   </label>
                   <select
                     id="course_id"
@@ -209,12 +219,10 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                     value={formData.course_id}
                     onChange={handleCourseChange}
                     disabled={loading}
-                    className={`w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      errors.course_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                    }`}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
                   >
                     <option value="">
-                      {loading ? 'Loading courses...' : 'Choose a course'}
+                      {loading ? 'Loading courses...' : 'Choose a course (optional)'}
                     </option>
                     {courses.map(course => (
                       <option key={course.id} value={course.id}>
@@ -222,9 +230,6 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                       </option>
                     ))}
                   </select>
-                  {errors.course_id && (
-                    <p className="mt-1 text-sm text-red-500">{errors.course_id}</p>
-                  )}
                 </div>
 
                 {/* Name */}
@@ -238,7 +243,7 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    placeholder="Enter your full name"
+                    placeholder="Enter full name"
                     disabled={submitting}
                     className={`w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
                       errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -260,7 +265,7 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
-                    placeholder="Enter your phone number"
+                    placeholder="Enter phone number"
                     disabled={submitting}
                     className={`w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
                       errors.phone ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -282,7 +287,7 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    placeholder="Enter your email address"
+                    placeholder="Enter email address"
                     disabled={submitting}
                     className={`w-full px-3 py-2 border rounded-lg shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
                       errors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
@@ -296,7 +301,7 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                 {/* Message */}
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Message <span className="text-gray-500 text-xs">(Optional)</span>
+                    Message / Notes <span className="text-gray-500 text-xs">(Optional)</span>
                   </label>
                   <textarea
                     id="message"
@@ -315,9 +320,9 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
                   <button
                     type="submit"
                     disabled={submitting || loading}
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-base font-medium text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-violet-500 text-base font-medium text-white hover:bg-violet-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {submitting ? 'Submitting...' : 'Submit'}
+                    {submitting ? 'Creating...' : 'Create Enquiry'}
                   </button>
                   <button
                     type="button"
@@ -334,7 +339,8 @@ const EnrollModal = ({ isOpen, onClose, onSuccess, selectedCourseId = null }) =>
         </div>
       </div>
     </div>
+    </>
   );
 };
 
-export default EnrollModal;
+export default CreateOfflineEnquiryModal;

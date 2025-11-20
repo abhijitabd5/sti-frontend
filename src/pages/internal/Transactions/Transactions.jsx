@@ -29,6 +29,12 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   
+  // Tab counts
+  const [tabCounts, setTabCounts] = useState({
+    income: 0,
+    expense: 0
+  });
+  
   // Filter states
   const [filters, setFilters] = useState({
     search: '',
@@ -54,6 +60,11 @@ const Transactions = () => {
     loadCategories();
   }, [activeTab]);
 
+  // Load counts for both tabs on mount
+  useEffect(() => {
+    loadTabCounts();
+  }, []);
+
   // Update URL when tab changes
   useEffect(() => {
     setSearchParams({ tab: activeTab });
@@ -73,6 +84,11 @@ const Transactions = () => {
       if (response.success) {
         setTransactions(response.data);
         setPagination(response.pagination);
+        // Update the count for the current tab
+        setTabCounts(prev => ({
+          ...prev,
+          [activeTab]: response.pagination.total
+        }));
       } else {
         showError(response.message || 'Failed to load transactions');
       }
@@ -81,6 +97,31 @@ const Transactions = () => {
       showError('An error occurred while loading transactions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadTabCounts = async () => {
+    try {
+      // Load income count
+      const incomeResponse = await TransactionApi.getTransactions({
+        type: 'income',
+        page: 1,
+        limit: 1
+      });
+      
+      // Load expense count
+      const expenseResponse = await TransactionApi.getTransactions({
+        type: 'expense',
+        page: 1,
+        limit: 1
+      });
+
+      setTabCounts({
+        income: incomeResponse.success ? incomeResponse.pagination.total : 0,
+        expense: expenseResponse.success ? expenseResponse.pagination.total : 0
+      });
+    } catch (error) {
+      console.error('Error loading tab counts:', error);
     }
   };
 
@@ -142,6 +183,7 @@ const Transactions = () => {
       const response = await TransactionApi.deleteTransaction(transactionId);
       if (response.success) {
         loadTransactions();
+        loadTabCounts(); // Refresh counts after deletion
         showSuccess('Transaction deleted successfully');
       } else {
         showError(response.message || 'Failed to delete transaction');
@@ -152,10 +194,27 @@ const Transactions = () => {
     }
   };
 
-  const getTabCounts = () => {
-    const incomeCount = transactions.filter(t => t.type === 'income').length;
-    const expenseCount = transactions.filter(t => t.type === 'expense').length;
-    return { income: incomeCount, expense: expenseCount };
+  const handleExport = async () => {
+    try {
+      const params = {
+        type: activeTab,
+        category_id: filters.category_id,
+        date_from: filters.date_from,
+        date_to: filters.date_to
+      };
+      
+      // Call export API (file download is handled in the API)
+      const response = await TransactionApi.exportTransactions(params);
+      
+      if (response.success) {
+        showSuccess('Transactions exported successfully');
+      } else {
+        showError(response.message || 'Failed to export transactions');
+      }
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      showError('An error occurred while exporting transactions');
+    }
   };
 
   const getTabDisplayName = (tab) => {
@@ -215,7 +274,7 @@ const Transactions = () => {
                       ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300'
                       : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
                   }`}>
-                    {pagination.total}
+                    {tabCounts[tab]}
                   </span>
                 </button>
               );
@@ -231,6 +290,7 @@ const Transactions = () => {
         categories={categories}
         categoriesLoading={categoriesLoading}
         transactionType={activeTab}
+        onExport={handleExport}
       />
 
       {/* Table */}

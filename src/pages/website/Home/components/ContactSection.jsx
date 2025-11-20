@@ -103,7 +103,8 @@ const ContactSection = () => {
         phone: formData.phone.trim(),
         message: formData.message.trim(),
         course_id: formData.course_id || null,
-        course_name: formData.course_name || null
+        course_name: formData.course_name || null,
+        enquiry_type: 'contact_us'
       });
       setSubmitStatus({
         type: 'success',

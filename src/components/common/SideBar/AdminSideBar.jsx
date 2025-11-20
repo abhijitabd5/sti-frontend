@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import SidebarLinkGroup from "./AdminSideBarLinkGroup";
-import dashboardIcon from "@/assets/icons/dashboard.png";
+import { icons } from "@/assets/icons";
 
 const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
@@ -95,16 +95,25 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
             </svg>
           </button>
           {/* Logo */}
-          <NavLink end to="/" className="block">
-            <svg
-              className="fill-violet-500"
-              xmlns="http://www.w3.org/2000/svg"
-              width={32}
-              height={32}
-            >
-              <path d="M31.956 14.8C31.372 6.92 25.08.628 17.2.044V5.76a9.04 9.04 0 0 0 9.04 9.04h5.716ZM14.8 26.24v5.716C6.92 31.372.63 25.08.044 17.2H5.76a9.04 9.04 0 0 1 9.04 9.04Zm11.44-9.04h5.716c-.584 7.88-6.876 14.172-14.756 14.756V26.24a9.04 9.04 0 0 1 9.04-9.04ZM.044 14.8C.63 6.92 6.92.628 14.8.044V5.76a9.04 9.04 0 0 1-9.04 9.04H.044Z" />
-            </svg>
+          <NavLink end to="/" className="block lg:sidebar-expanded:block lg:hidden 2xl:block">
+            <img src={icons.smallLogo} alt="Logo" />
           </NavLink>
+          {/* Expand / collapse button (top) */}
+          <button
+            className="hidden lg:inline-flex 2xl:hidden text-gray-400 hover:text-gray-500 dark:text-gray-500 dark:hover:text-gray-400"
+            onClick={() => setSidebarExpanded(!sidebarExpanded)}
+          >
+            <span className="sr-only">Expand / collapse sidebar</span>
+            <svg
+              className="shrink-0 fill-current text-gray-400 dark:text-gray-500 sidebar-expanded:rotate-180"
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+            >
+              <path d="M15 16a1 1 0 0 1-1-1V1a1 1 0 1 1 2 0v14a1 1 0 0 1-1 1ZM8.586 7H1a1 1 0 1 0 0 2h7.586l-2.793 2.793a1 1 0 1 0 1.414 1.414l4.5-4.5A.997.997 0 0 0 12 8.01M11.924 7.617a.997.997 0 0 0-.217-.324l-4.5-4.5a1 1 0 0 0-1.414 1.414L8.586 7M12 7.99a.996.996 0 0 0-.076-.373Z" />
+            </svg>
+          </button>
         </div>
 
         {/* Links */}
@@ -141,7 +150,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                 >
                   <div className="flex items-center">
                     <img
-                      src={dashboardIcon}
+                      src={icons.dashboard}
                       alt="Dashboard"
                       className={`shrink-0 h-4 w-4 ${
                         pathname === "/" || pathname.includes("dashboard")
@@ -172,62 +181,23 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
-                        pathname.includes("admin/courses")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                    <img
+                      src={icons.courses}
+                      alt="Courses"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/courses" ||
+                        pathname.includes("courses")
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Courses
                     </span>
                   </div>
                 </NavLink>
               </li>
-              {/* Pages */}
-              <li
-                className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
-                  pathname.includes("admin/pages") &&
-                  "from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]"
-                }`}
-              >
-                <NavLink
-                  end
-                  to={`/admin/pages`}
-                  className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
-                    pathname.includes("admin/pages")
-                      ? ""
-                      : "hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
-                        pathname.includes("admin/pages")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
-                      }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2ZM2 1h12a1 1 0 0 1 1 1v2H1V2a1 1 0 0 1 1-1Zm12 14H2a1 1 0 0 1-1-1V5h14v9a1 1 0 0 1-1 1Z" />
-                      <path d="M3 7h2v2H3V7Zm4 0h6v1H7V7Zm0 2h4v1H7V9Z" />
-                    </svg>
-                    <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                      Pages
-                    </span>
-                  </div>
-                </NavLink>
-              </li>
+
               {/* Transactions */}
               <li
                 className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
@@ -245,19 +215,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.transaction}
+                      alt="Transactions"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/transactions" ||
                         pathname.includes("admin/transactions")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Transactions
                     </span>
@@ -282,19 +249,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.galleryOne}
+                      alt="Gallery"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/gallery" ||
                         pathname.includes("admin/gallery")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Gallery
                     </span>
@@ -319,26 +283,23 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.student}
+                      alt="Students"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/students" ||
                         pathname.includes("admin/students")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Students
                     </span>
                   </div>
                 </NavLink>
               </li>
-              {/* Enquiries */}
+              {/* Online Enquiries */}
               <li
                 className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
                   pathname.includes("admin/enquiries") &&
@@ -355,21 +316,52 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.enquiry}
+                      alt="Enquiries"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/enquiries" ||
                         pathname.includes("admin/enquiries")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Enquiries
+                    </span>
+                  </div>
+                </NavLink>
+              </li>
+
+              {/* Offline Enquiries */}
+              <li
+                className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
+                  pathname.includes("admin/offline-enquiries") &&
+                  "from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]"
+                }`}
+              >
+                <NavLink
+                  end
+                  to={`/admin/offline-enquiries`}
+                  className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
+                    pathname.includes("admin/offline-enquiries")
+                      ? ""
+                      : "hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <img
+                      src={icons.enquiryOne}
+                      alt="Enquiries"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/offline-enquiries" ||
+                        pathname.includes("admin/offline-enquiries")
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
+                      }`}
+                    />
+                    <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                      Offline Enquiries
                     </span>
                   </div>
                 </NavLink>
@@ -392,19 +384,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.reviews}
+                      alt="Reviews"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/reviews" ||
                         pathname.includes("admin/reviews")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Reviews
                     </span>
@@ -429,19 +418,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   }`}
                 >
                   <div className="flex items-center">
-                    <svg
-                      className={`shrink-0 fill-current ${
+                    <img
+                      src={icons.gallery}
+                      alt="Gallery"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/other-gallery" ||
                         pathname.includes("admin/other-gallery")
-                          ? "text-violet-500"
-                          : "text-gray-400 dark:text-gray-500"
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
                       }`}
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 16 16"
-                    >
-                      <path d="M11.92 6.851c.044-.027.09-.05.137-.07.481-.275.758-.68.908-1.256.126-.55.169-.81.357-2.058.075-.498.144-.91.217-1.264-4.122.75-7.087 2.984-9.12 6.284a18.087 18.087 0 0 0-1.985 4.585 17.07 17.07 0 0 0-.354 1.506c-.05.265-.076.448-.086.535a1 1 0 0 1-1.988-.226c.056-.49.209-1.312.502-2.357a20.063 20.063 0 0 1 2.208-5.09C5.31 3.226 9.306.494 14.913.004a1 1 0 0 1 .954 1.494c-.237.414-.375.993-.567 2.267-.197 1.306-.244 1.586-.392 2.235-.285 1.094-.789 1.853-1.552 2.363-.748 3.816-3.976 5.06-8.515 4.326a1 1 0 0 1 .318-1.974c2.954.477 4.918.025 5.808-1.556-.628.085-1.335.121-2.127.121a1 1 0 1 1 0-2c1.458 0 2.434-.116 3.08-.429Z" />
-                    </svg>
+                    />
                     <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                       Other Gallery
                     </span>
@@ -496,7 +482,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               </li> */}
 
               {/* Promotion */}
-              <SidebarLinkGroup activecondition={pathname.includes("settings")}>
+              <SidebarLinkGroup
+                activecondition={pathname.includes("admin/promotion")}
+              >
                 {(handleClick, open) => {
                   return (
                     <React.Fragment>
@@ -515,22 +503,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <svg
-                              className={`shrink-0 fill-current ${
-                                pathname.includes("settings")
-                                  ? "text-violet-500"
-                                  : "text-gray-400 dark:text-gray-500"
+                            <img
+                              src={icons.promotion}
+                              alt="Reviews"
+                              className={`shrink-0 h-4 w-4 ${
+                                pathname === "admin/promotion" ||
+                                pathname.includes("admin/promotion")
+                                  ? "opacity-100"
+                                  : "opacity-60 dark:opacity-50"
                               }`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                            >
-                              <path
-                                d="M10.5 1a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2h-1.145a3.502 3.502 0 0 1-6.71 0H1a1 1 0 0 1 0-2h6.145A3.502 3.502 0 0 1 10.5 1ZM9 4.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM5.5 9a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2H8.855a3.502 3.502 0 0 1-6.71 0H1a1 1 0 1 1 0-2h1.145A3.502 3.502 0 0 1 5.5 9ZM4 12.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z"
-                                fillRule="evenodd"
-                              />
-                            </svg>
+                            />
                             <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                               Promotion
                             </span>
@@ -552,7 +534,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                           <li className="mb-1 last:mb-0">
                             <NavLink
                               end
-                              to="/admin/create-link"
+                              to="/admin/promotion/links/create"
                               className={({ isActive }) =>
                                 "block transition duration-150 truncate " +
                                 (isActive
@@ -605,7 +587,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               </SidebarLinkGroup>
 
               {/* Reports */}
-              <SidebarLinkGroup activecondition={pathname.includes("settings")}>
+              <SidebarLinkGroup
+                activecondition={pathname.includes("admin/reports")}
+              >
                 {(handleClick, open) => {
                   return (
                     <React.Fragment>
@@ -624,22 +608,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <svg
-                              className={`shrink-0 fill-current ${
-                                pathname.includes("settings")
-                                  ? "text-violet-500"
-                                  : "text-gray-400 dark:text-gray-500"
+                            <img
+                              src={icons.reports}
+                              alt="Reports"
+                              className={`shrink-0 h-4 w-4 ${
+                                pathname === "admin/reports/" ||
+                                pathname.includes("admin/reports/")
+                                  ? "opacity-100"
+                                  : "opacity-60 dark:opacity-50"
                               }`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                            >
-                              <path
-                                d="M10.5 1a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2h-1.145a3.502 3.502 0 0 1-6.71 0H1a1 1 0 0 1 0-2h6.145A3.502 3.502 0 0 1 10.5 1ZM9 4.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM5.5 9a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2H8.855a3.502 3.502 0 0 1-6.71 0H1a1 1 0 1 1 0-2h1.145A3.502 3.502 0 0 1 5.5 9ZM4 12.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z"
-                                fillRule="evenodd"
-                              />
-                            </svg>
+                            />
                             <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                               Reports
                             </span>
@@ -680,6 +658,41 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                   );
                 }}
               </SidebarLinkGroup>
+
+              {/* Pages */}
+              <li
+                className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
+                  pathname.includes("admin/pages") &&
+                  "from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]"
+                }`}
+              >
+                <NavLink
+                  end
+                  to={`/admin/pages`}
+                  className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
+                    pathname.includes("admin/pages")
+                      ? ""
+                      : "hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <img
+                      src={icons.seoPage}
+                      alt="Pages"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/pages" ||
+                        pathname.includes("admin/pages")
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
+                      }`}
+                    />
+                    <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                      Pages
+                    </span>
+                  </div>
+                </NavLink>
+              </li>
+
               {/* Settings */}
               <SidebarLinkGroup activecondition={pathname.includes("settings")}>
                 {(handleClick, open) => {
@@ -700,22 +713,16 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
-                            <svg
-                              className={`shrink-0 fill-current ${
-                                pathname.includes("settings")
-                                  ? "text-violet-500"
-                                  : "text-gray-400 dark:text-gray-500"
+                            <img
+                              src={icons.settings}
+                              alt="Settings"
+                              className={`shrink-0 h-4 w-4 ${
+                                pathname === "admin/settings" ||
+                                pathname.includes("admin/settings")
+                                  ? "opacity-100"
+                                  : "opacity-60 dark:opacity-50"
                               }`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                            >
-                              <path
-                                d="M10.5 1a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2h-1.145a3.502 3.502 0 0 1-6.71 0H1a1 1 0 0 1 0-2h6.145A3.502 3.502 0 0 1 10.5 1ZM9 4.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM5.5 9a3.502 3.502 0 0 1 3.355 2.5H15a1 1 0 1 1 0 2H8.855a3.502 3.502 0 0 1-6.71 0H1a1 1 0 1 1 0-2h1.145A3.502 3.502 0 0 1 5.5 9ZM4 12.5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0Z"
-                                fillRule="evenodd"
-                              />
-                            </svg>
+                            />
                             <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                               Settings
                             </span>
@@ -737,7 +744,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                           <li className="mb-1 last:mb-0">
                             <NavLink
                               end
-                              to="/admin/transaction-categories"
+                              to="/admin/settings/transaction-categories"
                               className={({ isActive }) =>
                                 "block transition duration-150 truncate " +
                                 (isActive
@@ -747,89 +754,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                             >
                               <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
                                 Transaction Categories
-                              </span>
-                            </NavLink>
-                          </li>
-                        </ul>
-                      </div>
-                    </React.Fragment>
-                  );
-                }}
-              </SidebarLinkGroup>
-            </ul>
-          </div>
-
-
-
-          {/* More group */}
-          <div>
-            <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-              <span
-                className="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6"
-                aria-hidden="true"
-              >
-                •••
-              </span>
-              <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                More
-              </span>
-            </h3>
-            <ul className="mt-3">
-              {/* Authentication */}
-              <SidebarLinkGroup>
-                {(handleClick, open) => {
-                  return (
-                    <React.Fragment>
-                      <a
-                        href="#0"
-                        className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
-                          open
-                            ? ""
-                            : "hover:text-gray-900 dark:hover:text-white"
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleClick();
-                          setSidebarExpanded(true);
-                        }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <svg
-                              className={`shrink-0 fill-current text-gray-400 dark:text-gray-500`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                            >
-                              <path d="M11.442 4.576a1 1 0 1 0-1.634-1.152L4.22 11.35 1.773 8.366A1 1 0 1 0 .227 9.634l3.281 4a1 1 0 0 0 1.59-.058l6.344-9ZM15.817 4.576a1 1 0 1 0-1.634-1.152l-5.609 7.957a1 1 0 0 0-1.347 1.453l.656.8a1 1 0 0 0 1.59-.058l6.344-9Z" />
-                            </svg>
-                            <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                              Authentication
-                            </span>
-                          </div>
-                          {/* Icon */}
-                          <div className="flex shrink-0 ml-2">
-                            <svg
-                              className={`w-3 h-3 shrink-0 ml-1 fill-current text-gray-400 dark:text-gray-500 ${
-                                open && "rotate-180"
-                              }`}
-                              viewBox="0 0 12 12"
-                            >
-                              <path d="M5.9 11.4L.5 6l1.4-1.4 4 4 4-4L11.3 6z" />
-                            </svg>
-                          </div>
-                        </div>
-                      </a>
-                      <div className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                        <ul className={`pl-8 mt-1 ${!open && "hidden"}`}>
-                          <li className="mb-1 last:mb-0">
-                            <NavLink
-                              end
-                              to="https://cruip.com/mosaic/ hover:text-gray-700 dark:hover:text-gray-200 transition duration-150 truncate"
-                            >
-                              <span className="text-sm font-medium lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
-                                Reset Password
                               </span>
                             </NavLink>
                           </li>

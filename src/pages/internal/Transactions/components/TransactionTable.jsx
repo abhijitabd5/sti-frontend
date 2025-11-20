@@ -29,9 +29,9 @@ const TransactionTable = ({
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount);
   };
 
@@ -167,12 +167,6 @@ const TransactionTable = ({
                       Contact
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Payment Ref
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Reference Note
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Created By
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -206,17 +200,6 @@ const TransactionTable = ({
                         {getPersonContact(transaction)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.payment_ref_num || '-'}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-                        <div className="flex items-center">
-                          {truncateText(transaction.reference_note || transaction.description, 40)}
-                          {transaction.attachment_path && (
-                            <PaperClipIcon className="h-4 w-4 ml-2 text-gray-400" title="Has attachment" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {transaction.creator ? `${transaction.creator.first_name} ${transaction.creator.last_name}` : 'System'}
                       </td>
                       <td className="px-4 py-3">
@@ -240,13 +223,13 @@ const TransactionTable = ({
                           </button>
                           
                           {/* Delete */}
-                          <button
+                          {/* <button
                             onClick={() => openDeleteConfirmation(transaction)}
                             className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                             title="Delete Transaction"
                           >
                             <TrashIcon className="h-4 w-4" />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>

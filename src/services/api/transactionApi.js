@@ -1,4 +1,5 @@
 import httpClient from '@/services/utils/httpClient';
+import { getTimestamp } from '@/utils/dateUtils';
 
 class TransactionApi {
   // Get all transactions
@@ -235,6 +236,77 @@ class TransactionApi {
         success: false,
         data: null,
         message: error.response?.data?.message || "Error deleting transaction"
+      };
+    }
+  }
+
+  // Export transactions to Excel
+  async exportTransactions(params = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add transaction type (required)
+      queryParams.append('transaction_type', params.type || 'income');
+      
+      // Add category filter
+      if (params.category_id) {
+        queryParams.append('categoryId', params.category_id);
+      }
+      
+      // Add date range filters
+      if (params.date_from) {
+        queryParams.append('dateFrom', params.date_from);
+      }
+      if (params.date_to) {
+        queryParams.append('dateTo', params.date_to);
+      }
+      
+      const response = await httpClient.get(`/internal/transactions/export?${queryParams}`, {
+        responseType: 'blob' // Important for file download
+      });
+      
+      // Extract filename from Content-Disposition header
+      let filename = '';
+      const contentDisposition = response.headers['content-disposition'];
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1];
+          console.log('Extracted filename from header:', filename);
+        }
+      }
+      
+      // Fallback: Generate timestamped filename using Indian timezone
+      if (!filename) {
+        console.log('No Content-Disposition header found - generating timestamped filename');
+        const timestamp = getTimestamp();
+        filename = `${params.type || 'income'}_transactions_export_${timestamp}.xlsx`;
+        console.log('Generated fallback filename:', filename);
+      }
+      
+      // Create blob and download
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      return {
+        success: true,
+        message: "Transactions exported successfully"
+      };
+    } catch (error) {
+      console.error('Error exporting transactions:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Error exporting transactions"
       };
     }
   }

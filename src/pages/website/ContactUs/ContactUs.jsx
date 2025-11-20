@@ -113,7 +113,8 @@ const Contact = () => {
         email: formData.email || undefined,
         course_id: null,
         course_name: null,
-        message: formData.message
+        message: formData.message,
+        enquiry_type: 'contact_us'
       });
 
       if (response.success) {

@@ -19,6 +19,7 @@ import Contact from "@/pages/website/ContactUs/ContactUs";
 import PrivacyPolicy from "@/pages/website/Legal/PrivacyPolicy";
 import TermsAndConditions from "@/pages/website/Legal/TermsAndConditions";
 import FAQ from "@/pages/website/Legal/FAQ";
+import Certificate from "@/pages/website/Certificate/Certificate";
 
 // Import lazy admin wrapper (lazy loading)
 import LazyAdminWrapper from "@/components/common/LazyAdminWrapper";
@@ -56,6 +57,7 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/certificate" element={<Certificate />} />
         <Route path="/logout" element={<Logout />} />
         {/* <Route path="/example-editor" element={<ExampleUsage />} /> */}
 

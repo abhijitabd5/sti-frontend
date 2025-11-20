@@ -19,7 +19,8 @@ import StudentDetail from '@/pages/internal/Students/StudentDetail';
 import EnrollmentForm from '@/pages/internal/Students/EnrollmentForm';
 import StudentDocuments from '@/pages/internal/Students/StudentDocuments';
 import Reviews from '@/pages/internal/Reviews/Reviews';
-import Enquiries from '@/pages/internal/Enquiries/Enquiries';
+import OnlineEnquiries from '@/pages/internal/Enquiries/OnlineEnquiries';
+import OfflineEnquiries from '@/pages/internal/Enquiries/OfflineEnquiries';
 import Profile from '@/pages/internal/Profile/Profile';
 import Partners from '@/pages/internal/Promotion/Partners/Partners';
 import CreatePartner from '@/pages/internal/Promotion/Partners/CreatePartner';
@@ -57,7 +58,7 @@ const AdminRoutes = () => {
       </Route>
 
       <Route
-        path="transaction-categories"
+        path="settings/transaction-categories"
         element={<TransactionCategories />}
       />
 
@@ -84,7 +85,11 @@ const AdminRoutes = () => {
       </Route>
 
       <Route path="enquiries">
-        <Route index element={<Enquiries />} />
+        <Route index element={<OnlineEnquiries />} />
+      </Route>
+
+      <Route path="offline-enquiries">
+        <Route index element={<OfflineEnquiries />} />
       </Route>
       
       <Route path="profile">

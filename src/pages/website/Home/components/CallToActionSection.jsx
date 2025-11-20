@@ -1,56 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const CoursesSection = ({ courses = [] }) => {
-  const getLevelColor = (level) => {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'intermediate':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'advanced':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default:
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    }
-  };
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
-
-  if (!courses.length) {
-    return (
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/3 mx-auto mb-4"></div>
-              <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-2/3 mx-auto"></div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[...Array(6)].map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden">
-                  <div className="h-48 bg-gray-300 dark:bg-gray-600"></div>
-                  <div className="p-6 space-y-4">
-                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-full"></div>
-                    <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-5/6"></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+const CallToActionSection = () => {
 
   return (
     <section className="py-16 bg-gray-50 dark:bg-gray-800">
@@ -131,4 +82,4 @@ const CoursesSection = ({ courses = [] }) => {
   );
 };
 
-export default CoursesSection;
+export default CallToActionSection;

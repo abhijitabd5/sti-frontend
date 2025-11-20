@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
+import { getTimestamp } from '@/utils/dateUtils';
 import AadhaarCheckModal from './components/AadhaarCheckModal';
 
 // Icons
@@ -220,15 +221,7 @@ function StudentList() {
         console.log('No Content-Disposition header found - generating timestamped filename');
         
         // Fallback: Generate timestamped filename using Indian timezone
-        const indianTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-        const day = String(indianTime.getDate()).padStart(2, '0');
-        const month = String(indianTime.getMonth() + 1).padStart(2, '0');
-        const year = indianTime.getFullYear();
-        const hours = String(indianTime.getHours()).padStart(2, '0');
-        const minutes = String(indianTime.getMinutes()).padStart(2, '0');
-        const seconds = String(indianTime.getSeconds()).padStart(2, '0');
-        
-        const timestamp = `${day}_${month}_${year}_${hours}_${minutes}_${seconds}`;
+        const timestamp = getTimestamp();
         filename = `Student_Records_${timestamp}.xlsx`;
         console.log('Generated fallback filename:', filename);
       }

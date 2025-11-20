@@ -3,7 +3,7 @@ import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import HeroSection from '@/pages/website/Home/components/HeroSection';
 import CoursesMarquee from '@/pages/website/Home/components/CoursesMarquee';
 import AboutSection from '@/pages/website/Home/components/AboutSection';
-import CoursesSection from '@/pages/website/Home/components/CoursesSection';
+import CallToActionSection from '@/pages/website/Home/components/CallToActionSection';
 import TestimonialsSection from '@/pages/website/Home/components/TestimonialsSection';
 import ContactSection from '@/pages/website/Home/components/ContactSection';
 import { websiteApi } from '@/services/api/websiteApi';
@@ -177,8 +177,8 @@ const Home = () => {
       {/* About Section */}
       <AboutSection />
       
-      {/* Main Courses Section */}
-      <CoursesSection courses={data.courses} />
+      {/* Call to Action Section */}
+      <CallToActionSection />
       
       {/* Testimonials Section */}
       <TestimonialsSection testimonials={data.testimonials} />

@@ -117,24 +117,11 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (token && user) {
-          // Verify token is still valid
-          try {
-            const response = await authApi.verifyToken(token);
-            if (response.success) {
-              dispatch({
-                type: AUTH_ACTIONS.LOGIN_SUCCESS,
-                payload: { user: response.data.user, token }
-              });
-            } else {
-              // Token is invalid, clear auth data
-              clearAuthData();
-              dispatch({ type: AUTH_ACTIONS.LOGOUT });
-            }
-          } catch (error) {
-            // Token verification failed
-            clearAuthData();
-            dispatch({ type: AUTH_ACTIONS.LOGOUT });
-          }
+          // Use stored user data directly
+          dispatch({
+            type: AUTH_ACTIONS.LOGIN_SUCCESS,
+            payload: { user, token }
+          });
         } else {
           dispatch({ type: AUTH_ACTIONS.SET_LOADING, payload: false });
         }
