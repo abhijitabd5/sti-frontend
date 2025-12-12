@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import TransactionTable from './components/TransactionTable';
+import DeletedTransactionsTable from './components/DeletedTransactionsTable';
 import TransactionFilters from './components/TransactionFilters';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
-import TransactionApi from '@/services/api/transactionApi';
+import transactionApi from '@/services/api/transactionApi';
 import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
 
 // Icons
 import { 
   PlusIcon,
   BanknotesIcon,
-  CurrencyDollarIcon
+  CurrencyDollarIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 
 const Transactions = () => {
@@ -32,7 +34,8 @@ const Transactions = () => {
   // Tab counts
   const [tabCounts, setTabCounts] = useState({
     income: 0,
-    expense: 0
+    expense: 0,
+    deleted: 0
   });
   
   // Filter states
@@ -40,7 +43,8 @@ const Transactions = () => {
     search: '',
     category_id: '',
     date_from: '',
-    date_to: ''
+    date_to: '',
+    payment_mode: ''
   });
   
   // Pagination
@@ -73,24 +77,47 @@ const Transactions = () => {
   const loadTransactions = async () => {
     try {
       setLoading(true);
-      const params = {
-        type: activeTab,
-        ...filters,
-        page: pagination.current_page,
-        limit: pagination.per_page
-      };
-
-      const response = await TransactionApi.getTransactions(params);
-      if (response.success) {
-        setTransactions(response.data);
-        setPagination(response.pagination);
-        // Update the count for the current tab
-        setTabCounts(prev => ({
-          ...prev,
-          [activeTab]: response.pagination.total
-        }));
+      
+      // For deleted tab, use deletedOnly parameter
+      if (activeTab === 'deleted') {
+        const params = {
+          ...filters,
+          deletedOnly: true,
+          page: pagination.current_page,
+          limit: pagination.per_page
+        };
+        
+        const response = await transactionApi.getTransactions(params);
+        if (response.success) {
+          setTransactions(response.data);
+          setPagination(response.pagination);
+          setTabCounts(prev => ({
+            ...prev,
+            deleted: response.pagination.total
+          }));
+        } else {
+          showError(response.message || 'Failed to load deleted transactions');
+        }
       } else {
-        showError(response.message || 'Failed to load transactions');
+        const params = {
+          type: activeTab,
+          ...filters,
+          page: pagination.current_page,
+          limit: pagination.per_page
+        };
+
+        const response = await transactionApi.getTransactions(params);
+        if (response.success) {
+          setTransactions(response.data);
+          setPagination(response.pagination);
+          // Update the count for the current tab
+          setTabCounts(prev => ({
+            ...prev,
+            [activeTab]: response.pagination.total
+          }));
+        } else {
+          showError(response.message || 'Failed to load transactions');
+        }
       }
     } catch (error) {
       console.error('Error loading transactions:', error);
@@ -103,22 +130,30 @@ const Transactions = () => {
   const loadTabCounts = async () => {
     try {
       // Load income count
-      const incomeResponse = await TransactionApi.getTransactions({
+      const incomeResponse = await transactionApi.getTransactions({
         type: 'income',
         page: 1,
         limit: 1
       });
       
       // Load expense count
-      const expenseResponse = await TransactionApi.getTransactions({
+      const expenseResponse = await transactionApi.getTransactions({
         type: 'expense',
+        page: 1,
+        limit: 1
+      });
+
+      // Load deleted count
+      const deletedResponse = await transactionApi.getTransactions({
+        deletedOnly: true,
         page: 1,
         limit: 1
       });
 
       setTabCounts({
         income: incomeResponse.success ? incomeResponse.pagination.total : 0,
-        expense: expenseResponse.success ? expenseResponse.pagination.total : 0
+        expense: expenseResponse.success ? expenseResponse.pagination.total : 0,
+        deleted: deletedResponse.success ? deletedResponse.pagination.total : 0
       });
     } catch (error) {
       console.error('Error loading tab counts:', error);
@@ -128,14 +163,29 @@ const Transactions = () => {
   const loadCategories = async () => {
     try {
       setCategoriesLoading(true);
-      const response = await TransactionCategoryApi.getTransactionCategories({ 
-        type: activeTab,
-        limit: 100 // Get all categories
-      });
-      if (response.success) {
-        setCategories(response.data);
+      
+      // For deleted tab, load all categories (both income and expense)
+      if (activeTab === 'deleted') {
+        const [incomeResponse, expenseResponse] = await Promise.all([
+          TransactionCategoryApi.getTransactionCategories({ type: 'income', limit: 100 }),
+          TransactionCategoryApi.getTransactionCategories({ type: 'expense', limit: 100 })
+        ]);
+        
+        const allCategories = [
+          ...(incomeResponse.success ? incomeResponse.data : []),
+          ...(expenseResponse.success ? expenseResponse.data : [])
+        ];
+        setCategories(allCategories);
       } else {
-        showError(response.message || 'Failed to load categories');
+        const response = await TransactionCategoryApi.getTransactionCategories({ 
+          type: activeTab,
+          limit: 100 // Get all categories
+        });
+        if (response.success) {
+          setCategories(response.data);
+        } else {
+          showError(response.message || 'Failed to load categories');
+        }
       }
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -152,7 +202,8 @@ const Transactions = () => {
       search: '',
       category_id: '',
       date_from: '',
-      date_to: ''
+      date_to: '',
+      payment_mode: ''
     });
     setPagination(prev => ({ ...prev, current_page: 1 }));
   };
@@ -170,8 +221,26 @@ const Transactions = () => {
     navigate(`/admin/transactions/create?type=${activeTab}`);
   };
 
-  const handleViewTransaction = (transactionId) => {
-    navigate(`/admin/transactions/${transactionId}`);
+  const handleViewTransaction = async (transactionId) => {
+    // For deleted tab, fetch and return transaction data for modal
+    if (activeTab === 'deleted') {
+      try {
+        const response = await transactionApi.getTransactionById(transactionId);
+        if (response.success) {
+          return response.data;
+        } else {
+          showError(response.message || 'Failed to load transaction');
+          return null;
+        }
+      } catch (error) {
+        console.error('Error loading transaction:', error);
+        showError('An error occurred while loading transaction');
+        return null;
+      }
+    } else {
+      // For regular tabs, navigate to view page
+      navigate(`/admin/transactions/${transactionId}`);
+    }
   };
 
   const handleEditTransaction = (transactionId) => {
@@ -180,7 +249,7 @@ const Transactions = () => {
 
   const handleDeleteTransaction = async (transactionId) => {
     try {
-      const response = await TransactionApi.deleteTransaction(transactionId);
+      const response = await transactionApi.deleteTransaction(transactionId);
       if (response.success) {
         loadTransactions();
         loadTabCounts(); // Refresh counts after deletion
@@ -194,6 +263,25 @@ const Transactions = () => {
     }
   };
 
+  const handleRestoreTransaction = async (transactionId) => {
+    // Placeholder for restore functionality
+    showError('Restore functionality will be implemented soon');
+    // TODO: Implement restore API call
+    // try {
+    //   const response = await transactionApi.restoreTransaction(transactionId);
+    //   if (response.success) {
+    //     loadTransactions();
+    //     loadTabCounts();
+    //     showSuccess('Transaction restored successfully');
+    //   } else {
+    //     showError(response.message || 'Failed to restore transaction');
+    //   }
+    // } catch (error) {
+    //   console.error('Error restoring transaction:', error);
+    //   showError('An error occurred while restoring the transaction');
+    // }
+  };
+
   const handleExport = async () => {
     try {
       const params = {
@@ -204,7 +292,7 @@ const Transactions = () => {
       };
       
       // Call export API (file download is handled in the API)
-      const response = await TransactionApi.exportTransactions(params);
+      const response = await transactionApi.exportTransactions(params);
       
       if (response.success) {
         showSuccess('Transactions exported successfully');
@@ -218,11 +306,17 @@ const Transactions = () => {
   };
 
   const getTabDisplayName = (tab) => {
-    return tab === 'income' ? 'Income' : 'Expense';
+    if (tab === 'income') return 'Income';
+    if (tab === 'expense') return 'Expense';
+    if (tab === 'deleted') return 'Deleted';
+    return tab;
   };
 
   const getTabIcon = (tab) => {
-    return tab === 'income' ? CurrencyDollarIcon : BanknotesIcon;
+    if (tab === 'income') return CurrencyDollarIcon;
+    if (tab === 'expense') return BanknotesIcon;
+    if (tab === 'deleted') return TrashIcon;
+    return CurrencyDollarIcon;
   };
 
   return (
@@ -239,13 +333,15 @@ const Transactions = () => {
         </div>
 
         <div className="grid grid-flow-col sm:auto-cols-max justify-start sm:justify-end gap-2">
-          <button
-            onClick={handleAddTransaction}
-            className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 shadow-lg"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Add {getTabDisplayName(activeTab)}
-          </button>
+          {activeTab !== 'deleted' && (
+            <button
+              onClick={handleAddTransaction}
+              className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 shadow-lg"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add {getTabDisplayName(activeTab)}
+            </button>
+          )}
         </div>
       </div>
 
@@ -253,7 +349,7 @@ const Transactions = () => {
       <div className="mb-6">
         <div className="border-b border-gray-200 dark:border-gray-700/60">
           <nav className="-mb-px flex space-x-8">
-            {['income', 'expense'].map((tab) => {
+            {['income', 'expense', 'deleted'].map((tab) => {
               const IconComponent = getTabIcon(tab);
               const isActive = activeTab === tab;
               
@@ -268,7 +364,7 @@ const Transactions = () => {
                   }`}
                 >
                   <IconComponent className="h-4 w-4 mr-2" />
-                  {getTabDisplayName(tab)} Transactions
+                  {getTabDisplayName(tab)} {tab !== 'deleted' && 'Transactions'}
                   <span className={`ml-2 py-0.5 px-2 rounded-full text-xs font-medium ${
                     isActive
                       ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300'
@@ -290,21 +386,33 @@ const Transactions = () => {
         categories={categories}
         categoriesLoading={categoriesLoading}
         transactionType={activeTab}
-        onExport={handleExport}
+        onExport={activeTab !== 'deleted' ? handleExport : null}
+        showPaymentMode={true}
       />
 
       {/* Table */}
-      <TransactionTable
-        transactions={transactions}
-        loading={loading}
-        pagination={pagination}
-        onPageChange={handlePageChange}
-        onView={handleViewTransaction}
-        onEdit={handleEditTransaction}
-        onDelete={handleDeleteTransaction}
-        transactionType={activeTab}
-        onAddTransaction={handleAddTransaction}
-      />
+      {activeTab === 'deleted' ? (
+        <DeletedTransactionsTable
+          transactions={transactions}
+          loading={loading}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onView={handleViewTransaction}
+          onRestore={handleRestoreTransaction}
+        />
+      ) : (
+        <TransactionTable
+          transactions={transactions}
+          loading={loading}
+          pagination={pagination}
+          onPageChange={handlePageChange}
+          onView={handleViewTransaction}
+          onEdit={handleEditTransaction}
+          onDelete={handleDeleteTransaction}
+          transactionType={activeTab}
+          onAddTransaction={handleAddTransaction}
+        />
+      )}
 
       {/* Toast Notification */}
       <Toast

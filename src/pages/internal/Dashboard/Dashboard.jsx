@@ -4,9 +4,10 @@ import AdminLayout from "@/components/common/Layouts/AdminLayout";
 
 import DashboardStatsCards from "@/pages/internal/Dashboard/components/DashboardStatsCards";
 import DashboardIncomeVsExpenses from "@/pages/internal/Dashboard/components/DashboardIncomeVsExpenses";
-import DashboardExpensesByCategory from "@/pages/internal/Dashboard/components/DashboardExpensesByCategory";
+import DashboardIncomeExpensesByCategory from "@/pages/internal/Dashboard/components/DashboardIncomeExpensesByCategory";
 import DashboardSocialTraffic from "@/pages/internal/Dashboard/components/DashboardSocialTraffic";
 import DashboardStudentsPerState from "@/pages/internal/Dashboard/components/DashboardStudentsPerState";
+import DashboardStudentsPerCourse from "@/pages/internal/Dashboard/components/DashboardStudentsPerCourse";
 
 
 
@@ -43,7 +44,14 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Row 3: Social Traffic - Full Width */}
+        {/* Row 3: Students per Course Chart - Full Width */}
+        <div className="grid grid-cols-12 gap-6">
+          <div className="col-span-12">
+            <DashboardStudentsPerCourse />
+          </div>
+        </div>
+
+        {/* Row 4: Social Traffic - Full Width */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
             <DashboardSocialTraffic />
@@ -53,7 +61,7 @@ function Dashboard() {
         {/* Row 4: Expenses by Category - Full Width */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12">
-            <DashboardExpensesByCategory />
+            <DashboardIncomeExpensesByCategory />
           </div>
         </div>
       </div>

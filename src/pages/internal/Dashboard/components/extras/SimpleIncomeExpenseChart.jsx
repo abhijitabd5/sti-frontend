@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import transactionsApi from '@/services/api/transactionsApi';
+import transactionApi from '@/services/api/transactionApi';
 
 function SimpleIncomeExpenseChart() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -22,7 +22,7 @@ function SimpleIncomeExpenseChart() {
       if (startDate) params.from = startDate;
       if (endDate) params.to = endDate;
 
-      const response = await transactionsApi.getIncomeVsExpense(params);
+      const response = await transactionApi.getIncomeVsExpense(params);
 
       if (response.success && response.data && response.data.chart_data) {
         setChartData(response.data.chart_data);

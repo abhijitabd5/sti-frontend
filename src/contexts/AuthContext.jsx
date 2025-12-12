@@ -117,6 +117,15 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (token && user) {
+          // Check if user data has required fields (first_name, last_name)
+          // If missing, it means old data is cached - clear and force re-login
+          if (!user.first_name || !user.last_name) {
+            console.warn('Incomplete user data in localStorage, clearing auth data');
+            clearAuthData();
+            dispatch({ type: AUTH_ACTIONS.LOGOUT });
+            return;
+          }
+          
           // Use stored user data directly
           dispatch({
             type: AUTH_ACTIONS.LOGIN_SUCCESS,

@@ -7,9 +7,21 @@ const TransactionFilters = ({
   categories, 
   categoriesLoading, 
   transactionType,
-  onExport 
+  onExport,
+  showPaymentMode = false
 }) => {
   const [localFilters, setLocalFilters] = useState(filters);
+  
+  // Payment mode options
+  const paymentModes = [
+    { value: 'cash', label: 'Cash' },
+    { value: 'upi', label: 'UPI' },
+    { value: 'net_banking', label: 'Net Banking' },
+    { value: 'cheque', label: 'Cheque' },
+    { value: 'bank_transfer', label: 'Bank Transfer' },
+    { value: 'card', label: 'Card' },
+    { value: 'payment_gateway', label: 'Payment Gateway' }
+  ];
   
   const handleInputChange = (field, value) => {
     setLocalFilters({
@@ -27,19 +39,20 @@ const TransactionFilters = ({
       search: '',
       category_id: '',
       date_from: '',
-      date_to: ''
+      date_to: '',
+      payment_mode: ''
     };
     setLocalFilters(clearedFilters);
     onFilterChange(clearedFilters);
   };
 
-  const hasActiveFilters = localFilters.search || localFilters.category_id || localFilters.date_from || localFilters.date_to;
+  const hasActiveFilters = localFilters.search || localFilters.category_id || localFilters.date_from || localFilters.date_to || localFilters.payment_mode;
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60 mb-6">
       <div className="p-4">
-        {/* First Row: Category and Date Range */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* First Row: Category, Payment Mode, and Date Range */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           {/* Category Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -60,8 +73,29 @@ const TransactionFilters = ({
             </select>
           </div>
 
+          {/* Payment Mode Filter */}
+          {showPaymentMode && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Payment Mode
+              </label>
+              <select
+                value={localFilters.payment_mode}
+                onChange={(e) => handleInputChange('payment_mode', e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100"
+              >
+                <option value="">All Payment Modes</option>
+                {paymentModes.map((mode) => (
+                  <option key={mode.value} value={mode.value}>
+                    {mode.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Date Range */}
-          <div>
+          <div className={showPaymentMode ? '' : 'md:col-span-2'}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Date Range
             </label>
@@ -116,13 +150,15 @@ const TransactionFilters = ({
               <FunnelIcon className="h-4 w-4 mr-2" />
               Apply
             </button>
-            <button
-              onClick={onExport}
-              className="btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
-            >
-              <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
-              Export
-            </button>
+            {onExport && (
+              <button
+                onClick={onExport}
+                className="btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+              >
+                <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+                Export
+              </button>
+            )}
           </div>
         </div>
 

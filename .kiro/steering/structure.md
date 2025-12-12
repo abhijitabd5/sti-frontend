@@ -111,6 +111,51 @@ export const createItem = (data) => { /* ... */ };
 - Theme switching via `ThemeContext` toggles `dark` class on `<html>`
 - Read CSS variables from `globals.css` when JS needs runtime values
 
+### Authentication Pattern
+
+**CRITICAL:** Always use the `useAuth()` hook for authentication operations, never call API services directly.
+
+**Correct Pattern:**
+```javascript
+import { useAuth } from '@/hooks/useAuth';
+
+const MyComponent = () => {
+  const { login, logout, user } = useAuth();
+  
+  const handleLogin = async (credentials) => {
+    await login(credentials); // ✅ Updates AuthContext state
+  };
+};
+```
+
+**Incorrect Pattern:**
+```javascript
+import { authApi } from '@/services/api/authApi';
+
+const MyComponent = () => {
+  const handleLogin = async (credentials) => {
+    await authApi.login(credentials); // ❌ Does NOT update AuthContext state
+    // User data won't be available in components until page refresh
+  };
+};
+```
+
+**Why this matters:**
+- Calling `authApi` directly only updates localStorage
+- The AuthContext state remains unchanged
+- Components using `useAuth()` won't see the user data
+- This causes "User" to display instead of actual user name
+- Only works after page refresh when AuthContext loads from localStorage
+
+**Available Auth Methods:**
+- `login(credentials)` - Authenticate user and update context
+- `logout()` - Clear auth data and update context
+- `updateUser(userData)` - Update user profile in context
+- `user` - Current user object
+- `isAuthenticated` - Boolean auth status
+- `hasRole(role)` - Check user role
+- `hasPermission(permission)` - Check user permission
+
 ### Route Protection
 
 Use guards from `src/guards/`:

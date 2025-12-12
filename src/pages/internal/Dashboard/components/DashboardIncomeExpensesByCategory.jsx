@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DoughnutChart from '@/components/charts/DoughnutChart';
-import transactionsApi from '@/services/api/transactionsApi';
+import transactionApi from '@/services/api/transactionApi';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
 
-function DashboardExpensesByCategory() {
+function DashboardIncomeExpensesByCategory() {
   const [selectedType, setSelectedType] = useState('expense');
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ function DashboardExpensesByCategory() {
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
 
-      const response = await transactionsApi.getCategoryWiseByType(selectedType, params);
+      const response = await transactionApi.getCategoryWiseByType(selectedType, params);
 
       if (response.success && response.data && response.data.categories) {
         const categories = response.data.categories;
@@ -199,4 +199,4 @@ function DashboardExpensesByCategory() {
   );
 }
 
-export default DashboardExpensesByCategory;
+export default DashboardIncomeExpensesByCategory;
