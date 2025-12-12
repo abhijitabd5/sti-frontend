@@ -40,14 +40,22 @@ export default function CreateLink() {
   }, [form.partnerId]);
 
   const link = useMemo(() => {
-    const base = typeof window !== 'undefined' ? window.location.origin : '';
+    const base = import.meta.env.VITE_PROMOTION_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
     const partner = partners.find(p => String(p.id) === String(form.partnerId));
     const post = posts.find(pt => String(pt.id) === String(form.postId));
     const code = partner?.referral_code || '';
     const pid = post?.id || '';
     const src = form.source || '';
-    if (!code || !pid || !src) return '';
-    return `${base}/ref?code=${encodeURIComponent(code)}&post=${encodeURIComponent(pid)}&source=${encodeURIComponent(src)}`;
+    
+    // Link becomes active when source and partner are selected
+    if (!src || !code) return '';
+    
+    const params = new URLSearchParams();
+    params.append('source', src);
+    params.append('code', code);
+    if (pid) params.append('post', pid);
+    
+    return `${base}/ref?${params.toString()}`;
   }, [partners, posts, form]);
 
   const copy = async () => {
@@ -77,7 +85,7 @@ export default function CreateLink() {
               onChange={(e)=>setForm(s => ({ ...s, source: e.target.value }))}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm"
             >
-              {SOURCES.map(s => <option key={s} value={s}>{s.replace('_',' ')}</option>)}
+              {SOURCES.map(s => <option key={s} value={s}>{s.replace('_',' ').replace(/\b\w/g, l => l.toUpperCase())}</option>)}
             </select>
           </div>
           <div>

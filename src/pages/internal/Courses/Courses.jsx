@@ -52,13 +52,15 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
         isDragging ? 'opacity-50' : ''
       }`}
     >
-      <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">{course.id}</td>
       <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 font-medium">{course.display_order}</td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-2">
           {/* <span className="text-lg">{getLanguageFlag(course.language)}</span> */}
           <span className="text-sm font-medium text-gray-800 dark:text-gray-100">{course.title}</span>
         </div>
+      </td>
+      <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 text-center">
+        {course.enrolled_students_count || 0}
       </td>
       <td className="px-4 py-3">
         <button
@@ -135,7 +137,10 @@ function Courses() {
   const loadCourses = async () => {
     try {
       setLoading(true);
-      const response = await courseApi.getCourses({ language: 'en' });
+      const response = await courseApi.getCourses({ 
+        language: 'en',
+        limit: 'all'
+      });
       if (response.success) {
         setCourses(response.data);
       }
@@ -290,13 +295,13 @@ function Courses() {
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Display Order
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Title
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Students Enrolled
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status

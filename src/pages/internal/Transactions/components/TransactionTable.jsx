@@ -223,13 +223,13 @@ const TransactionTable = ({
                           </button>
                           
                           {/* Delete */}
-                          {/* <button
+                          <button
                             onClick={() => openDeleteConfirmation(transaction)}
                             className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                             title="Delete Transaction"
                           >
                             <TrashIcon className="h-4 w-4" />
-                          </button> */}
+                          </button>
                         </div>
                       </td>
                     </tr>

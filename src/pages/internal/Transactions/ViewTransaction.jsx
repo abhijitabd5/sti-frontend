@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
-import TransactionApi from '@/services/api/transactionApi';
+import transactionApi from '@/services/api/transactionApi';
 
 // Icons
 import { 
@@ -34,7 +34,7 @@ const ViewTransaction = () => {
   const loadTransaction = async () => {
     try {
       setLoading(true);
-      const response = await TransactionApi.getTransactionById(id);
+      const response = await transactionApi.getTransactionById(id);
       if (response.success) {
         setTransaction(response.data);
       } else {
@@ -56,7 +56,7 @@ const ViewTransaction = () => {
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
       try {
-        const response = await TransactionApi.deleteTransaction(id);
+        const response = await transactionApi.deleteTransaction(id);
         if (response.success) {
           navigate('/admin/transactions?tab=' + transaction.type);
         }

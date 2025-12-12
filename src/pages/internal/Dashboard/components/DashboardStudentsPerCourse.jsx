@@ -6,32 +6,28 @@ import dashboardApi from '@/services/api/dashboardApi';
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
 
-function DashboardStudentsPerState() {
+function DashboardStudentsPerCourse() {
   // =============================================================================
   // DATA SOURCE TOGGLE - Change this boolean to switch between Mock and Real API
   // =============================================================================
   const USE_MOCK_DATA = false; // Set to false to use real API
   // =============================================================================
 
-  const [selectedFilter, setSelectedFilter] = useState('top10'); // 'top10' or region name
+  const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'operator_training', or 'technician_training'
   const [chartType, setChartType] = useState('bar'); // 'doughnut' or 'bar'
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [allStatesData, setAllStatesData] = useState([]);
+  const [allCoursesData, setAllCoursesData] = useState([]);
 
-  // Filter options - updated to match your API region names
+  // Filter options
   const filterOptions = [
-    { value: 'top10', label: 'Top 10 States' },
-    { value: 'Northern India', label: 'Northern India' },
-    { value: 'Southern India', label: 'Southern India' },
-    { value: 'Western India', label: 'Western India' },
-    { value: 'Eastern India', label: 'Eastern India' },
-    { value: 'Northeastern India', label: 'Northeastern India' },
-    { value: 'Central India', label: 'Central India' },
+    { value: 'all', label: 'All Courses' },
+    { value: 'operator_training', label: 'Operator Training' },
+    { value: 'technician_training', label: 'Technician Training' },
   ];
 
-  // Colors for states - each state gets a unique color
-  const stateColors = [
+  // Colors for courses - each course gets a unique color
+  const courseColors = [
     getCSSVariable('--color-violet-500'),
     getCSSVariable('--color-sky-500'),
     getCSSVariable('--color-green-500'),
@@ -52,25 +48,9 @@ function DashboardStudentsPerState() {
     getCSSVariable('--color-slate-500'),
     getCSSVariable('--color-gray-500'),
     getCSSVariable('--color-zinc-500'),
-    getCSSVariable('--color-neutral-500'),
-    getCSSVariable('--color-stone-500'),
-    getCSSVariable('--color-red-400'),
-    getCSSVariable('--color-orange-400'),
-    getCSSVariable('--color-amber-400'),
-    getCSSVariable('--color-yellow-400'),
-    getCSSVariable('--color-lime-400'),
-    getCSSVariable('--color-green-400'),
-    getCSSVariable('--color-emerald-400'),
-    getCSSVariable('--color-teal-400'),
-    getCSSVariable('--color-cyan-400'),
-    getCSSVariable('--color-sky-400'),
-    getCSSVariable('--color-blue-400'),
-    getCSSVariable('--color-indigo-400'),
-    getCSSVariable('--color-violet-400'),
-    getCSSVariable('--color-purple-400'),
   ];
 
-  const stateHoverColors = [
+  const courseHoverColors = [
     getCSSVariable('--color-violet-600'),
     getCSSVariable('--color-sky-600'),
     getCSSVariable('--color-green-600'),
@@ -91,92 +71,61 @@ function DashboardStudentsPerState() {
     getCSSVariable('--color-slate-600'),
     getCSSVariable('--color-gray-600'),
     getCSSVariable('--color-zinc-600'),
-    getCSSVariable('--color-neutral-600'),
-    getCSSVariable('--color-stone-600'),
-    getCSSVariable('--color-red-500'),
-    getCSSVariable('--color-orange-500'),
-    getCSSVariable('--color-amber-500'),
-    getCSSVariable('--color-yellow-500'),
-    getCSSVariable('--color-lime-500'),
-    getCSSVariable('--color-green-500'),
-    getCSSVariable('--color-emerald-500'),
-    getCSSVariable('--color-teal-500'),
-    getCSSVariable('--color-cyan-500'),
-    getCSSVariable('--color-sky-500'),
-    getCSSVariable('--color-blue-500'),
-    getCSSVariable('--color-indigo-500'),
-    getCSSVariable('--color-violet-500'),
-    getCSSVariable('--color-purple-500'),
   ];
 
   useEffect(() => {
-    fetchStudentsPerStateData();
+    fetchStudentsPerCourseData();
   }, []);
 
   useEffect(() => {
-    if (allStatesData.length > 0) {
+    if (allCoursesData.length > 0) {
       updateChartData();
     }
-  }, [selectedFilter, chartType, allStatesData]);
+  }, [selectedFilter, chartType, allCoursesData]);
 
-  const fetchStudentsPerStateData = async () => {
+  const fetchStudentsPerCourseData = async () => {
     setLoading(true);
     try {
-      let response;
+      // Using the same students stats API that includes studentsByCourse data
+      const response = await dashboardApi.getStudentsStats();
 
-      if (USE_MOCK_DATA) {
-        // Using Mock Data
-        const { getMockStudentsPerStateData } = await import('@/data/mockStudentsPerStateData');
-        response = await getMockStudentsPerStateData();
+      if (response.success && response.data && response.data.studentsByCourse) {
+        // Transform the API data to match expected format
+        const transformedCourses = response.data.studentsByCourse.map(course => ({
+          course_name: course.courseName,
+          student_count: course.count,
+          course_type: course.courseType
+        }));
+        
+        // Sort by student count (descending) for better visualization
+        transformedCourses.sort((a, b) => b.student_count - a.student_count);
+        
+        setAllCoursesData(transformedCourses);
       } else {
-        // Using Real API - reuse the students stats API
-        response = await dashboardApi.getStudentsStats();
-      }
-
-      if (response.success && response.data) {
-        // Transform the studentsByState data to match expected format
-        if (USE_MOCK_DATA && response.data.states) {
-          setAllStatesData(response.data.states);
-        } else if (response.data.studentsByState) {
-          // Transform your API format to expected format
-          const transformedStates = response.data.studentsByState.map(state => ({
-            state_name: state.stateName,
-            student_count: state.count,
-            region_name: state.regionName
-          }));
-          
-          // Sort by student count (descending) for better visualization
-          transformedStates.sort((a, b) => b.student_count - a.student_count);
-          
-          setAllStatesData(transformedStates);
-        } else {
-          setAllStatesData([]);
-        }
-      } else {
-        setAllStatesData([]);
+        setAllCoursesData([]);
       }
     } catch (error) {
-      console.error('Error fetching students per state data:', error);
-      setAllStatesData([]);
+      console.error('Error fetching students per course data:', error);
+      setAllCoursesData([]);
     } finally {
       setLoading(false);
     }
   };
 
   const updateChartData = () => {
-    if (allStatesData.length === 0) {
+    if (allCoursesData.length === 0) {
       setChartData(null);
       return;
     }
 
     let filteredData = [];
 
-    if (selectedFilter === 'top10') {
-      // Show top 10 states
-      filteredData = allStatesData.slice(0, 10);
+    if (selectedFilter === 'all') {
+      // Show all courses
+      filteredData = allCoursesData;
     } else {
-      // Show states from selected region using region_name
-      filteredData = allStatesData.filter(state => state.region_name === selectedFilter);
+      // Show courses from selected type
+      filteredData = allCoursesData.filter(course => course.course_type === selectedFilter);
     }
 
     if (filteredData.length === 0) {
@@ -184,20 +133,20 @@ function DashboardStudentsPerState() {
       return;
     }
 
-    // Assign unique colors to each state
+    // Assign unique colors to each course
     const colors = filteredData.map((_, index) => 
-      stateColors[index % stateColors.length]
+      courseColors[index % courseColors.length]
     );
     const hoverColors = filteredData.map((_, index) => 
-      stateHoverColors[index % stateHoverColors.length]
+      courseHoverColors[index % courseHoverColors.length]
     );
 
     const newChartData = {
-      labels: filteredData.map(state => state.state_name),
+      labels: filteredData.map(course => course.course_name),
       datasets: [
         {
           label: 'Students',
-          data: filteredData.map(state => state.student_count),
+          data: filteredData.map(course => course.student_count),
           backgroundColor: colors,
           hoverBackgroundColor: hoverColors,
           borderWidth: 0,
@@ -306,7 +255,7 @@ function DashboardStudentsPerState() {
     })
   };
 
-  const totalStudents = allStatesData.reduce((sum, state) => sum + state.student_count, 0);
+  const totalStudents = allCoursesData.reduce((sum, course) => sum + course.student_count, 0);
   const filteredStudents = chartData ? chartData.datasets[0].data.reduce((a, b) => a + b, 0) : 0;
 
   return (
@@ -318,7 +267,7 @@ function DashboardStudentsPerState() {
             <div>
               <div className="flex items-center space-x-2">
                 <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-                  Students per State
+                  Students per Course
                 </h2>
                 {/* Data Source Indicator */}
                 <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
@@ -414,4 +363,4 @@ function DashboardStudentsPerState() {
   );
 }
 
-export default DashboardStudentsPerState;
+export default DashboardStudentsPerCourse;

@@ -22,6 +22,7 @@ function DashboardStatsCards() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchDashboardStats();
@@ -29,46 +30,57 @@ function DashboardStatsCards() {
 
   const fetchDashboardStats = async () => {
     setLoading(true);
+    setError(null);
+    
+    // Fetch students data
     try {
-      // Fetch both students and enquiries data
-      const [studentsResponse, enquiriesResponse] = await Promise.all([
-        dashboardApi.getStudentsStats(),
-        dashboardApi.getEnquiriesStats()
-      ]);
-
-      if (studentsResponse.success) {
+      const studentsResponse = await dashboardApi.getStudentsStats();
+      console.log('Students Response:', studentsResponse);
+      
+      if (studentsResponse?.success) {
+        console.log('Processing students data:', studentsResponse.data.totalStudents);
         setStudentsData(prev => ({
           ...prev,
-          value: studentsResponse.data.total.toString(),
+          value: studentsResponse.data.totalStudents.toString(),
           percentage: studentsResponse.data.growth || "0%"
         }));
       }
+    } catch (studentsError) {
+      console.error('Error fetching students stats:', studentsError);
+      setStudentsData(prev => ({ ...prev, value: "0", percentage: "0%" }));
+    }
 
-      if (enquiriesResponse.success) {
+    // Fetch enquiries data
+    try {
+      const enquiriesResponse = await dashboardApi.getEnquiriesStats();
+      console.log('Enquiries Response:', enquiriesResponse);
+      
+      if (enquiriesResponse?.success) {
+        // Transform the API response to match frontend expectations
+        const breakdown = [
+          { label: "Course Enquiries", value: enquiriesResponse.data.courseEnquiries || 0 },
+          { label: "Contact Us", value: enquiriesResponse.data.contactUsEnquiries || 0 },
+          { label: "Offline Enquiries", value: enquiriesResponse.data.offlineEnquiries || 0 }
+        ];
+
         setEnquiriesData(prev => ({
           ...prev,
-          value: enquiriesResponse.data.total.toString(),
+          value: enquiriesResponse.data.totalEnquiries.toString(),
           percentage: enquiriesResponse.data.growth || "0%",
-          breakdown: enquiriesResponse.data.breakdown || []
+          breakdown: breakdown
         }));
       }
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      // Keep mock data on error
-      setStudentsData(prev => ({ ...prev, value: "2,780", percentage: "+49%" }));
+    } catch (enquiriesError) {
+      console.error('Error fetching enquiries stats:', enquiriesError);
       setEnquiriesData(prev => ({
         ...prev,
-        value: "1,245",
-        percentage: "+23%",
-        breakdown: [
-          { label: "Course Enquiries", value: 485 },
-          { label: "Contact Us", value: 320 },
-          { label: "Offline Enquiries", value: 440 }
-        ]
+        value: "0",
+        percentage: "0%",
+        breakdown: []
       }));
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   return (
@@ -80,7 +92,7 @@ function DashboardStatsCards() {
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
               {studentsData.title}
             </h2>
-            <EditMenu align="right" className="relative inline-flex">
+            {/* <EditMenu align="right" className="relative inline-flex">
               <li>
                 <Link 
                   className="font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 flex py-1 px-3" 
@@ -97,7 +109,7 @@ function DashboardStatsCards() {
                   {studentsData.links.link2Text}
                 </Link>
               </li>
-            </EditMenu>
+            </EditMenu> */}
           </header>
 
           {loading ? (
@@ -105,14 +117,23 @@ function DashboardStatsCards() {
               <div className="animate-pulse bg-gray-300 dark:bg-gray-600 h-8 w-20 rounded mr-2"></div>
               <div className="animate-pulse bg-gray-300 dark:bg-gray-600 h-6 w-12 rounded-full"></div>
             </div>
+          ) : error ? (
+            <div className="flex items-center text-gray-500 dark:text-gray-400">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 18.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span className="text-sm">Data unavailable</span>
+            </div>
           ) : (
             <div className="flex items-start">
               <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
                 {studentsData.value}
               </div>
-              <div className="text-sm font-medium text-green-700 px-1.5 bg-green-500/20 rounded-full">
-                {studentsData.percentage}
-              </div>
+              {studentsData.percentage !== "0%" && (
+                <div className="text-sm font-medium text-green-700 px-1.5 bg-green-500/20 rounded-full">
+                  {studentsData.percentage}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -125,7 +146,7 @@ function DashboardStatsCards() {
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">
               {enquiriesData.title}
             </h2>
-            <EditMenu align="right" className="relative inline-flex">
+            {/* <EditMenu align="right" className="relative inline-flex">
               <li>
                 <Link 
                   className="font-medium text-sm text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-200 flex py-1 px-3" 
@@ -142,7 +163,7 @@ function DashboardStatsCards() {
                   Export
                 </Link>
               </li>
-            </EditMenu>
+            </EditMenu> */}
           </header>
 
           {loading ? (
@@ -150,14 +171,23 @@ function DashboardStatsCards() {
               <div className="animate-pulse bg-gray-300 dark:bg-gray-600 h-8 w-20 rounded mr-2"></div>
               <div className="animate-pulse bg-gray-300 dark:bg-gray-600 h-6 w-12 rounded-full"></div>
             </div>
+          ) : error ? (
+            <div className="flex items-center text-gray-500 dark:text-gray-400 mb-3">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.314 18.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span className="text-sm">Data unavailable</span>
+            </div>
           ) : (
             <div className="flex items-start mb-3">
               <div className="text-3xl font-bold text-gray-800 dark:text-gray-100 mr-2">
                 {enquiriesData.value}
               </div>
-              <div className="text-sm font-medium text-green-700 px-1.5 bg-green-500/20 rounded-full">
-                {enquiriesData.percentage}
-              </div>
+              {enquiriesData.percentage !== "0%" && (
+                <div className="text-sm font-medium text-green-700 px-1.5 bg-green-500/20 rounded-full">
+                  {enquiriesData.percentage}
+                </div>
+              )}
             </div>
           )}
 
@@ -174,7 +204,13 @@ function DashboardStatsCards() {
                   <div className="animate-pulse bg-gray-300 dark:bg-gray-600 h-4 w-8 rounded"></div>
                 </div>
               ))
-            ) : (
+            ) : error ? (
+              <div className="text-center py-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  Breakdown data unavailable
+                </span>
+              </div>
+            ) : enquiriesData.breakdown.length > 0 ? (
               enquiriesData.breakdown.map((item, index) => (
                 <div key={index} className="flex justify-between items-center text-sm">
                   <div className="flex items-center">
@@ -190,6 +226,12 @@ function DashboardStatsCards() {
                   </span>
                 </div>
               ))
+            ) : (
+              <div className="text-center py-4">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  No breakdown data available
+                </span>
+              </div>
             )}
           </div>
         </div>

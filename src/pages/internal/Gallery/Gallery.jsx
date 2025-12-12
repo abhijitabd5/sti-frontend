@@ -177,7 +177,8 @@ function Gallery() {
       
       const response = await galleryApi.getGalleryItems({
         media_type: mediaType,
-        page_slug: pageSlug
+        page_slug: pageSlug,
+        limit: 'all'
       });
       
       if (response.success) {
