@@ -74,8 +74,7 @@ function OtherGallery() {
       const response = await galleryApi.getGalleryItems({
         media_type: mediaType,
         page_slug: selectedPage,
-        page: page,
-        limit: pagination.limit,
+        limit: 'all'
       });
       
       if (response.success) {

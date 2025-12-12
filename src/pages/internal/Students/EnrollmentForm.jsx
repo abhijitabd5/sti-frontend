@@ -83,9 +83,9 @@ function EnrollmentForm() {
     mess_fee: 0,
     pre_tax_total: 0,
     taxable_amount: 0,
-    sgst_percentage: 9, // from env
-    cgst_percentage: 9, // from env
-    igst_percentage: 18, // from env
+    sgst_percentage: 0,
+    cgst_percentage: 0,
+    igst_percentage: 0,
     sgst_amount: 0,
     cgst_amount: 0,
     igst_amount: 0,
@@ -172,19 +172,14 @@ function EnrollmentForm() {
     // Pre-tax total
     const preTaxTotal = discountedFee + hostelFee + messFee - parseFloat(formData.extra_discount_amount || 0);
     
-    // Tax calculation
+    // Tax calculation - All taxes set to 0%
     const taxableAmount = preTaxTotal;
-    let sgstAmount = 0, cgstAmount = 0, igstAmount = 0;
+    const sgstAmount = 0;
+    const cgstAmount = 0;
+    const igstAmount = 0;
 
-    if (formData.igst_applicable) {
-      igstAmount = taxableAmount * 18 / 100;
-    } else {
-      sgstAmount = taxableAmount * 9 / 100;
-      cgstAmount = taxableAmount * 9 / 100;
-    }
-
-    // Total payable
-    const totalPayableFee = preTaxTotal + sgstAmount + cgstAmount + igstAmount;
+    // Total payable (no tax added)
+    const totalPayableFee = preTaxTotal;
     const dueAmount = totalPayableFee - parseFloat(formData.paid_amount || 0);
 
     setFeeCalculation({
@@ -195,9 +190,9 @@ function EnrollmentForm() {
       mess_fee: messFee,
       pre_tax_total: preTaxTotal,
       taxable_amount: taxableAmount,
-      sgst_percentage: 9,
-      cgst_percentage: 9,
-      igst_percentage: 18,
+      sgst_percentage: 0,
+      cgst_percentage: 0,
+      igst_percentage: 0,
       sgst_amount: sgstAmount,
       cgst_amount: cgstAmount,
       igst_amount: igstAmount,
@@ -774,8 +769,8 @@ function EnrollmentForm() {
                   />
                 </div>
 
-                {/* Tax Configuration */}
-                <div>
+                {/* Tax Configuration - Hidden (calculations still happen with 0%) */}
+                {/* <div>
                   <div className="flex items-center mb-3">
                     <input
                       type="checkbox"
@@ -794,7 +789,7 @@ function EnrollmentForm() {
                       <>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            SGST (9%)
+                            SGST (0%)
                           </label>
                           <input
                             type="number"
@@ -806,7 +801,7 @@ function EnrollmentForm() {
 
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            CGST (9%)
+                            CGST (0%)
                           </label>
                           <input
                             type="number"
@@ -819,7 +814,7 @@ function EnrollmentForm() {
                     ) : (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          IGST (18%)
+                          IGST (0%)
                         </label>
                         <input
                           type="number"
@@ -830,7 +825,7 @@ function EnrollmentForm() {
                       </div>
                     )}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Payment Summary */}
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-4">

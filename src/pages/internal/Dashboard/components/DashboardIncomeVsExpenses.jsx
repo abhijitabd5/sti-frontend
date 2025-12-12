@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BarChart from '@/components/charts/BarChart';
-import transactionsApi from '@/services/api/transactionsApi';
+import transactionApi from '@/services/api/transactionApi';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
@@ -28,7 +28,7 @@ function DashboardIncomeVsExpenses() {
       // if (startDate) params.from = startDate;
       // if (endDate) params.to = endDate;
 
-      const response = await transactionsApi.getIncomeVsExpense(params);
+      const response = await transactionApi.getIncomeVsExpense(params);
 
       if (response.success && response.data && response.data.chart_data) {
         const data = response.data.chart_data;

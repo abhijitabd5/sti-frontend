@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { authApi, saveAuthData } from '@/services/api/authApi';
+import { useAuth } from '@/hooks/useAuth';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
 
@@ -17,6 +17,7 @@ const Login = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
+  const { login: authLogin } = useAuth();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -41,15 +42,12 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await authApi.login({
+      const response = await authLogin({
         login: formData.login,
         password: formData.password
       });
 
       if (response.success) {
-        const tokens = response.data.token || response.data.tokens;
-        saveAuthData(tokens, response.data.user);
-
         const successMessage = `Welcome back, ${response.data.user.first_name}!`;
         
         const redirectTo = location.state?.from?.pathname || response.data.redirect_url;

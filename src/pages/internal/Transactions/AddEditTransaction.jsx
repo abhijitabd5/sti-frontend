@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import AdminLayout from "@/components/common/Layouts/AdminLayout";
 import Toast from "@/components/ui/Internal/Toast/Toast";
 import useToast from "@/hooks/useToast";
-import TransactionApi from "@/services/api/transactionApi";
+import transactionApi from "@/services/api/transactionApi";
 import TransactionCategoryApi from "@/services/api/transactionCategoryApi";
 
 // Icons
@@ -88,7 +88,7 @@ const AddEditTransaction = () => {
   const loadTransaction = async () => {
     try {
       setLoading(true);
-      const response = await TransactionApi.getTransactionById(id);
+      const response = await transactionApi.getTransactionById(id);
       if (response.success) {
         // Map API response to form data structure
         const transaction = response.data;
@@ -211,9 +211,9 @@ const AddEditTransaction = () => {
 
       let response;
       if (isEdit) {
-        response = await TransactionApi.updateTransaction(id, finalFormData);
+        response = await transactionApi.updateTransaction(id, finalFormData);
       } else {
-        response = await TransactionApi.createTransaction(finalFormData);
+        response = await transactionApi.createTransaction(finalFormData);
       }
 
       if (response.success) {

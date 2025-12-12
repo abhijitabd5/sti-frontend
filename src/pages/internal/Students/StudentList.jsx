@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import { getTimestamp } from '@/utils/dateUtils';
 import AadhaarCheckModal from './components/AadhaarCheckModal';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 // Icons
 import { 
@@ -22,6 +24,8 @@ import {
 
 function StudentList() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast, showSuccess, hideToast } = useToast();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState({});
@@ -36,10 +40,43 @@ function StudentList() {
     dateTo: '',
   });
 
-  // Load students
+  // Handle navigation state and success messages
   useEffect(() => {
-    loadStudents();
+    if (location.state?.message) {
+      showSuccess(location.state.message);
+      
+      // Clear navigation state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, showSuccess]);
+
+  // Load students - optimized to prevent flickering
+  useEffect(() => {
+    // Skip initial load if we just handled navigation state
+    const hasNavigationState = location.state?.message;
+    
+    if (hasNavigationState) {
+      setLoading(false); // Don't show loading spinner immediately
+      const timer = setTimeout(() => {
+        setLoading(true); // Show loading for the delayed fetch
+        loadStudents();
+      }, 1000); // Load data after 1 second to show success message
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Normal page load or pagination change
+      loadStudents();
+    }
   }, [currentPage, recordsPerPage]);
+
+  // Separate effect for handling navigation state changes
+  useEffect(() => {
+    // This effect only runs when location.state changes, not on pagination
+    if (location.state?.message && currentPage === 1) {
+      // Reset pagination when coming from enrollment
+      setCurrentPage(1);
+    }
+  }, [location.state]);
 
   const loadStudents = async (params = {}) => {
     try {
@@ -235,7 +272,8 @@ function StudentList() {
     }
   };
 
-  if (loading) {
+  // Only show loading spinner if not coming from enrollment form
+  if (loading && !location.state?.message) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -352,9 +390,14 @@ function StudentList() {
       {/* Students Table */}
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700/60 flex justify-between items-center">
-          <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-            All Students ({pagination.total || 0})
-          </h3>
+          <div className="flex items-center space-x-2">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
+              All Students ({pagination.total || 0})
+            </h3>
+            {loading && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-violet-500"></div>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <label className="text-sm text-gray-600 dark:text-gray-400">Records per page:</label>
             <select
@@ -584,6 +627,14 @@ function StudentList() {
       <AadhaarCheckModal
         isOpen={showEnrollModal}
         onClose={() => setShowEnrollModal(false)}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
       />
     </AdminLayout>
   );
