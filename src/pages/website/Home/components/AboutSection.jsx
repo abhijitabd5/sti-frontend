@@ -15,12 +15,17 @@ const AboutSection = () => {
       try {
         const response = await galleryApi.getPublicGalleryByPageSlug("home");
         if (response.data && response.data.length > 0) {
-          // Get the first image from the gallery
-          setGalleryImage(response.data[0].media_url);
-          setImageError(false);
+          // Get mission section image by specific slug
+          const missionImageItem = response.data.find(item => item.slug === 'home-mission-section-image-clr-5nu');
+          if (missionImageItem) {
+            setGalleryImage(missionImageItem.media_url);
+            setImageError(false);
+          } else {
+            setImageError(true);
+          }
           
-          // Get video by specific slug
-          const videoItem = response.data.find(item => item.section_slug === 'home-training-video');
+          // Get training video by specific slug
+          const videoItem = response.data.find(item => item.slug === 'home-watch-training-video-jgb-vhl');
           if (videoItem) {
             setGalleryVideo(videoItem.media_url);
           }

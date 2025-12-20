@@ -13,7 +13,7 @@ function DashboardStudentsPerCourse() {
   const USE_MOCK_DATA = false; // Set to false to use real API
   // =============================================================================
 
-  const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'operator_training', or 'technician_training'
+  const [selectedFilter, setSelectedFilter] = useState('top10'); // 'top10', 'operator_training', or 'technician_training'
   const [chartType, setChartType] = useState('bar'); // 'doughnut' or 'bar'
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ function DashboardStudentsPerCourse() {
 
   // Filter options
   const filterOptions = [
-    { value: 'all', label: 'All Courses' },
+    { value: 'top10', label: 'Top 10 Courses' },
     { value: 'operator_training', label: 'Operator Training' },
     { value: 'technician_training', label: 'Technician Training' },
   ];
@@ -92,7 +92,7 @@ function DashboardStudentsPerCourse() {
       if (response.success && response.data && response.data.studentsByCourse) {
         // Transform the API data to match expected format
         const transformedCourses = response.data.studentsByCourse.map(course => ({
-          course_name: course.courseName,
+          course_name: course.courseDisplayName || course.courseName,
           student_count: course.count,
           course_type: course.courseType
         }));
@@ -120,12 +120,13 @@ function DashboardStudentsPerCourse() {
 
     let filteredData = [];
 
-    if (selectedFilter === 'all') {
-      // Show all courses
-      filteredData = allCoursesData;
+    if (selectedFilter === 'top10') {
+      // Show top 10 courses (data is already sorted by student count descending)
+      filteredData = allCoursesData.slice(0, 10);
     } else {
-      // Show courses from selected type
-      filteredData = allCoursesData.filter(course => course.course_type === selectedFilter);
+      // Show courses from selected type, then take top 10 if more than 10
+      const typeFilteredData = allCoursesData.filter(course => course.course_type === selectedFilter);
+      filteredData = typeFilteredData.slice(0, 10);
     }
 
     if (filteredData.length === 0) {

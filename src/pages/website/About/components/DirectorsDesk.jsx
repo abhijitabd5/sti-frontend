@@ -1,14 +1,21 @@
 import React from 'react';
 
-const DirectorsDesk = () => {
+const DirectorsDesk = ({ galleryData = [] }) => {
+  // Get images from gallery data by slug
+  const getImageBySlug = (slug) => {
+    const item = galleryData.find(item => item.slug === slug);
+    return item ? item.media_url : null;
+  };
+
   // Main director photo
-  const directorImage = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+  const directorImage = getImageBySlug('about-us-director-main-image-lz1-0m3') || 
+    'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
   
   // Side photos
   const sideImages = [
-    'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1590845947670-c009801ffa74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+    getImageBySlug('about-us-director-small-image--b52-vad') || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    getImageBySlug('about-us-director-small-image--39g-aw5') || 'https://images.unsplash.com/photo-1590845947670-c009801ffa74?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80',
+    getImageBySlug('about-us-director-small-image--k4m-20g') || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
   ];
 
   return (

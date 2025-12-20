@@ -23,6 +23,7 @@ function EditCourse() {
   const [initialLoading, setInitialLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
+    display_name: "",
     language: "en",
     summary: "",
     description: "",
@@ -62,6 +63,7 @@ function EditCourse() {
         const course = response.data;
         const newFormData = {
           title: course.title,
+          display_name: course.display_name || "",
           language: course.language,
           summary: course.summary,
           description: course.description,
@@ -226,6 +228,7 @@ function EditCourse() {
 
       const courseData = {
         title: formData.title,
+        display_name: formData.display_name,
         language: formData.language,
         summary: formData.summary,
         description: formData.description,
@@ -328,6 +331,23 @@ function EditCourse() {
                   {errors.title && (
                     <p className="text-red-500 text-sm mt-1">{errors.title}</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    name="display_name"
+                    value={formData.display_name}
+                    onChange={handleInputChange}
+                    className="form-input w-full"
+                    placeholder="Enter display name (optional)"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Alternative name to display publicly (if different from title)
+                  </p>
                 </div>
 
                 <div>

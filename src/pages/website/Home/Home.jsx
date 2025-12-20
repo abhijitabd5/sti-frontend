@@ -14,9 +14,9 @@ import { INSTITUTION_INFO } from '@/config/constants';
 
 // Hero slide section slugs
 const HERO_SLIDE_SLUGS = [
-  'home-hero-slide-one',
-  'home-hero-slide-two',
-  'home-hero-slide-three'
+  'home-hero-section-slide-one-q9k-j1l',
+  'home-hero-section-slide-two-3v2-1ro',
+  'home-hero-section-slide-three-r1q-2sy'
 ];
 
 // Default hero slide content for the training institute
@@ -56,9 +56,9 @@ const Home = () => {
         try {
           const galleryResponse = await galleryApi.getPublicGalleryByPageSlug('home');
           if (galleryResponse.data && galleryResponse.data.length > 0) {
-            // Map gallery items by section slug in order
+            // Map gallery items by slug in order
             heroSlides = HERO_SLIDE_SLUGS.map(slug => {
-              const item = galleryResponse.data.find(data => data.section_slug === slug);
+              const item = galleryResponse.data.find(data => data.slug === slug);
               if (item) {
                 return {
                   id: item.id,

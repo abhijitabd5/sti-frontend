@@ -188,7 +188,7 @@ const WebsiteHeader = () => {
             )}
 
             {/* Language Dropdown */}
-            <LanguageDropdown isSticky={isSticky} />
+            {/* <LanguageDropdown isSticky={isSticky} /> */}
 
             {/* Theme Toggle */}
             <div className={`${!isSticky ? '[&_svg]:text-gray-900 dark:[&_svg]:text-white/90' : ''}`}>
