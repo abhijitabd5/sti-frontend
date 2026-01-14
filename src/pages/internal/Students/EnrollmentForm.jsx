@@ -100,7 +100,12 @@ function EnrollmentForm() {
 
   // Update fee calculations when relevant fields change
   useEffect(() => {
-    calculateFees();
+    // Use requestAnimationFrame to batch updates and prevent flickering
+    const timeoutId = setTimeout(() => {
+      calculateFees();
+    }, 0);
+    
+    return () => clearTimeout(timeoutId);
   }, [
     formData.course_id, 
     formData.is_hostel_opted, 
@@ -116,12 +121,17 @@ function EnrollmentForm() {
     if (formData.course_id) {
       const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
       if (selectedCourse) {
-        // Reset accommodation options if not available for selected course
-        setFormData(prev => ({
-          ...prev,
-          is_hostel_opted: selectedCourse.hostel_available ? prev.is_hostel_opted : false,
-          is_mess_opted: selectedCourse.mess_available ? prev.is_mess_opted : false
-        }));
+        // Only update if values actually need to change to prevent unnecessary re-renders
+        const shouldUpdateHostel = !selectedCourse.hostel_available && formData.is_hostel_opted;
+        const shouldUpdateMess = !selectedCourse.mess_available && formData.is_mess_opted;
+        
+        if (shouldUpdateHostel || shouldUpdateMess) {
+          setFormData(prev => ({
+            ...prev,
+            is_hostel_opted: selectedCourse.hostel_available ? prev.is_hostel_opted : false,
+            is_mess_opted: selectedCourse.mess_available ? prev.is_mess_opted : false
+          }));
+        }
       }
     }
   }, [formData.course_id, courses]);
@@ -144,19 +154,23 @@ function EnrollmentForm() {
   const calculateFees = () => {
     const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
     if (!selectedCourse) {
-      setFeeCalculation(prev => ({ 
-        ...prev, 
-        base_course_fee: 0,
-        discount_percentage: 0,
-        discounted_course_fee: 0,
-        pre_tax_total: 0,
-        taxable_amount: 0,
-        sgst_amount: 0,
-        cgst_amount: 0,
-        igst_amount: 0,
-        total_payable_fee: 0,
-        due_amount: 0
-      }));
+      // Only update if values are different to prevent unnecessary re-renders
+      setFeeCalculation(prev => {
+        if (prev.total_payable_fee === 0) return prev;
+        return { 
+          ...prev, 
+          base_course_fee: 0,
+          discount_percentage: 0,
+          discounted_course_fee: 0,
+          pre_tax_total: 0,
+          taxable_amount: 0,
+          sgst_amount: 0,
+          cgst_amount: 0,
+          igst_amount: 0,
+          total_payable_fee: 0,
+          due_amount: 0
+        };
+      });
       return;
     }
 
@@ -182,22 +196,37 @@ function EnrollmentForm() {
     const totalPayableFee = preTaxTotal;
     const dueAmount = totalPayableFee - parseFloat(formData.paid_amount || 0);
 
-    setFeeCalculation({
-      base_course_fee: baseFee,
-      discount_percentage: discountPercentage,
-      discounted_course_fee: discountedFee,
-      hostel_fee: hostelFee,
-      mess_fee: messFee,
-      pre_tax_total: preTaxTotal,
-      taxable_amount: taxableAmount,
-      sgst_percentage: 0,
-      cgst_percentage: 0,
-      igst_percentage: 0,
-      sgst_amount: sgstAmount,
-      cgst_amount: cgstAmount,
-      igst_amount: igstAmount,
-      total_payable_fee: totalPayableFee,
-      due_amount: dueAmount
+    // Only update state if values have changed to prevent flickering
+    setFeeCalculation(prev => {
+      if (
+        prev.base_course_fee === baseFee &&
+        prev.discount_percentage === discountPercentage &&
+        prev.discounted_course_fee === discountedFee &&
+        prev.hostel_fee === hostelFee &&
+        prev.mess_fee === messFee &&
+        prev.total_payable_fee === totalPayableFee &&
+        prev.due_amount === dueAmount
+      ) {
+        return prev; // No change, return previous state
+      }
+
+      return {
+        base_course_fee: baseFee,
+        discount_percentage: discountPercentage,
+        discounted_course_fee: discountedFee,
+        hostel_fee: hostelFee,
+        mess_fee: messFee,
+        pre_tax_total: preTaxTotal,
+        taxable_amount: taxableAmount,
+        sgst_percentage: 0,
+        cgst_percentage: 0,
+        igst_percentage: 0,
+        sgst_amount: sgstAmount,
+        cgst_amount: cgstAmount,
+        igst_amount: igstAmount,
+        total_payable_fee: totalPayableFee,
+        due_amount: dueAmount
+      };
     });
   };
 
@@ -289,6 +318,7 @@ function EnrollmentForm() {
           try {
             await uploadDocuments(student_id, documentsToUpload);
           } catch (error) {
+            console.error('Document upload error:', error);
             documentUploadSuccess = false;
           }
         }
@@ -302,13 +332,19 @@ function EnrollmentForm() {
                 ? 'Student enrolled successfully!' 
                 : 'Student enrolled successfully! Note: Some documents may not have been uploaded.',
               studentId: student_id
-            }
+            },
+            replace: true // Replace history to prevent back button issues
           });
         }, 2000);
+      } else {
+        // Handle API error response
+        throw new Error(response.message || 'Failed to create enrollment');
       }
     } catch (error) {
       console.error('Error creating enrollment:', error);
+      alert(error.message || 'Failed to enroll student. Please try again.');
       setLoading(false);
+      setShowProgressModal(false);
     }
   };
 
@@ -350,7 +386,7 @@ function EnrollmentForm() {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto" style={{ minHeight: '100vh' }}>
         <div className="mb-8">
           <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
             {isExisting ? 'Enroll Existing Student' : 'Enroll New Student'}

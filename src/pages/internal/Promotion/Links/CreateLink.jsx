@@ -40,7 +40,7 @@ export default function CreateLink() {
   }, [form.partnerId]);
 
   const link = useMemo(() => {
-    const base = import.meta.env.VITE_PROMOTION_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    const base = import.meta.env.VITE_PROMOTION_BASE_URL || 'https://api.shahabuddintraining.com';
     const partner = partners.find(p => String(p.id) === String(form.partnerId));
     const post = posts.find(pt => String(pt.id) === String(form.postId));
     const code = partner?.referral_code || '';

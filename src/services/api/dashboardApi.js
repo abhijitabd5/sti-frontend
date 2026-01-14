@@ -2,9 +2,20 @@ import httpClient from '@/services/utils/httpClient';
 
 class DashboardApi {
   // Students Statistics
-  async getStudentsStats() {
+  async getStudentsStats(params = {}) {
     try {
-      const response = await httpClient.get('/internal/dashboard/students/stats');
+      const query = new URLSearchParams();
+      
+      // Add date range parameters if provided
+      if (params.dateFrom) query.append('dateFrom', params.dateFrom);
+      if (params.dateTo) query.append('dateTo', params.dateTo);
+      
+      const queryString = query.toString();
+      const url = queryString 
+        ? `/internal/dashboard/students/stats?${queryString}`
+        : '/internal/dashboard/students/stats';
+      
+      const response = await httpClient.get(url);
       return response.data;
     } catch (error) {
       console.error('Error fetching students stats:', error);

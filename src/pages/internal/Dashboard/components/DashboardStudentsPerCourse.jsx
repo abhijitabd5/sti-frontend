@@ -13,15 +13,17 @@ function DashboardStudentsPerCourse() {
   const USE_MOCK_DATA = false; // Set to false to use real API
   // =============================================================================
 
-  const [selectedFilter, setSelectedFilter] = useState('all'); // 'all', 'operator_training', or 'technician_training'
+  const [selectedFilter, setSelectedFilter] = useState('top10'); // 'top10', 'operator_training', or 'technician_training'
   const [chartType, setChartType] = useState('bar'); // 'doughnut' or 'bar'
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [allCoursesData, setAllCoursesData] = useState([]);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   // Filter options
   const filterOptions = [
-    { value: 'all', label: 'All Courses' },
+    { value: 'top10', label: 'Top 10 Courses' },
     { value: 'operator_training', label: 'Operator Training' },
     { value: 'technician_training', label: 'Technician Training' },
   ];
@@ -74,8 +76,11 @@ function DashboardStudentsPerCourse() {
   ];
 
   useEffect(() => {
-    fetchStudentsPerCourseData();
-  }, []);
+    // Only fetch if both dates are selected or both are empty
+    if ((dateFrom && dateTo) || (!dateFrom && !dateTo)) {
+      fetchStudentsPerCourseData();
+    }
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     if (allCoursesData.length > 0) {
@@ -87,12 +92,16 @@ function DashboardStudentsPerCourse() {
     setLoading(true);
     try {
       // Using the same students stats API that includes studentsByCourse data
-      const response = await dashboardApi.getStudentsStats();
+      const params = {};
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      
+      const response = await dashboardApi.getStudentsStats(params);
 
       if (response.success && response.data && response.data.studentsByCourse) {
         // Transform the API data to match expected format
         const transformedCourses = response.data.studentsByCourse.map(course => ({
-          course_name: course.courseName,
+          course_name: course.courseDisplayName || course.courseName,
           student_count: course.count,
           course_type: course.courseType
         }));
@@ -120,12 +129,13 @@ function DashboardStudentsPerCourse() {
 
     let filteredData = [];
 
-    if (selectedFilter === 'all') {
-      // Show all courses
-      filteredData = allCoursesData;
+    if (selectedFilter === 'top10') {
+      // Show top 10 courses (data is already sorted by student count descending)
+      filteredData = allCoursesData.slice(0, 10);
     } else {
-      // Show courses from selected type
-      filteredData = allCoursesData.filter(course => course.course_type === selectedFilter);
+      // Show courses from selected type, then take top 10 if more than 10
+      const typeFilteredData = allCoursesData.filter(course => course.course_type === selectedFilter);
+      filteredData = typeFilteredData.slice(0, 10);
     }
 
     if (filteredData.length === 0) {
@@ -328,6 +338,40 @@ function DashboardStudentsPerCourse() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Date Range Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+            
+            <button
+              onClick={() => {
+                setDateFrom('');
+                setDateTo('');
+              }}
+              className="px-3 py-1 text-sm bg-violet-500 hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700 text-white rounded-lg transition-colors"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </header>

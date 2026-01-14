@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const useToast = () => {
   const [toast, setToast] = useState({
@@ -7,25 +7,26 @@ const useToast = () => {
     message: ''
   });
 
-  const showToast = (message, type = 'info') => {
+  const showToast = useCallback((message, type = 'info') => {
     setToast({
       isVisible: true,
       type,
       message
     });
-  };
+  }, []);
 
-  const hideToast = () => {
-    setToast(prev => ({
-      ...prev,
-      isVisible: false
-    }));
-  };
+  const hideToast = useCallback(() => {
+    setToast({
+      isVisible: false,
+      type: 'info',
+      message: ''
+    });
+  }, []);
 
-  const showSuccess = (message) => showToast(message, 'success');
-  const showError = (message) => showToast(message, 'error');
-  const showWarning = (message) => showToast(message, 'warning');
-  const showInfo = (message) => showToast(message, 'info');
+  const showSuccess = useCallback((message) => showToast(message, 'success'), [showToast]);
+  const showError = useCallback((message) => showToast(message, 'error'), [showToast]);
+  const showWarning = useCallback((message) => showToast(message, 'warning'), [showToast]);
+  const showInfo = useCallback((message) => showToast(message, 'info'), [showToast]);
 
   return {
     toast,
