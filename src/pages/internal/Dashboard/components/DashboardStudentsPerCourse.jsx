@@ -18,6 +18,8 @@ function DashboardStudentsPerCourse() {
   const [chartData, setChartData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [allCoursesData, setAllCoursesData] = useState([]);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   // Filter options
   const filterOptions = [
@@ -74,8 +76,11 @@ function DashboardStudentsPerCourse() {
   ];
 
   useEffect(() => {
-    fetchStudentsPerCourseData();
-  }, []);
+    // Only fetch if both dates are selected or both are empty
+    if ((dateFrom && dateTo) || (!dateFrom && !dateTo)) {
+      fetchStudentsPerCourseData();
+    }
+  }, [dateFrom, dateTo]);
 
   useEffect(() => {
     if (allCoursesData.length > 0) {
@@ -87,7 +92,11 @@ function DashboardStudentsPerCourse() {
     setLoading(true);
     try {
       // Using the same students stats API that includes studentsByCourse data
-      const response = await dashboardApi.getStudentsStats();
+      const params = {};
+      if (dateFrom) params.dateFrom = dateFrom;
+      if (dateTo) params.dateTo = dateTo;
+      
+      const response = await dashboardApi.getStudentsStats(params);
 
       if (response.success && response.data && response.data.studentsByCourse) {
         // Transform the API data to match expected format
@@ -329,6 +338,40 @@ function DashboardStudentsPerCourse() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Date Range Filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                min={dateFrom || undefined}
+                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              />
+            </div>
+            
+            <button
+              onClick={() => {
+                setDateFrom('');
+                setDateTo('');
+              }}
+              className="px-3 py-1 text-sm bg-violet-500 hover:bg-violet-600 dark:bg-violet-600 dark:hover:bg-violet-700 text-white rounded-lg transition-colors"
+            >
+              Clear
+            </button>
           </div>
         </div>
       </header>

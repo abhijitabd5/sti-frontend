@@ -80,11 +80,11 @@ function ProgressModal({ isOpen, hasDocuments }) {
   const visibleSteps = steps.filter(step => step.show !== false);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* Background overlay */}
         <div
-          className="fixed inset-0 transition-opacity bg-gray-500/60 dark:bg-gray-900/70"
+          className="fixed inset-0 transition-opacity bg-gray-500/60 dark:bg-gray-900/70 backdrop-blur-sm"
           aria-hidden="true"
         />
 
@@ -97,7 +97,7 @@ function ProgressModal({ isOpen, hasDocuments }) {
         </span>
 
         {/* Modal panel */}
-        <div className="relative z-[10000] inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
+        <div className="relative inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full sm:p-6">
           <div className="sm:flex sm:items-start">
             <div className="mt-3 text-center sm:mt-0 sm:text-left w-full">
               <div className="flex items-center mb-6">

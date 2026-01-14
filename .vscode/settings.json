@@ -8,5 +8,6 @@
   "path-intellisense.pathMappings": {
   "@": "${workspaceRoot}/src"
 },
-"javascript.autoClosingTags": false
+"javascript.autoClosingTags": false,
+"kiroAgent.configureMCP": "Disabled"
 }
