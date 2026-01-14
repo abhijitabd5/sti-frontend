@@ -150,6 +150,7 @@ const CategoryModal = ({
                 <option value="">Select type</option>
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
+                <option value="investment">Investment</option>
               </select>
               {errors.type && (
                 <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.type}</p>

@@ -10,6 +10,7 @@ import EditCourse from '@/pages/internal/Courses/EditCourse';
 import AddCourseLanguage from '@/pages/internal/Courses/AddCourseLanguage';
 import TransactionCategories from '@/pages/internal/TransactionCategories/TransactionCategories';
 import Transactions from '@/pages/internal/Transactions/Transactions';
+import InvestmentTransactions from '@/pages/internal/Transactions/InvestmentTransactions';
 import AddEditTransaction from '@/pages/internal/Transactions/AddEditTransaction';
 import ViewTransaction from '@/pages/internal/Transactions/ViewTransaction';
 import Gallery from '@/pages/internal/Gallery/Gallery';
@@ -64,6 +65,13 @@ const AdminRoutes = () => {
 
       <Route path="transactions">
         <Route index element={<Transactions />} />
+        <Route path="create" element={<AddEditTransaction />} />
+        <Route path=":id" element={<ViewTransaction />} />
+        <Route path="edit/:id" element={<AddEditTransaction />} />
+      </Route>
+
+      <Route path="investments">
+        <Route index element={<InvestmentTransactions />} />
         <Route path="create" element={<AddEditTransaction />} />
         <Route path=":id" element={<ViewTransaction />} />
         <Route path="edit/:id" element={<AddEditTransaction />} />

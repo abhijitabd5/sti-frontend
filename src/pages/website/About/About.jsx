@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import EnrollModal from '@/components/common/Modal/EnrollModal';
 import DirectorsDesk from './components/DirectorsDesk';
+import galleryApi from '@/services/api/galleryApi';
 import { useSEO } from '@/hooks/useSEO';
 import { INSTITUTION_INFO } from '@/config/constants';
 
@@ -12,6 +13,73 @@ const About = () => {
   const { seoData, loading: seoLoading } = useSEO('about-us', 'en');
   
   const [enrollModalOpen, setEnrollModalOpen] = useState(false);
+  const [missionImage, setMissionImage] = useState(null);
+  const [galleryData, setGalleryData] = useState([]);
+  const [facilityData, setFacilityData] = useState([]);
+
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        const response = await galleryApi.getPublicGalleryByPageSlug('about-us');
+        if (response.data && response.data.length > 0) {
+          setGalleryData(response.data);
+          
+          // Get mission section image by specific slug
+          const missionImageItem = response.data.find(item => item.slug === 'about-us-our-mission-image-dri-nqe');
+          if (missionImageItem) {
+            setMissionImage(missionImageItem.media_url);
+          }
+
+          // Get facility images by specific slugs
+          const facilitySlugs = [
+            'about-us-training-facility-one-cez-ng4',
+            'about-us-training-facility-two-u0i-bih',
+            'about-us-training-facility-thr-ctl-f0b'
+          ];
+
+          const defaultFacilities = [
+            {
+              image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              title: '50-Acre Training Yard',
+              description: 'Spacious outdoor training area with various terrain types to simulate real working conditions.'
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1562813733-b31f71025d54?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              title: 'Modern Classrooms',
+              description: 'State-of-the-art classrooms equipped with multimedia technology for effective learning.'
+            },
+            {
+              image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
+              title: 'Latest Equipment Fleet',
+              description: 'Comprehensive collection of modern heavy equipment for hands-on training experience.'
+            }
+          ];
+
+          const facilities = facilitySlugs.map((slug, index) => {
+            const facilityItem = response.data.find(item => item.slug === slug);
+            if (facilityItem) {
+              return {
+                image: facilityItem.media_url,
+                title: facilityItem.title && facilityItem.title.trim() !== '' 
+                  ? facilityItem.title 
+                  : defaultFacilities[index].title,
+                description: facilityItem.caption && facilityItem.caption.trim() !== '' 
+                  ? facilityItem.caption 
+                  : defaultFacilities[index].description
+              };
+            }
+            return defaultFacilities[index];
+          });
+
+          setFacilityData(facilities);
+        }
+      } catch (error) {
+        console.error('Error loading gallery images:', error);
+      }
+    };
+
+    loadGalleryImages();
+  }, []);
 
   const stats = [
     { number: INSTITUTION_INFO.studentsTrained, label: 'Students Trained' },
@@ -155,7 +223,7 @@ const About = () => {
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1590845947670-c009801ffa74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                src={missionImage || "https://images.unsplash.com/photo-1590845947670-c009801ffa74?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
                 alt="Training facility"
                 className="rounded-lg shadow-xl"
               />
@@ -170,7 +238,7 @@ const About = () => {
       </section>
 
       {/* Director's Desk Section */}
-      <DirectorsDesk />
+      <DirectorsDesk galleryData={galleryData} />
 
       {/* Values Section */}
       <section className="py-16 bg-gray-50 dark:bg-gray-800">
@@ -260,53 +328,23 @@ const About = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <img
-                src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Training yard"
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  50-Acre Training Yard
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Spacious outdoor training area with various terrain types to simulate real working conditions.
-                </p>
+            {facilityData.map((facility, index) => (
+              <div key={index} className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <img
+                  src={facility.image}
+                  alt={facility.title}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                    {facility.title}
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {facility.description}
+                  </p>
+                </div>
               </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <img
-                src="https://images.unsplash.com/photo-1562813733-b31f71025d54?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Modern classrooms"
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Modern Classrooms
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  State-of-the-art classrooms equipped with multimedia technology for effective learning.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Equipment fleet"
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-                  Latest Equipment Fleet
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Comprehensive collection of modern heavy equipment for hands-on training experience.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>

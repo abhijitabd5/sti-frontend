@@ -178,13 +178,19 @@ const TransactionCategories = () => {
   };
 
   const getTypeColor = (type) => {
-    return type === 'income' 
-      ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-      : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+    if (type === 'income') {
+      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+    } else if (type === 'investment') {
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+    } else {
+      return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+    }
   };
 
   const getTypeLabel = (type) => {
-    return type === 'income' ? 'Income' : 'Expense';
+    if (type === 'income') return 'Income';
+    if (type === 'investment') return 'Investment';
+    return 'Expense';
   };
 
   return (
@@ -239,6 +245,7 @@ const TransactionCategories = () => {
                 <option value="all">All Types</option>
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
+                <option value="investment">Investment</option>
               </select>
             </div>
           </div>

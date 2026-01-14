@@ -401,6 +401,40 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                 </NavLink>
               </li>
 
+              {/* Investments */}
+              <li
+                className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
+                  pathname.includes("admin/investments") &&
+                  "from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]"
+                }`}
+              >
+                <NavLink
+                  end
+                  to={`/admin/investments`}
+                  className={`block text-gray-800 dark:text-gray-100 truncate transition duration-150 ${
+                    pathname.includes("admin/investments")
+                      ? ""
+                      : "hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <img
+                      src={icons.transaction}
+                      alt="Investments"
+                      className={`shrink-0 h-4 w-4 ${
+                        pathname === "admin/investments" ||
+                        pathname.includes("admin/investments")
+                          ? "opacity-100"
+                          : "opacity-60 dark:opacity-50"
+                      }`}
+                    />
+                    <span className="text-sm font-medium ml-4 lg:opacity-0 lg:sidebar-expanded:opacity-100 2xl:opacity-100 duration-200">
+                      Investments
+                    </span>
+                  </div>
+                </NavLink>
+              </li>
+
               {/* Other Gallery */}
               <li
                 className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${

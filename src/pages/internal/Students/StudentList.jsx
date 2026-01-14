@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
@@ -26,6 +26,7 @@ function StudentList() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast, showSuccess, hideToast } = useToast();
+  const messageShownRef = useRef(false);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState({});
@@ -42,41 +43,26 @@ function StudentList() {
 
   // Handle navigation state and success messages
   useEffect(() => {
-    if (location.state?.message) {
+    if (location.state?.message && !messageShownRef.current) {
+      messageShownRef.current = true;
       showSuccess(location.state.message);
       
-      // Clear navigation state to prevent showing message on refresh
-      window.history.replaceState({}, document.title);
+      // Clear navigation state immediately to prevent re-triggering
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, showSuccess]);
+  }, [location.state, navigate, showSuccess]);
+
+  // Reset message shown flag when component unmounts or location changes without message
+  useEffect(() => {
+    if (!location.state?.message) {
+      messageShownRef.current = false;
+    }
+  }, [location.pathname]);
 
   // Load students - optimized to prevent flickering
   useEffect(() => {
-    // Skip initial load if we just handled navigation state
-    const hasNavigationState = location.state?.message;
-    
-    if (hasNavigationState) {
-      setLoading(false); // Don't show loading spinner immediately
-      const timer = setTimeout(() => {
-        setLoading(true); // Show loading for the delayed fetch
-        loadStudents();
-      }, 1000); // Load data after 1 second to show success message
-      
-      return () => clearTimeout(timer);
-    } else {
-      // Normal page load or pagination change
-      loadStudents();
-    }
+    loadStudents();
   }, [currentPage, recordsPerPage]);
-
-  // Separate effect for handling navigation state changes
-  useEffect(() => {
-    // This effect only runs when location.state changes, not on pagination
-    if (location.state?.message && currentPage === 1) {
-      // Reset pagination when coming from enrollment
-      setCurrentPage(1);
-    }
-  }, [location.state]);
 
   const loadStudents = async (params = {}) => {
     try {

@@ -146,9 +146,16 @@ function ViewCourse() {
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-2xl">{languageInfo.flag}</span>
-                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                      {course.title}
-                    </h2>
+                    <div className="flex-1">
+                      <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                        {course.title}
+                      </h2>
+                      {course.display_name && course.display_name !== course.title && (
+                        <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">
+                          Display Name: {course.display_name}
+                        </p>
+                      )}
+                    </div>
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                       course.is_active 
                         ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'

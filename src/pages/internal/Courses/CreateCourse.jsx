@@ -20,6 +20,7 @@ function CreateCourse() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
+    display_name: "",
     language: "en",
     summary: "",
     description: "",
@@ -241,6 +242,23 @@ function CreateCourse() {
                   {errors.title && (
                     <p className="text-red-500 text-sm mt-1">{errors.title}</p>
                   )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    name="display_name"
+                    value={formData.display_name}
+                    onChange={handleInputChange}
+                    className="form-input w-full"
+                    placeholder="Enter display name (optional)"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Alternative name to display publicly (if different from title)
+                  </p>
                 </div>
 
                 <div>

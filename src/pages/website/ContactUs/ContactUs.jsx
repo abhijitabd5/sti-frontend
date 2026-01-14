@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import enquiryApi from '@/services/api/enquiryApi';
+import galleryApi from '@/services/api/galleryApi';
 import { useSEO } from '@/hooks/useSEO';
 import { INSTITUTION_INFO } from '@/config/constants';
 
@@ -25,6 +26,26 @@ const Contact = () => {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [facilityImage, setFacilityImage] = useState(null);
+
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        const response = await galleryApi.getPublicGalleryByPageSlug('contact-us');
+        if (response.data && response.data.length > 0) {
+          // Get facility image by specific slug
+          const facilityImageItem = response.data.find(item => item.slug === 'contact-us-facility-image-6o8-8rr');
+          if (facilityImageItem) {
+            setFacilityImage(facilityImageItem.media_url);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading gallery images:', error);
+      }
+    };
+
+    loadGalleryImages();
+  }, []);
 
   const validateField = (name, value) => {
     let error = '';
@@ -209,7 +230,7 @@ const Contact = () => {
             <div className="space-y-8">
               <div className="relative">
                 <img
-                  src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  src={facilityImage || "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"}
                   alt="Our training facility"
                   className="w-full h-64 lg:h-80 object-cover rounded-lg shadow-lg"
                 />
