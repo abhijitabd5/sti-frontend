@@ -37,6 +37,13 @@ import CreatePage from '@/pages/internal/Pages/CreatePage';
 import EditPage from '@/pages/internal/Pages/EditPage';
 import ViewPage from '@/pages/internal/Pages/ViewPage';
 import PromotionReports from '@/pages/internal/Reports/PromotionReports';
+import CertificateTemplates from '@/pages/internal/CertificateTemplates/CertificateTemplates';
+import CreateCertificateTemplate from '@/pages/internal/CertificateTemplates/CreateCertificateTemplate';
+import EditCertificateTemplate from '@/pages/internal/CertificateTemplates/EditCertificateTemplate';
+import PreviewCertificateTemplate from '@/pages/internal/CertificateTemplates/PreviewCertificateTemplate';
+import Certificates from '@/pages/internal/Certificates/Certificates';
+import ViewCertificate from '@/pages/internal/Certificates/ViewCertificate';
+import PendingCertificates from '@/pages/internal/Certificates/PendingCertificates';
 
 const AdminRoutes = () => {
   return (
@@ -126,6 +133,22 @@ const AdminRoutes = () => {
 
       <Route path="reports">
         <Route path="promotion-analytics" element={<PromotionReports />} />
+      </Route>
+
+      <Route path="certificate/templates">
+        <Route index element={<CertificateTemplates />} />
+        <Route path="create" element={<CreateCertificateTemplate />} />
+        <Route path="edit/:id" element={<EditCertificateTemplate />} />
+        <Route path="preview/:id" element={<PreviewCertificateTemplate />} />
+      </Route>
+
+      <Route path="certificate/issued">
+        <Route index element={<Certificates />} />
+        <Route path="view/:id" element={<ViewCertificate />} />
+      </Route>
+
+      <Route path="certificate/pending">
+        <Route index element={<PendingCertificates />} />
       </Route>
     </Routes>
   );
