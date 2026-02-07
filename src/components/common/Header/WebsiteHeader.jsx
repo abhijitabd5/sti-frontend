@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import ThemeToggle from '../ThemeToggle/ThemeToggle';
 import LanguageDropdown from '../LanguageDropdown/LanguageDropdown';
+import VerifyCertificateModal from '@/components/common/VerifyCertificateModal';
 import stiLogo from '@/assets/logos/sti-logo.svg';
 
 const WebsiteHeader = () => {
@@ -9,6 +10,7 @@ const WebsiteHeader = () => {
   const [isSticky, setIsSticky] = useState(false);
   const [isGalleryDropdownOpen, setIsGalleryDropdownOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const location = useLocation();
 
   // Detect mobile device
@@ -40,6 +42,7 @@ const WebsiteHeader = () => {
       ]
     },
     { label: 'Contact Us', path: '/contact', active: location.pathname === '/contact' },
+    { label: 'Verify Certificate', action: () => setIsVerifyModalOpen(true), isButton: true },
   ];
 
   // Handle scroll for sticky navigation
@@ -79,7 +82,7 @@ const WebsiteHeader = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-4">
-            {navItems.map((item) => (
+            {navItems.map((item, index) => (
               item.hasDropdown ? (
                 <div key={item.path} className="relative group">
                   <button
@@ -119,6 +122,19 @@ const WebsiteHeader = () => {
                     </div>
                   </div>
                 </div>
+              ) : item.isButton ? (
+                <button
+                  key={`button-${index}`}
+                  onClick={item.action}
+                  className={`relative px-4 py-2 text-sm font-medium transition-all duration-200 group ${
+                    isSticky
+                      ? 'text-gray-700 dark:text-gray-300 hover:text-orange-500'
+                      : 'text-gray-900 dark:text-white/90 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                  <span className="absolute bottom-0 left-1/2 h-0.5 bg-current transform -translate-x-1/2 transition-all duration-200 w-0 group-hover:w-full" />
+                </button>
               ) : (
                 <Link
                   key={item.path}
@@ -225,22 +241,36 @@ const WebsiteHeader = () => {
               ? 'border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95' 
               : 'border-white/20 bg-black/20 backdrop-blur-sm'
           }`}>
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`block px-4 py-3 text-base font-medium rounded-lg mx-2 transition-all duration-200 ${
-                  item.active
-                    ? isSticky
-                      ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
-                      : 'bg-white/20 text-yellow-400'
-                    : isSticky
+            {navItems.map((item, index) => (
+              item.isButton ? (
+                <button
+                  key={`button-${index}`}
+                  onClick={item.action}
+                  className={`block w-full text-left px-4 py-3 text-base font-medium rounded-lg mx-2 transition-all duration-200 ${
+                    isSticky
                       ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                       : 'text-white/90 hover:bg-white/20 hover:text-white'
-                }`}
-              >
-                {item.label}
-              </Link>
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={`block px-4 py-3 text-base font-medium rounded-lg mx-2 transition-all duration-200 ${
+                    item.active
+                      ? isSticky
+                        ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
+                        : 'bg-white/20 text-yellow-400'
+                      : isSticky
+                        ? 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        : 'text-white/90 hover:bg-white/20 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              )
             ))}
             
             {/* Mobile Call Now */}
@@ -260,6 +290,12 @@ const WebsiteHeader = () => {
           </div>
         </div>
       </div>
+
+      {/* Verify Certificate Modal */}
+      <VerifyCertificateModal 
+        isOpen={isVerifyModalOpen} 
+        onClose={() => setIsVerifyModalOpen(false)} 
+      />
     </header>
   );
 };

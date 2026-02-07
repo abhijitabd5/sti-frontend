@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import AdminLayout from "@/components/common/Layouts/AdminLayout";
 import courseApi from "@/services/api/courseApi";
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 // Icons
 import {
@@ -18,6 +20,7 @@ import {
 function AddCourseLanguage() {
   const navigate = useNavigate();
   const { id: courseGroupId } = useParams();
+  const { toast, showSuccess, showError, hideToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [baseCourse, setBaseCourse] = useState(null);
   const [hindiVersion, setHindiVersion] = useState(null);
@@ -182,12 +185,12 @@ const loadBaseCourse = async () => {
         });
       } else {
         console.error('API returned success: false', response);
-        alert('Failed to save Hindi version: ' + (response.message || 'Unknown error'));
+        showError(response.message || 'Failed to save Hindi version');
       }
     } catch (error) {
       console.error("Error saving Hindi version:", error);
       console.error("Error response:", error.response?.data);
-      alert('Error saving Hindi version: ' + (error.response?.data?.message || error.message));
+      showError(error.response?.data?.message || error.message || 'Error saving Hindi version');
     } finally {
       setLoading(false);
     }
@@ -744,6 +747,14 @@ const loadBaseCourse = async () => {
           </button>
         </div>
       </form>
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 }

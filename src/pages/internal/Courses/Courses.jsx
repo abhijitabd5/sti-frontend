@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import courseApi from '@/services/api/courseApi';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 // Icons
 import { 
@@ -123,11 +125,22 @@ const DraggableRow = ({ course, index, moveCourse, onToggleStatus, onNavigate, o
 
 function Courses() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast, showSuccess, showError, hideToast } = useToast();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusLoading, setStatusLoading] = useState({});
   const [saveOrderLoading, setSaveOrderLoading] = useState(false);
   const [hasOrderChanged, setHasOrderChanged] = useState(false);
+
+  // Show success message from navigation state
+  useEffect(() => {
+    if (location.state?.message) {
+      showSuccess(location.state.message);
+      // Clear the state to prevent showing the message again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Load courses
   useEffect(() => {
@@ -143,9 +156,12 @@ function Courses() {
       });
       if (response.success) {
         setCourses(response.data);
+      } else {
+        showError(response.message || 'Failed to load courses');
       }
     } catch (error) {
       console.error('Error loading courses:', error);
+      showError('An error occurred while loading courses');
     } finally {
       setLoading(false);
     }
@@ -164,9 +180,13 @@ function Courses() {
               : course
           )
         );
+        showSuccess(`Course ${response.data.is_active ? 'activated' : 'deactivated'} successfully`);
+      } else {
+        showError(response.message || 'Failed to toggle course status');
       }
     } catch (error) {
       console.error('Error toggling status:', error);
+      showError('An error occurred while toggling course status');
     } finally {
       setStatusLoading(prev => ({ ...prev, [courseId]: false }));
     }
@@ -210,9 +230,15 @@ function Courses() {
       const response = await courseApi.reorderCourses(courseOrders);
       if (response.success) {
         setHasOrderChanged(false);
-        // Show success message (you can add a toast notification here)
+        showSuccess('Course order saved successfully');
+      } else {
+        showError(response.message || 'Failed to save course order');
+        loadCourses();
+        setHasOrderChanged(false);
       }
     } catch (error) {
+      console.error('Error saving order:', error);
+      showError('An error occurred while saving course order');
       // Revert on error
       loadCourses();
       setHasOrderChanged(false);
@@ -329,6 +355,14 @@ function Courses() {
           </DndProvider>
         )}
       </div>
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
     </AdminLayout>
   );
 }
