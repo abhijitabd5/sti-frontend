@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import certificateTemplateApi from '@/services/api/certificateTemplateApi';
 import certificateApi from '@/services/api/certificateApi';
 
 // Icons
 import { 
   XMarkIcon,
-  DocumentCheckIcon
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
-function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError }) {
+function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, onError }) {
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [issuing, setIssuing] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [formData, setFormData] = useState({
@@ -31,16 +31,65 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
   });
 
   useEffect(() => {
-    if (isOpen && enrollment) {
+    if (isOpen && certificate) {
       loadTemplates();
-      // Pre-populate available data from enrollment
-      setFormData(prev => ({
-        ...prev,
-        student_name: enrollment.student_name || '',
-        issue_date: format(new Date(), 'yyyy-MM-dd')
-      }));
+      populateFormFromCertificate();
     }
-  }, [isOpen, enrollment]);
+  }, [isOpen, certificate]);
+
+  const populateFormFromCertificate = () => {
+    if (!certificate?.certificate_data_snapshot) return;
+
+    const snapshot = certificate.certificate_data_snapshot;
+    
+    // Parse course duration (e.g., "6 Months" -> value: "6", type: "Months")
+    let durationValue = '';
+    let durationType = 'Months';
+    if (snapshot.course_duration) {
+      const parts = snapshot.course_duration.split(' ');
+      if (parts.length >= 2) {
+        durationValue = parts[0];
+        durationType = parts[1];
+      }
+    }
+
+    // Parse examination date (e.g., "February 2026" -> "2026-02")
+    let examinationDate = '';
+    if (snapshot.examination_month_year) {
+      try {
+        const parsed = parse(snapshot.examination_month_year, 'MMMM yyyy', new Date());
+        examinationDate = format(parsed, 'yyyy-MM');
+      } catch (e) {
+        console.error('Error parsing examination date:', e);
+      }
+    }
+
+    // Parse commencement date (e.g., "Feb 2026" -> "2026-02")
+    let commencementDate = '';
+    if (snapshot.commencement_month_year) {
+      try {
+        const parsed = parse(snapshot.commencement_month_year, 'MMM yyyy', new Date());
+        commencementDate = format(parsed, 'yyyy-MM');
+      } catch (e) {
+        console.error('Error parsing commencement date:', e);
+      }
+    }
+
+    setFormData({
+      student_name: snapshot.student_name || '',
+      student_gender: snapshot.student_gender || 'male',
+      guardian_relationship: snapshot.guardian_relationship || 'son',
+      guardian_name: snapshot.guardian_name || '',
+      guardian_gender: snapshot.guardian_gender || 'male',
+      grade: snapshot.grade || '',
+      examination_date: examinationDate,
+      commencement_month_year: commencementDate,
+      course_duration_value: durationValue,
+      course_duration_type: durationType,
+      template_id: certificate.template_id || '',
+      issue_date: certificate.issue_date ? format(new Date(certificate.issue_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+    });
+  };
 
   const loadTemplates = async () => {
     try {
@@ -54,11 +103,6 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       
       if (response.success && response.data.length > 0) {
         setTemplates(response.data);
-        // Set first template as default
-        setFormData(prev => ({
-          ...prev,
-          template_id: response.data[0].id
-        }));
       }
     } catch (error) {
       console.error('Error loading templates:', error);
@@ -162,21 +206,13 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       return;
     }
 
-    if (!studentPhoto) {
-      if (onError) onError('Please upload student photo');
-      return;
-    }
-
-    setIssuing(true);
+    setRegenerating(true);
     
     try {
       // Create FormData for multipart/form-data
       const formDataToSend = new FormData();
       
-      // Append all required form fields
-      formDataToSend.append('student_id', enrollment.student_id);
-      formDataToSend.append('course_id', enrollment.course_id);
-      formDataToSend.append('enrollment_id', enrollment.enrollment_id);
+      // Append all form fields
       formDataToSend.append('student_name', formData.student_name.trim());
       formDataToSend.append('student_gender', formData.student_gender);
       formDataToSend.append('guardian_relationship', formData.guardian_relationship);
@@ -190,22 +226,24 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       formDataToSend.append('template_id', parseInt(formData.template_id));
       formDataToSend.append('issue_date', formData.issue_date);
       
-      // Append photo (required)
-      formDataToSend.append('student_photo', studentPhoto);
+      // Append photo if selected
+      if (studentPhoto) {
+        formDataToSend.append('student_photo', studentPhoto);
+      }
 
-      const response = await certificateApi.issueCertificate(formDataToSend);
+      const response = await certificateApi.regenerateCertificate(certificate.id, formDataToSend);
       
       if (response.success) {
         onClose();
-        if (onSuccess) onSuccess(`Certificate issued successfully! Certificate Number: ${response.data.certificate_number}`);
+        if (onSuccess) onSuccess('Certificate regenerated successfully!');
       } else {
-        if (onError) onError(response.message || 'Failed to issue certificate');
+        if (onError) onError(response.message || 'Failed to regenerate certificate');
       }
     } catch (error) {
-      console.error('Error issuing certificate:', error);
-      if (onError) onError('Failed to issue certificate. Please try again.');
+      console.error('Error regenerating certificate:', error);
+      if (onError) onError('Failed to regenerate certificate. Please try again.');
     } finally {
-      setIssuing(false);
+      setRegenerating(false);
     }
   };
 
@@ -214,7 +252,6 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
     
     // For duration value, only allow positive integers
     if (name === 'course_duration_value') {
-      // Remove any non-digit characters
       const integerValue = value.replace(/\D/g, '');
       setFormData(prev => ({ ...prev, [name]: integerValue }));
     } else {
@@ -229,9 +266,14 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
         {/* Header - Fixed */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Issue Certificate
-          </h3>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Regenerate Certificate
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Certificate #{certificate?.certificate_number}
+            </p>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -242,23 +284,23 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
 
         {/* Content - Scrollable */}
         <div className="p-6 overflow-y-auto flex-1">
-          {/* Enrollment Info */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Enrollment Information
+          {/* Certificate Info */}
+          <div className="mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <h4 className="text-sm font-medium text-purple-900 dark:text-purple-300 mb-2">
+              Current Certificate Information
             </h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium">Student Code:</span> {enrollment.student_code}
+              <p className="text-purple-700 dark:text-purple-400">
+                <span className="font-medium">Student:</span> {certificate?.student?.name_on_id || certificate?.student?.user?.first_name}
               </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium">Course:</span> {enrollment.course_title}
+              <p className="text-purple-700 dark:text-purple-400">
+                <span className="font-medium">Course:</span> {certificate?.course?.title}
               </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium">Enrollment Date:</span> {enrollment.enrollment_date}
+              <p className="text-purple-700 dark:text-purple-400">
+                <span className="font-medium">Status:</span> {certificate?.status}
               </p>
-              <p className="text-gray-600 dark:text-gray-400">
-                <span className="font-medium">Status:</span> {enrollment.enrollment_status}
+              <p className="text-purple-700 dark:text-purple-400">
+                <span className="font-medium">Template:</span> {certificate?.template?.name}
               </p>
             </div>
           </div>
@@ -319,7 +361,7 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
                 {/* Student Photo Upload */}
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Student Photo <span className="text-red-500">*</span>
+                    Student Photo (Optional)
                   </label>
                   <div className="flex items-start gap-4">
                     {photoPreview ? (
@@ -338,17 +380,16 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
                         </button>
                       </div>
                     ) : (
-                      <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed border-red-300 dark:border-red-600 rounded-lg cursor-pointer hover:border-violet-500 dark:hover:border-violet-400 transition-colors bg-red-50 dark:bg-red-900/10">
-                        <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <label className="w-32 h-32 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-violet-500 dark:hover:border-violet-400 transition-colors">
+                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <span className="text-xs text-red-600 dark:text-red-400 mt-2 font-medium">Upload Photo</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-2">Upload Photo</span>
                         <input
                           type="file"
                           accept="image/*"
                           onChange={handlePhotoChange}
                           className="hidden"
-                          required
                         />
                       </label>
                     )}
@@ -359,9 +400,11 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
                       <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                         Accepted formats: JPG, PNG, GIF (Max 5MB)
                       </p>
-                      <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
-                        Required field - Photo must be uploaded
-                      </p>
+                      {certificate?.student_photo_path && !photoPreview && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          Current photo will be used if not replaced
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -622,25 +665,25 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
             <button
               type="button"
               onClick={onClose}
-              disabled={issuing}
+              disabled={regenerating}
               className="btn bg-gray-500 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              disabled={issuing}
-              className="btn bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={regenerating}
+              className="btn bg-gradient-to-r from-purple-500 to-violet-500 text-white hover:from-purple-600 hover:to-violet-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {issuing ? (
+              {regenerating ? (
                 <div className="flex items-center space-x-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Issuing...</span>
+                  <span>Regenerating...</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <DocumentCheckIcon className="h-4 w-4" />
-                  <span>Issue Certificate</span>
+                  <ArrowPathIcon className="h-4 w-4" />
+                  <span>Regenerate Certificate</span>
                 </div>
               )}
             </button>
@@ -651,4 +694,4 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
   );
 }
 
-export default IssueCertificateModal;
+export default RegenerateCertificateModal;

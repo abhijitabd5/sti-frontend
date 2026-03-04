@@ -6,6 +6,7 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import certificateApi from '@/services/api/certificateApi';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
+import RegenerateCertificateModal from '@/components/common/RegenerateCertificateModal';
 
 // Icons
 import { 
@@ -30,6 +31,7 @@ function ViewCertificate() {
   const [actionLoading, setActionLoading] = useState(null);
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [editingAddress, setEditingAddress] = useState(false);
+  const [regenerateModalOpen, setRegenerateModalOpen] = useState(false);
 
   useEffect(() => {
     loadCertificate();
@@ -74,9 +76,9 @@ function ViewCertificate() {
           response = await certificateApi.markHardCopyDelivered(id);
           break;
         case 'regenerate':
-          if (!window.confirm('Regenerate certificate PDF?')) return;
-          response = await certificateApi.regenerateCertificate(id);
-          break;
+          // Open modal instead of direct regeneration
+          setRegenerateModalOpen(true);
+          return;
         default:
           return;
       }
@@ -505,6 +507,18 @@ function ViewCertificate() {
           </div>
         </div>
       </div>
+
+      {/* Regenerate Certificate Modal */}
+      <RegenerateCertificateModal
+        isOpen={regenerateModalOpen}
+        onClose={() => setRegenerateModalOpen(false)}
+        certificate={certificate}
+        onSuccess={(message) => {
+          loadCertificate();
+          showSuccess(message);
+        }}
+        onError={showError}
+      />
 
       {/* Toast Notification */}
       <Toast
