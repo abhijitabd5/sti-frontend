@@ -23,9 +23,14 @@ function CreateCertificateTemplate() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    template_type: 'completion',
+    template_type: 'course_completion',
     template_image: null,
-    font_family: 'Helvetica',
+    static_font_family: 'Times New Roman',
+    static_font_size: 14,
+    static_text_color: '#333333',
+    dynamic_font_family: 'Arial',
+    dynamic_font_size: 24,
+    dynamic_text_color: '#000000',
     course_id: '',
     is_default: false,
     is_active: true,
@@ -152,10 +157,14 @@ function CreateCertificateTemplate() {
                   required
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 >
-                  <option value="course">Course</option>
-                  <option value="completion">Completion</option>
+                  <option value="course_completion">Course Completion</option>
                   <option value="participation">Participation</option>
                   <option value="achievement">Achievement</option>
+                  <option value="excellence">Excellence</option>
+                  <option value="training">Training</option>
+                  <option value="workshop">Workshop</option>
+                  <option value="internship">Internship</option>
+                  <option value="other">Other</option>
                 </select>
               </div>
 
@@ -216,54 +225,155 @@ function CreateCertificateTemplate() {
               Configuration
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6">
+              {/* Static Content Styling */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Font Family
-                </label>
-                <select
-                  name="font_family"
-                  value={formData.font_family}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                >
-                  <option value="Helvetica">Helvetica</option>
-                  <option value="Times-Roman">Times Roman</option>
-                  <option value="Courier">Courier</option>
-                </select>
+                <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Static Content Styling
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Styling for fixed text like labels and descriptions
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Font Family
+                    </label>
+                    <select
+                      name="static_font_family"
+                      value={formData.static_font_family}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    >
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Arial">Arial</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Courier">Courier</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Font Size (px)
+                    </label>
+                    <input
+                      type="number"
+                      name="static_font_size"
+                      value={formData.static_font_size}
+                      onChange={handleInputChange}
+                      min="8"
+                      max="72"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Text Color
+                    </label>
+                    <input
+                      type="color"
+                      name="static_text_color"
+                      value={formData.static_text_color}
+                      onChange={handleInputChange}
+                      className="w-full h-10 px-1 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
 
+              {/* Dynamic Content Styling */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Associated Course (Optional)
-                </label>
-                <select
-                  name="course_id"
-                  value={formData.course_id}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                >
-                  <option value="">None (General Template)</option>
-                  {courses.map(course => (
-                    <option key={course.id} value={course.id}>
-                      {course.title}
-                    </option>
-                  ))}
-                </select>
+                <h3 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Dynamic Content Styling
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Styling for variable data like student name, course name, dates
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Font Family
+                    </label>
+                    <select
+                      name="dynamic_font_family"
+                      value={formData.dynamic_font_family}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    >
+                      <option value="Arial">Arial</option>
+                      <option value="Times New Roman">Times New Roman</option>
+                      <option value="Helvetica">Helvetica</option>
+                      <option value="Georgia">Georgia</option>
+                      <option value="Courier">Courier</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Font Size (px)
+                    </label>
+                    <input
+                      type="number"
+                      name="dynamic_font_size"
+                      value={formData.dynamic_font_size}
+                      onChange={handleInputChange}
+                      min="8"
+                      max="72"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Text Color
+                    </label>
+                    <input
+                      type="color"
+                      name="dynamic_text_color"
+                      value={formData.dynamic_text_color}
+                      onChange={handleInputChange}
+                      className="w-full h-10 px-1 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Display Order
-                </label>
-                <input
-                  type="number"
-                  name="display_order"
-                  value={formData.display_order}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                />
+              {/* Other Configuration */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Associated Course (Optional)
+                  </label>
+                  <select
+                    name="course_id"
+                    value={formData.course_id}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  >
+                    <option value="">None (General Template)</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.id}>
+                        {course.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Order
+                  </label>
+                  <input
+                    type="number"
+                    name="display_order"
+                    value={formData.display_order}
+                    onChange={handleInputChange}
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
           </div>
