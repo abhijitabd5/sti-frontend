@@ -56,10 +56,19 @@ class CertificateApi {
     }
   }
 
-  // Issue certificate
+  // Issue certificate (supports both JSON and FormData)
   async issueCertificate(certificateData) {
     try {
-      const response = await httpClient.post('/internal/certificates/issue', certificateData);
+      const config = {};
+      
+      // If FormData, set appropriate headers
+      if (certificateData instanceof FormData) {
+        config.headers = {
+          'Content-Type': 'multipart/form-data'
+        };
+      }
+      
+      const response = await httpClient.post('/internal/certificates/issue', certificateData, config);
       return response.data;
     } catch (error) {
       console.error('Error issuing certificate:', error);
@@ -80,10 +89,19 @@ class CertificateApi {
     }
   }
 
-  // Regenerate certificate
-  async regenerateCertificate(id) {
+  // Regenerate certificate (supports both JSON and FormData)
+  async regenerateCertificate(id, certificateData = null) {
     try {
-      const response = await httpClient.post(`/internal/certificates/regenerate/${id}`);
+      const config = {};
+      
+      // If FormData, set appropriate headers
+      if (certificateData instanceof FormData) {
+        config.headers = {
+          'Content-Type': 'multipart/form-data'
+        };
+      }
+      
+      const response = await httpClient.post(`/internal/certificates/regenerate/${id}`, certificateData, config);
       return response.data;
     } catch (error) {
       console.error('Error regenerating certificate:', error);
