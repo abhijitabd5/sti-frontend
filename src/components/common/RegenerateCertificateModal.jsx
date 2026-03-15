@@ -24,6 +24,7 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
     grade: '',
     examination_date: '',
     commencement_month_year: '',
+    completion_month_year: '',
     course_duration_value: '',
     course_duration_type: 'Months',
     template_id: '',
@@ -68,10 +69,21 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
     let commencementDate = '';
     if (snapshot.commencement_month_year) {
       try {
-        const parsed = parse(snapshot.commencement_month_year, 'MMM yyyy', new Date());
+        const parsed = parse(snapshot.commencement_month_year, 'MMMM yyyy', new Date());
         commencementDate = format(parsed, 'yyyy-MM');
       } catch (e) {
         console.error('Error parsing commencement date:', e);
+      }
+    }
+
+    // Parse completion date (e.g., "March 2026" -> "2026-03")
+    let completionDate = '';
+    if (snapshot.completion_month_year) {
+      try {
+        const parsed = parse(snapshot.completion_month_year, 'MMMM yyyy', new Date());
+        completionDate = format(parsed, 'yyyy-MM');
+      } catch (e) {
+        console.error('Error parsing completion date:', e);
       }
     }
 
@@ -84,6 +96,7 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       grade: snapshot.grade || '',
       examination_date: examinationDate,
       commencement_month_year: commencementDate,
+      completion_month_year: completionDate,
       course_duration_value: durationValue,
       course_duration_type: durationType,
       template_id: certificate.template_id || '',
@@ -182,7 +195,12 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
     }
 
     if (!formData.commencement_month_year) {
-      if (onError) onError('Commencement month & year is required');
+      if (onError) onError('Course start month & year is required');
+      return;
+    }
+
+    if (!formData.completion_month_year) {
+      if (onError) onError('Course completion month & year is required');
       return;
     }
 
@@ -212,6 +230,21 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       // Create FormData for multipart/form-data
       const formDataToSend = new FormData();
       
+      // Convert date formats
+      // Convert "2026-03" to "March 2026"
+      const formatMonthYear = (monthInput) => {
+        if (!monthInput) return '';
+        const date = parse(monthInput, 'yyyy-MM', new Date());
+        return format(date, 'MMMM yyyy');
+      };
+      
+      // Convert "2026-03-15" to "15-03-2026"
+      const formatIssueDate = (dateInput) => {
+        if (!dateInput) return '';
+        const date = parse(dateInput, 'yyyy-MM-dd', new Date());
+        return format(date, 'dd-MM-yyyy');
+      };
+      
       // Append all form fields
       formDataToSend.append('student_name', formData.student_name.trim());
       formDataToSend.append('student_gender', formData.student_gender);
@@ -219,12 +252,13 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       formDataToSend.append('guardian_name', formData.guardian_name.trim());
       formDataToSend.append('guardian_gender', formData.guardian_gender);
       formDataToSend.append('grade', formData.grade);
-      formDataToSend.append('examination_date', formData.examination_date);
-      formDataToSend.append('commencement_month_year', formData.commencement_month_year);
-      formDataToSend.append('course_duration_value', formData.course_duration_value);
-      formDataToSend.append('course_duration_type', formData.course_duration_type);
+      formDataToSend.append('examination_date', formatMonthYear(formData.examination_date));
+      formDataToSend.append('commencement_month_year', formatMonthYear(formData.commencement_month_year));
+      formDataToSend.append('completion_month_year', formatMonthYear(formData.completion_month_year));
+      formDataToSend.append('course_duration_value', parseInt(formData.course_duration_value));
+      formDataToSend.append('course_duration_type', formData.course_duration_type.toLowerCase());
       formDataToSend.append('template_id', parseInt(formData.template_id));
-      formDataToSend.append('issue_date', formData.issue_date);
+      formDataToSend.append('issue_date', formatIssueDate(formData.issue_date));
       
       // Append photo if selected
       if (studentPhoto) {
@@ -523,12 +557,26 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Commencement Month & Year <span className="text-red-500">*</span>
+                      Course Start Month & Year <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="month"
                       name="commencement_month_year"
                       value={formData.commencement_month_year}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Course Completion Month & Year <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="month"
+                      name="completion_month_year"
+                      value={formData.completion_month_year}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"

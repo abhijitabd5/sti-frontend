@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import certificateTemplateApi from '@/services/api/certificateTemplateApi';
 import certificateApi from '@/services/api/certificateApi';
 
@@ -24,6 +24,7 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
     grade: '',
     examination_date: '',
     commencement_month_year: '',
+    completion_month_year: '',
     course_duration_value: '',
     course_duration_type: 'Months',
     template_id: '',
@@ -138,7 +139,12 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
     }
 
     if (!formData.commencement_month_year) {
-      if (onError) onError('Commencement month & year is required');
+      if (onError) onError('Course start month & year is required');
+      return;
+    }
+
+    if (!formData.completion_month_year) {
+      if (onError) onError('Course completion month & year is required');
       return;
     }
 
@@ -173,6 +179,21 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       // Create FormData for multipart/form-data
       const formDataToSend = new FormData();
       
+      // Convert date formats
+      // Convert "2026-03" to "March 2026"
+      const formatMonthYear = (monthInput) => {
+        if (!monthInput) return '';
+        const date = parse(monthInput, 'yyyy-MM', new Date());
+        return format(date, 'MMMM yyyy');
+      };
+      
+      // Convert "2026-03-15" to "15-03-2026"
+      const formatIssueDate = (dateInput) => {
+        if (!dateInput) return '';
+        const date = parse(dateInput, 'yyyy-MM-dd', new Date());
+        return format(date, 'dd-MM-yyyy');
+      };
+      
       // Append all required form fields
       formDataToSend.append('student_id', enrollment.student_id);
       formDataToSend.append('course_id', enrollment.course_id);
@@ -183,12 +204,13 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
       formDataToSend.append('guardian_name', formData.guardian_name.trim());
       formDataToSend.append('guardian_gender', formData.guardian_gender);
       formDataToSend.append('grade', formData.grade);
-      formDataToSend.append('examination_date', formData.examination_date);
-      formDataToSend.append('commencement_month_year', formData.commencement_month_year);
-      formDataToSend.append('course_duration_value', formData.course_duration_value);
-      formDataToSend.append('course_duration_type', formData.course_duration_type);
+      formDataToSend.append('examination_date', formatMonthYear(formData.examination_date));
+      formDataToSend.append('commencement_month_year', formatMonthYear(formData.commencement_month_year));
+      formDataToSend.append('completion_month_year', formatMonthYear(formData.completion_month_year));
+      formDataToSend.append('course_duration_value', parseInt(formData.course_duration_value));
+      formDataToSend.append('course_duration_type', formData.course_duration_type.toLowerCase());
       formDataToSend.append('template_id', parseInt(formData.template_id));
-      formDataToSend.append('issue_date', formData.issue_date);
+      formDataToSend.append('issue_date', formatIssueDate(formData.issue_date));
       
       // Append photo (required)
       formDataToSend.append('student_photo', studentPhoto);
@@ -480,12 +502,26 @@ function IssueCertificateModal({ isOpen, onClose, enrollment, onSuccess, onError
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Commencement Month & Year <span className="text-red-500">*</span>
+                      Course Start Month & Year <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="month"
                       name="commencement_month_year"
                       value={formData.commencement_month_year}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Course Completion Month & Year <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="month"
+                      name="completion_month_year"
+                      value={formData.completion_month_year}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"

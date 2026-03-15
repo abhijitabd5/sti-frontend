@@ -50,6 +50,21 @@ httpClient.interceptors.request.use(
   }
 );
 
+// Track refresh attempts to prevent loops
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 // Response interceptor
 httpClient.interceptors.response.use(
   (response) => {
@@ -58,15 +73,34 @@ httpClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Handle rate limiting
+    if (error.response?.status === 429) {
+      console.error('Rate limit exceeded. Please wait before retrying.');
+      return Promise.reject(error);
+    }
+    
     // Handle token expiration
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Prevent multiple simultaneous refresh attempts
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return httpClient(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err);
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
       
       const refreshToken = localStorage.getItem('refresh_token');
       
       if (refreshToken) {
         try {
-          const response = await axios.post('/api/auth/refresh-token', {
+          const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/refresh-token`, {
             refresh_token: refreshToken
           });
           
@@ -78,16 +112,23 @@ httpClient.interceptors.response.use(
               localStorage.setItem('refresh_token', tokens.refresh_token);
             }
             
+            // Process queued requests
+            processQueue(null, tokens.access_token);
+            isRefreshing = false;
+            
             // Retry the original request with new token
             originalRequest.headers.Authorization = `Bearer ${tokens.access_token}`;
             return httpClient(originalRequest);
           }
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError);
+          processQueue(refreshError, null);
+          isRefreshing = false;
         }
       }
       
       // If refresh fails or no refresh token, clear auth data and redirect
+      isRefreshing = false;
       localStorage.removeItem('token');
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');

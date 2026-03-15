@@ -289,10 +289,14 @@ function EnrollmentForm() {
     setLoading(true);
 
     try {
+      // Get state name from the selected state slug
+      const stateName = getStateDisplayName(formData.state);
+      
       // Prepare enrollment data
       const enrollmentData = {
         ...formData,
-        state_slug: formData.state, // Send state slug instead of state
+        state_slug: formData.state, // Send state slug
+        state_name: stateName, // Send state name
         extra_discount_amount: parseFloat(formData.extra_discount_amount) || 0,
         paid_amount: parseFloat(formData.paid_amount) || 0,
         course_id: parseInt(formData.course_id)

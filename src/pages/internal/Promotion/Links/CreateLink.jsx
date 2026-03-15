@@ -130,10 +130,13 @@ export default function CreateLink() {
               <button
                 onClick={copy}
                 disabled={!link}
-                className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50"
+                className={`btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 transition-all duration-200 ${
+                  copied ? 'scale-95 !bg-green-500 !from-green-500 !to-green-600' : 'scale-100'
+                }`}
                 title={copied ? 'Link copied' : 'Copy link'}
               >
-                <ClipboardIcon className="h-4 w-4 mr-2" /> Copy
+                <ClipboardIcon className={`h-4 w-4 mr-2 transition-transform duration-200 ${copied ? 'scale-110' : 'scale-100'}`} /> 
+                {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
             {copied && (

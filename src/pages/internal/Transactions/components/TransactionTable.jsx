@@ -120,7 +120,7 @@ const TransactionTable = ({
       <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700/60">
           <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">
-            {transactionType === 'income' ? 'Income' : 'Expense'} Transactions ({pagination.total})
+            {transactionType === 'income' ? 'Income' : transactionType === 'investment' ? 'Investment' : 'Expense'} Transactions ({pagination.total})
           </h3>
         </div>
 
@@ -139,7 +139,7 @@ const TransactionTable = ({
               className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
-              Add Your First {transactionType === 'income' ? 'Income' : 'Expense'}
+              Add Your First {transactionType === 'income' ? 'Income' : transactionType === 'investment' ? 'Investment' : 'Expense'}
             </button>
           </div>
         ) : (
@@ -286,7 +286,7 @@ const TransactionTable = ({
               </div>
               
               <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 text-center mb-2">
-                Delete {transactionType === 'income' ? 'Income' : 'Expense'} Transaction
+                Delete {transactionType === 'income' ? 'Income' : transactionType === 'investment' ? 'Investment' : 'Expense'} Transaction
               </h3>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">

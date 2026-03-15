@@ -18,24 +18,24 @@ function ProgressModal({ isOpen, hasDocuments }) {
     if (isOpen) {
       setCurrentStep(1);
       
-      // Simulate enrollment progress
+      // Step 1 -> Step 2: 3 seconds delay
       const timer1 = setTimeout(() => {
         setCurrentStep(2);
-      }, 1000);
+      }, 3000);
 
-      // Simulate document upload progress (if documents are present)
+      // Step 2 -> Step 3 or 4: 3 seconds delay
       const timer2 = setTimeout(() => {
         if (hasDocuments) {
           setCurrentStep(3);
         } else {
           setCurrentStep(4); // Skip to completion
         }
-      }, 1500);
+      }, 6000);
 
-      // Final completion
+      // Step 3 -> Step 4: 3 seconds delay (only if documents exist)
       const timer3 = setTimeout(() => {
         setCurrentStep(4);
-      }, hasDocuments ? 2500 : 2000);
+      }, hasDocuments ? 9000 : 6000);
 
       return () => {
         clearTimeout(timer1);

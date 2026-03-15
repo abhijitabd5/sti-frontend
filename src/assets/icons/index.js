@@ -11,6 +11,8 @@ import enquiryTwo from './enquiryTwo.png';
 import facebook from './facebook.png';
 import gallery from './gallery.png';
 import galleryOne from './galleryOne.png';
+import certificate from './certificate.png';
+import investment from './investment.png';
 import reviews from './reviews.png';
 import promotion from './promotion.png';
 import socialPartners from './socialPartners.png';
@@ -42,6 +44,8 @@ export const icons = {
   facebook,
   gallery,
   galleryOne,
+  certificate,
+  investment,
   reviews,
   promotion,
   socialPartners,
