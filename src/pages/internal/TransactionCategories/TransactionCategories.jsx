@@ -26,10 +26,12 @@ const TransactionCategories = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 10,
+    page: 1,
+    limit: 10,
     total: 0,
-    last_page: 1
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false
   });
 
   // Modal states
@@ -49,16 +51,16 @@ const TransactionCategories = () => {
   // Load categories
   useEffect(() => {
     loadCategories();
-  }, [searchTerm, typeFilter, pagination.current_page]);
+  }, [searchTerm, typeFilter, pagination.page]);
 
   const loadCategories = async () => {
     try {
       setLoading(true);
       const params = {
         search: searchTerm,
-        type: typeFilter,
-        page: pagination.current_page,
-        limit: pagination.per_page
+        type: typeFilter !== 'all' ? typeFilter : undefined,
+        page: pagination.page,
+        limit: pagination.limit
       };
 
       const response = await TransactionCategoryApi.getTransactionCategories(params);
@@ -79,18 +81,18 @@ const TransactionCategories = () => {
   // Handle search
   const handleSearch = (value) => {
     setSearchTerm(value);
-    setPagination(prev => ({ ...prev, current_page: 1 }));
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   // Handle filter
   const handleFilterChange = (value) => {
     setTypeFilter(value);
-    setPagination(prev => ({ ...prev, current_page: 1 }));
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   // Handle pagination
   const handlePageChange = (newPage) => {
-    setPagination(prev => ({ ...prev, current_page: newPage }));
+    setPagination(prev => ({ ...prev, page: newPage }));
   };
 
   // Modal handlers
@@ -285,13 +287,16 @@ const TransactionCategories = () => {
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      #
+                      Sr. No.
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Created At
@@ -305,7 +310,7 @@ const TransactionCategories = () => {
                   {categories.map((category, index) => (
                     <tr key={category.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                       <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">
-                        {(pagination.current_page - 1) * pagination.per_page + index + 1}
+                        {(pagination.page - 1) * pagination.limit + index + 1}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-100">
                         {category.name}
@@ -315,8 +320,17 @@ const TransactionCategories = () => {
                           {getTypeLabel(category.type)}
                         </span>
                       </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          category.is_active 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400'
+                        }`}>
+                          {category.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {formatDate(category.createdAt || category.created_at)}
+                        {formatDate(category.createdAt)}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
@@ -346,27 +360,27 @@ const TransactionCategories = () => {
             </div>
 
             {/* Pagination */}
-            {pagination.last_page > 1 && (
+            {pagination.totalPages > 1 && (
               <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Showing {pagination.from} to {pagination.to} of {pagination.total} results
+                  Showing {(pagination.page - 1) * pagination.limit + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => handlePageChange(pagination.current_page - 1)}
-                    disabled={pagination.current_page === 1}
+                    onClick={() => handlePageChange(pagination.page - 1)}
+                    disabled={!pagination.hasPrev}
                     className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronLeftIcon className="h-4 w-4" />
                   </button>
                   
                   <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Page {pagination.current_page} of {pagination.last_page}
+                    Page {pagination.page} of {pagination.totalPages}
                   </span>
                   
                   <button
-                    onClick={() => handlePageChange(pagination.current_page + 1)}
-                    disabled={pagination.current_page === pagination.last_page}
+                    onClick={() => handlePageChange(pagination.page + 1)}
+                    disabled={!pagination.hasNext}
                     className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <ChevronRightIcon className="h-4 w-4" />

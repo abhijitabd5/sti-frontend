@@ -159,17 +159,17 @@ function DashboardSocialTraffic() {
     return num.toString();
   };
 
-  const calculateConversionRate = (clicks, conversions) => {
-    if (clicks === 0) return '0%';
-    return ((conversions / clicks) * 100).toFixed(1) + '%';
-  };
+  // const calculateConversionRate = (clicks, conversions) => {
+  //   if (clicks === 0) return '0%';
+  //   return ((conversions / clicks) * 100).toFixed(1) + '%';
+  // };
 
   const formatDataForPeriod = (sourceData, period) => {
     const data = sourceData[period] || { clicks: 0, conversions: 0 };
     return {
       clicks: formatNumber(data.clicks),
-      conversions: data.conversions,
-      rate: calculateConversionRate(data.clicks, data.conversions)
+      // conversions: data.conversions,
+      // rate: calculateConversionRate(data.clicks, data.conversions)
     };
   };
 
@@ -257,36 +257,36 @@ function DashboardSocialTraffic() {
                       <td className="p-2">
                         <div className="text-center">
                           <div className="font-semibold text-gray-900 dark:text-gray-100">{todayData.clicks}</div>
-                          <div className="text-xs text-green-500">{todayData.conversions} conv</div>
-                          <div className="text-xs text-sky-500">{todayData.rate}</div>
+                          {/* <div className="text-xs text-green-500">{todayData.conversions} conv</div>
+                          <div className="text-xs text-sky-500">{todayData.rate}</div> */}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="text-center">
                           <div className="font-semibold text-gray-900 dark:text-gray-100">{weekData.clicks}</div>
-                          <div className="text-xs text-green-500">{weekData.conversions} conv</div>
-                          <div className="text-xs text-sky-500">{weekData.rate}</div>
+                          {/* <div className="text-xs text-green-500">{weekData.conversions} conv</div>
+                          <div className="text-xs text-sky-500">{weekData.rate}</div> */}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="text-center">
                           <div className="font-semibold text-gray-900 dark:text-gray-100">{monthData.clicks}</div>
-                          <div className="text-xs text-green-500">{monthData.conversions} conv</div>
-                          <div className="text-xs text-sky-500">{monthData.rate}</div>
+                          {/* <div className="text-xs text-green-500">{monthData.conversions} conv</div>
+                          <div className="text-xs text-sky-500">{monthData.rate}</div> */}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="text-center">
                           <div className="font-semibold text-gray-900 dark:text-gray-100">{yearData.clicks}</div>
-                          <div className="text-xs text-green-500">{yearData.conversions} conv</div>
-                          <div className="text-xs text-sky-500">{yearData.rate}</div>
+                          {/* <div className="text-xs text-green-500">{yearData.conversions} conv</div>
+                          <div className="text-xs text-sky-500">{yearData.rate}</div> */}
                         </div>
                       </td>
                       <td className="p-2">
                         <div className="text-center">
                           <div className="font-semibold text-gray-900 dark:text-gray-100">{customData.clicks}</div>
-                          <div className="text-xs text-green-500">{customData.conversions} conv</div>
-                          <div className="text-xs text-sky-500">{customData.rate}</div>
+                          {/* <div className="text-xs text-green-500">{customData.conversions} conv</div>
+                          <div className="text-xs text-sky-500">{customData.rate}</div> */}
                         </div>
                       </td>
                     </tr>

@@ -152,7 +152,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.dashboard}
                       alt="Dashboard"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "/" || pathname.includes("dashboard")
                           ? "opacity-100"
                           : "opacity-60 dark:opacity-50"
@@ -184,7 +184,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.courses}
                       alt="Courses"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/courses" ||
                         pathname.includes("courses")
                           ? "opacity-100"
@@ -218,7 +218,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.transaction}
                       alt="Transactions"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/transactions" ||
                         pathname.includes("admin/transactions")
                           ? "opacity-100"
@@ -252,7 +252,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.galleryOne}
                       alt="Gallery"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/gallery" ||
                         pathname.includes("admin/gallery")
                           ? "opacity-100"
@@ -286,7 +286,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.student}
                       alt="Students"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/students" ||
                         pathname.includes("admin/students")
                           ? "opacity-100"
@@ -319,7 +319,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.enquiry}
                       alt="Enquiries"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/enquiries" ||
                         pathname.includes("admin/enquiries")
                           ? "opacity-100"
@@ -353,7 +353,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.enquiryOne}
                       alt="Enquiries"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/offline-enquiries" ||
                         pathname.includes("admin/offline-enquiries")
                           ? "opacity-100"
@@ -387,7 +387,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.reviews}
                       alt="Reviews"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/reviews" ||
                         pathname.includes("admin/reviews")
                           ? "opacity-100"
@@ -419,9 +419,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                 >
                   <div className="flex items-center">
                     <img
-                      src={icons.transaction}
+                      src={icons.investment}
                       alt="Investments"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/investments" ||
                         pathname.includes("admin/investments")
                           ? "opacity-100"
@@ -455,7 +455,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.gallery}
                       alt="Gallery"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/other-gallery" ||
                         pathname.includes("admin/other-gallery")
                           ? "opacity-100"
@@ -538,9 +538,9 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center">
                             <img
-                              src={icons.promotion}
+                              src={icons.certificate}
                               alt="Reviews"
-                              className={`shrink-0 h-4 w-4 ${
+                              className={`shrink-0 h-6 w-6 ${
                                 pathname === "admin/certificate" ||
                                 pathname.includes("admin/certificate")
                                   ? "opacity-100"
@@ -644,7 +644,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                             <img
                               src={icons.promotion}
                               alt="Reviews"
-                              className={`shrink-0 h-4 w-4 ${
+                              className={`shrink-0 h-6 w-6 ${
                                 pathname === "admin/promotion" ||
                                 pathname.includes("admin/promotion")
                                   ? "opacity-100"
@@ -749,7 +749,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                             <img
                               src={icons.reports}
                               alt="Reports"
-                              className={`shrink-0 h-4 w-4 ${
+                              className={`shrink-0 h-6 w-6 ${
                                 pathname === "admin/reports/" ||
                                 pathname.includes("admin/reports/")
                                   ? "opacity-100"
@@ -798,7 +798,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
               </SidebarLinkGroup>
 
               {/* Pages */}
-              <li
+              {/* <li
                 className={`pl-4 pr-3 py-2 rounded-lg mb-0.5 last:mb-0 bg-linear-to-r ${
                   pathname.includes("admin/pages") &&
                   "from-violet-500/[0.12] dark:from-violet-500/[0.24] to-violet-500/[0.04]"
@@ -817,7 +817,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     <img
                       src={icons.seoPage}
                       alt="Pages"
-                      className={`shrink-0 h-4 w-4 ${
+                      className={`shrink-0 h-6 w-6 ${
                         pathname === "admin/pages" ||
                         pathname.includes("admin/pages")
                           ? "opacity-100"
@@ -829,7 +829,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                     </span>
                   </div>
                 </NavLink>
-              </li>
+              </li> */}
 
               {/* Settings */}
               <SidebarLinkGroup activecondition={pathname.includes("settings")}>
@@ -854,7 +854,7 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
                             <img
                               src={icons.settings}
                               alt="Settings"
-                              className={`shrink-0 h-4 w-4 ${
+                              className={`shrink-0 h-6 w-6 ${
                                 pathname === "admin/settings" ||
                                 pathname.includes("admin/settings")
                                   ? "opacity-100"

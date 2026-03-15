@@ -47,7 +47,8 @@ function Certificates() {
   // Load certificates and stats
   useEffect(() => {
     loadCertificates();
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.status, filters.hard_copy_delivered, filters.student_id, filters.course_id, filters.page, filters.limit]);
 
   useEffect(() => {
     loadStats();

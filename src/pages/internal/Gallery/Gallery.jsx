@@ -5,6 +5,8 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import galleryApi from '@/services/api/galleryApi';
 import GalleryItemModal from './components/GalleryItemModal';
 import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
+import Toast from '@/components/ui/Internal/Toast/Toast';
+import useToast from '@/hooks/useToast';
 
 // Icons
 import { 
@@ -44,7 +46,6 @@ const DraggableRow = ({ item, index, moveItem, onToggleStatus, onEdit, onView, o
         isDragging ? 'opacity-50' : ''
       }`}
     >
-      <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100">{item.id}</td>
       <td className="px-4 py-3 text-sm text-gray-800 dark:text-gray-100 font-medium">{item.display_order}</td>
       <td className="px-4 py-3">
         <div className="flex items-center space-x-3">
@@ -156,6 +157,8 @@ const DraggableRow = ({ item, index, moveItem, onToggleStatus, onEdit, onView, o
 };
 
 function Gallery() {
+  const { toast, showSuccess, showError, hideToast } = useToast();
+  
   const [activeTab, setActiveTab] = useState('images');
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -243,9 +246,13 @@ function Gallery() {
       const response = await galleryApi.reorderGalleryItems(itemOrders);
       
       if (response.success) {
-        // Success feedback could be added here
+        showSuccess('Gallery items reordered successfully');
+      } else {
+        showError(response.message || 'Failed to save order');
       }
     } catch (error) {
+      console.error('Error saving order:', error);
+      showError('An error occurred while saving the order');
       // Revert on error
       loadGalleryItems();
     } finally {
@@ -289,9 +296,13 @@ function Gallery() {
       if (response.success) {
         setDeleteTarget(null);
         loadGalleryItems();
+        showSuccess('Gallery item deleted successfully');
+      } else {
+        showError(response.message || 'Failed to delete item');
       }
     } catch (error) {
       console.error('Error deleting item:', error);
+      showError('An error occurred while deleting the item');
     }
   };
 
@@ -406,9 +417,6 @@ function Gallery() {
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Order
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -463,6 +471,14 @@ function Gallery() {
         onConfirm={confirmDelete}
         title="Delete Gallery Item"
         message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+      />
+
+      {/* Toast Notification */}
+      <Toast
+        type={toast.type}
+        message={toast.message}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
       />
     </AdminLayout>
   );

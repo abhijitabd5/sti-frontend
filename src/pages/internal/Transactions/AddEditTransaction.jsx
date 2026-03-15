@@ -222,10 +222,13 @@ const AddEditTransaction = () => {
             ? "Transaction updated successfully"
             : "Transaction created successfully"
         );
-        setTimeout(
-          () => navigate("/admin/transactions?tab=" + transactionType),
-          1000
-        );
+        setTimeout(() => {
+          if (transactionType === "investment") {
+            navigate("/admin/investments");
+          } else {
+            navigate("/admin/transactions?tab=" + transactionType);
+          }
+        }, 1000);
       } else {
         console.error('Transaction save failed:', response);
         showError(response.message || "Failed to save transaction");
@@ -239,11 +242,17 @@ const AddEditTransaction = () => {
   };
 
   const handleCancel = () => {
-    navigate("/admin/transactions?tab=" + transactionType);
+    if (transactionType === "investment") {
+      navigate("/admin/investments");
+    } else {
+      navigate("/admin/transactions?tab=" + transactionType);
+    }
   };
 
   const getDisplayName = () => {
-    return transactionType === "income" ? "Income" : "Expense";
+    if (transactionType === "income") return "Income";
+    if (transactionType === "investment") return "Investment";
+    return "Expense";
   };
 
   const getPersonLabel = () => {

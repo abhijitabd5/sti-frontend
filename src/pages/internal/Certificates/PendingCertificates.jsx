@@ -35,7 +35,8 @@ function PendingCertificates() {
   // Load enrollments when filters change
   useEffect(() => {
     loadEnrollments();
-  }, [filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.search, filters.enrollment_status, filters.course, filters.start_date, filters.end_date, filters.page, filters.limit]);
 
   const loadEnrollments = async () => {
     try {
