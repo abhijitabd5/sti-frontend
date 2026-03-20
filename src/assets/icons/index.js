@@ -31,7 +31,7 @@ import youtube from './youtube.png';
 import icon01 from './icon-01.svg';
 import icon02 from './icon-02.svg';
 import icon03 from './icon-03.svg';
-import favicon from './sti-favicon.svg';
+import favicon from './sti-favicon.png';
 
 export const icons = {
   smallLogo,

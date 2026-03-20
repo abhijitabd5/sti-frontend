@@ -6,6 +6,7 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import reviewApi from '@/services/api/reviewApi';
 import ReviewFormModal from './ReviewFormModal';
 import ViewReviewModal from './ViewReviewModal';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 
 import {
   EyeIcon,
@@ -15,9 +16,10 @@ import {
   ExclamationTriangleIcon,
   CheckIcon,
   StarIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
-const DraggableRow = ({ review, index, moveReview, onToggleApproval, onView, onEdit }) => {
+const DraggableRow = ({ review, index, moveReview, onToggleApproval, onView, onEdit, onDelete }) => {
   const [{ isDragging }, drag] = useDrag({
     type: 'reviewRow',
     item: { index, id: review.id },
@@ -115,6 +117,15 @@ const DraggableRow = ({ review, index, moveReview, onToggleApproval, onView, onE
             <PencilIcon className="h-4 w-4" />
           </button>
 
+          {/* Delete */}
+          <button
+            onClick={() => onDelete(review)}
+            className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            title="Delete Review"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </button>
+
           {/* Drag Handle */}
           <button
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-move"
@@ -134,6 +145,7 @@ function Reviews() {
   const [saveOrderLoading, setSaveOrderLoading] = useState(false);
   const [hasOrderChanged, setHasOrderChanged] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all'); // all, approved, pending
+  const [deleteTarget, setDeleteTarget] = useState(null);
   
   // Modal states
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -233,6 +245,24 @@ function Reviews() {
   const handleEdit = (review) => {
     setSelectedReview(review);
     setIsFormModalOpen(true);
+  };
+
+  const handleDelete = (review) => {
+    setDeleteTarget(review);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    
+    try {
+      const response = await reviewApi.deleteReview(deleteTarget.id);
+      if (response.success) {
+        setDeleteTarget(null);
+        loadReviews();
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+    }
   };
 
   const handleCreateNew = () => {
@@ -401,6 +431,7 @@ function Reviews() {
                       onToggleApproval={handleToggleApproval}
                       onView={handleView}
                       onEdit={handleEdit}
+                      onDelete={handleDelete}
                     />
                   ))}
                 </tbody>
@@ -423,6 +454,15 @@ function Reviews() {
         isOpen={isViewModalOpen}
         onClose={handleCloseViewModal}
         review={viewReviewData}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Review"
+        message={`Are you sure you want to delete the review by "${deleteTarget?.name}"? This action cannot be undone.`}
       />
     </AdminLayout>
   );

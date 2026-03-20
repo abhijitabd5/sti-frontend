@@ -405,14 +405,7 @@ function OtherGallery() {
                               <PencilIcon className="h-4 w-4" />
                             </button>
 
-                            {/* Delete */}
-                            <button
-                              onClick={() => handleDelete(item)}
-                              className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                              title="Delete Item"
-                            >
-                              <TrashIcon className="h-4 w-4" />
-                            </button>
+
                           </div>
                         </td>
                       </tr>

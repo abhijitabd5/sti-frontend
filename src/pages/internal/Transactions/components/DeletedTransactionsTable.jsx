@@ -28,12 +28,24 @@ const DeletedTransactionsTable = ({
     }).format(amount);
   };
 
-  // Format date
+  // Format date (for transaction date)
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
+    });
+  };
+
+  // Format date and time
+  const formatDateTime = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -136,11 +148,11 @@ const DeletedTransactionsTable = ({
                       Contact
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Deleted By
+                      Deleted At
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Actions
-                    </th>
+                    </th> */}
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700/60">
@@ -169,11 +181,10 @@ const DeletedTransactionsTable = ({
                         {getPersonContact(transaction)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.deleted_by ? `${transaction.deleted_by.first_name} ${transaction.deleted_by.last_name}` : 'System'}
+                        {formatDateTime(transaction.deletedAt)}
                       </td>
-                      <td className="px-4 py-3">
+                      {/* <td className="px-4 py-3">
                         <div className="flex items-center space-x-2">
-                          {/* View */}
                           <button
                             onClick={() => handleViewClick(transaction)}
                             className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -182,7 +193,6 @@ const DeletedTransactionsTable = ({
                             <EyeIcon className="h-4 w-4" />
                           </button>
                           
-                          {/* Restore */}
                           <button
                             onClick={() => handleRestore(transaction.id)}
                             className="p-1 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
@@ -191,7 +201,7 @@ const DeletedTransactionsTable = ({
                             <ArrowPathIcon className="h-4 w-4" />
                           </button>
                         </div>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>
