@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   EyeIcon, 
   PencilIcon, 
@@ -21,11 +21,6 @@ const TransactionTable = ({
   transactionType,
   onAddTransaction
 }) => {
-  const [deleteState, setDeleteState] = useState({
-    isOpen: false,
-    transaction: null,
-    loading: false
-  });
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -84,27 +79,6 @@ const TransactionTable = ({
       'payment_gateway': 'Payment Gateway'
     };
     return modeMap[mode?.toLowerCase()] || mode;
-  };
-
-  // Delete handlers
-  const openDeleteConfirmation = (transaction) => {
-    setDeleteState({ isOpen: true, transaction, loading: false });
-  };
-
-  const closeDeleteConfirmation = () => {
-    setDeleteState({ isOpen: false, transaction: null, loading: false });
-  };
-
-  const handleDelete = async () => {
-    try {
-      setDeleteState(prev => ({ ...prev, loading: true }));
-      await onDelete(deleteState.transaction.id);
-      closeDeleteConfirmation();
-    } catch (error) {
-      console.error('Error deleting transaction:', error);
-    } finally {
-      setDeleteState(prev => ({ ...prev, loading: false }));
-    }
   };
 
   const getPersonName = (transaction) => {
@@ -224,7 +198,7 @@ const TransactionTable = ({
                           
                           {/* Delete */}
                           <button
-                            onClick={() => openDeleteConfirmation(transaction)}
+                            onClick={() => onDelete(transaction)}
                             className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                             title="Delete Transaction"
                           >
@@ -270,56 +244,6 @@ const TransactionTable = ({
           </>
         )}
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {deleteState.isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div 
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75"
-              onClick={closeDeleteConfirmation}
-            />
-
-            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700/60">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
-              
-              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 text-center mb-2">
-                Delete {transactionType === 'income' ? 'Income' : transactionType === 'investment' ? 'Investment' : 'Expense'} Transaction
-              </h3>
-              
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
-                Are you sure you want to delete this {transactionType} transaction of {formatCurrency(deleteState.transaction?.amount)}? This action cannot be undone.
-              </p>
-
-              <div className="flex justify-center space-x-3">
-                <button
-                  onClick={closeDeleteConfirmation}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                  disabled={deleteState.loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={deleteState.loading}
-                >
-                  {deleteState.loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Deleting...
-                    </div>
-                  ) : (
-                    'Delete Transaction'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

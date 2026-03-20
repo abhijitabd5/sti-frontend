@@ -429,13 +429,13 @@ function Certificates() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-center space-x-2">
-                          <button
+                          {/* <button
                             onClick={() => navigate(`/admin/certificate/view/${cert.id}`)}
                             className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                             title="View Details"
                           >
                             <EyeIcon className="h-4 w-4" />
-                          </button>
+                          </button> */}
                           
                           <button
                             onClick={() => handleDownload(cert.id, cert.certificate_number)}

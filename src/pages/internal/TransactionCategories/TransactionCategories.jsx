@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import CategoryModal from './CategoryModal';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
 import TransactionCategoryApi from '@/services/api/transactionCategoryApi';
@@ -42,11 +43,7 @@ const TransactionCategories = () => {
   });
 
   // Delete confirmation state
-  const [deleteState, setDeleteState] = useState({
-    isOpen: false,
-    category: null,
-    loading: false
-  });
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Load categories
   useEffect(() => {
@@ -141,20 +138,16 @@ const TransactionCategories = () => {
 
   // Delete handlers
   const openDeleteConfirmation = (category) => {
-    setDeleteState({ isOpen: true, category, loading: false });
+    setDeleteTarget(category);
   };
 
-  const closeDeleteConfirmation = () => {
-    setDeleteState({ isOpen: false, category: null, loading: false });
-  };
-
-  const handleDelete = async () => {
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    
     try {
-      setDeleteState(prev => ({ ...prev, loading: true }));
-      
-      const response = await TransactionCategoryApi.deleteTransactionCategory(deleteState.category.id);
+      const response = await TransactionCategoryApi.deleteTransactionCategory(deleteTarget.id);
       if (response.success) {
-        closeDeleteConfirmation();
+        setDeleteTarget(null);
         loadCategories();
         showSuccess('Transaction category deleted successfully');
       } else {
@@ -163,8 +156,6 @@ const TransactionCategories = () => {
     } catch (error) {
       console.error('Error deleting category:', error);
       showError('An error occurred while deleting the transaction category');
-    } finally {
-      setDeleteState(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -402,54 +393,13 @@ const TransactionCategories = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      {deleteState.isOpen && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div 
-              className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75"
-              onClick={closeDeleteConfirmation}
-            />
-
-            <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-gray-800 shadow-xl rounded-lg border border-gray-200 dark:border-gray-700/60">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full">
-                <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
-              
-              <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 text-center mb-2">
-                Delete Category
-              </h3>
-              
-              <p className="text-sm text-gray-600 dark:text-gray-400 text-center mb-6">
-                Are you sure you want to delete "{deleteState.category?.name}"? This action cannot be undone.
-              </p>
-
-              <div className="flex justify-center space-x-3">
-                <button
-                  onClick={closeDeleteConfirmation}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-                  disabled={deleteState.loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={deleteState.loading}
-                >
-                  {deleteState.loading ? (
-                    <div className="flex items-center">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Deleting...
-                    </div>
-                  ) : (
-                    'Delete Category'
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+      />
 
       {/* Toast Notification */}
       <Toast

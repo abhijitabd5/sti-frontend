@@ -4,7 +4,7 @@ function ScrollToTop() {
     <div>
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="flex items-center justify-center w-14 h-14 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+        className="flex items-center justify-center w-10 h-10 bg-gray-600 hover:bg-gray-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
         aria-label="Scroll to top"
       >
         <svg

@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 
 import SidebarLinkGroup from "./AdminSideBarLinkGroup";
 import { icons } from "@/assets/icons";
+import stiLogo from '@/assets/logos/sti-logo.png';
 
 const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 
@@ -96,7 +97,12 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
           </button>
           {/* Logo */}
           <NavLink end to="/" className="block lg:sidebar-expanded:block lg:hidden 2xl:block">
-            <img src={icons.smallLogo} alt="Logo" />
+            <img 
+              src={stiLogo} 
+              alt="STI Logo" 
+              className="h-8 w-auto"
+              style={{ filter: 'invert(1) sepia(1) saturate(3) hue-rotate(25deg) brightness(1.1)' }}
+            />
           </NavLink>
           {/* Expand / collapse button (top) */}
           <button
@@ -120,17 +126,6 @@ function Sidebar({ sidebarOpen, setSidebarOpen, variant = "default" }) {
         <div className="space-y-8">
           {/* Pages group */}
           <div>
-            <h3 className="text-xs uppercase text-gray-400 dark:text-gray-500 font-semibold pl-3">
-              <span
-                className="hidden lg:block lg:sidebar-expanded:hidden 2xl:hidden text-center w-6"
-                aria-hidden="true"
-              >
-                •••
-              </span>
-              <span className="lg:hidden lg:sidebar-expanded:block 2xl:block">
-                Pages
-              </span>
-            </h3>
             <ul className="mt-3">
               {/* Dashboard */}
               <li

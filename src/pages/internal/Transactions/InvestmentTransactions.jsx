@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import TransactionTable from './components/TransactionTable';
 import TransactionFilters from './components/TransactionFilters';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
 import transactionApi from '@/services/api/transactionApi';
@@ -27,6 +28,7 @@ const InvestmentTransactions = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -122,10 +124,17 @@ const InvestmentTransactions = () => {
     navigate(`/admin/transactions/edit/${transactionId}`);
   };
 
-  const handleDeleteTransaction = async (transactionId) => {
+  const handleDeleteTransaction = (transaction) => {
+    setDeleteTarget(transaction);
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!deleteTarget) return;
+    
     try {
-      const response = await transactionApi.deleteTransaction(transactionId);
+      const response = await transactionApi.deleteTransaction(deleteTarget.id);
       if (response.success) {
+        setDeleteTarget(null);
         loadTransactions();
         showSuccess('Investment transaction deleted successfully');
       } else {
@@ -206,6 +215,15 @@ const InvestmentTransactions = () => {
         onDelete={handleDeleteTransaction}
         transactionType={transactionType}
         onAddTransaction={handleAddTransaction}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteTransaction}
+        title="Delete Investment Transaction"
+        message={`Are you sure you want to delete this investment transaction? This action cannot be undone.`}
       />
 
       {/* Toast Notification */}

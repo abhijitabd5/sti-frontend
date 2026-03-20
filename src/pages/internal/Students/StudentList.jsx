@@ -4,6 +4,7 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import { getTimestamp } from '@/utils/dateUtils';
 import AadhaarCheckModal from './components/AadhaarCheckModal';
+import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
 
@@ -19,7 +20,8 @@ import {
   ArrowDownTrayIcon,
   FunnelIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 
 function StudentList() {
@@ -33,6 +35,7 @@ function StudentList() {
   const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = useState({});
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
   const [filters, setFilters] = useState({
@@ -139,6 +142,25 @@ function StudentList() {
 
   const handleAttachDocuments = (studentId) => {
     navigate(`/admin/students/${studentId}/documents`);
+  };
+
+  const handleDeleteStudent = (student) => {
+    setDeleteTarget(student);
+  };
+
+  const confirmDeleteStudent = async () => {
+    if (!deleteTarget) return;
+    
+    try {
+      const response = await studentApi.deleteStudent(deleteTarget.student_id);
+      if (response.success) {
+        setDeleteTarget(null);
+        loadStudents();
+        showSuccess('Student deleted successfully');
+      }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+    }
   };
 
   const getFeeStatusColor = (status) => {
@@ -531,6 +553,15 @@ function StudentList() {
                         >
                           <DocumentTextIcon className="h-4 w-4" />
                         </button>
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => handleDeleteStudent(student)}
+                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                          title="Delete Student"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -613,6 +644,15 @@ function StudentList() {
       <AadhaarCheckModal
         isOpen={showEnrollModal}
         onClose={() => setShowEnrollModal(false)}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDeleteStudent}
+        title="Delete Student"
+        message={`Are you sure you want to delete "${deleteTarget?.name}" (${deleteTarget?.student_code})? This action cannot be undone and will remove all associated data.`}
       />
 
       {/* Toast Notification */}
