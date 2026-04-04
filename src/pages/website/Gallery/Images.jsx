@@ -13,54 +13,74 @@ const Images = () => {
   
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
   const [displayedImages, setDisplayedImages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [totalImages, setTotalImages] = useState(0);
   const [error, setError] = useState(null);
   const observerRef = useRef(null);
   const loadMoreRef = useRef(null);
 
   useEffect(() => {
-    loadGalleryImages();
+    loadGalleryImages(1);
   }, []);
 
-  const loadGalleryImages = async () => {
+  const loadGalleryImages = async (page = 1) => {
     try {
-      setLoading(true);
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
-      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_images');
+      
+      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_images', {
+        page,
+        limit: IMAGES_PER_PAGE
+      });
       
       if (response.success && response.data) {
-        setGalleryImages(response.data);
-        // Initially display first 12 images
-        setDisplayedImages(response.data.slice(0, IMAGES_PER_PAGE));
-        setHasMore(response.data.length > IMAGES_PER_PAGE);
+        const newImages = response.data;
+        
+        if (page === 1) {
+          setGalleryImages(newImages);
+          setDisplayedImages(newImages);
+        } else {
+          setGalleryImages(prev => [...prev, ...newImages]);
+          setDisplayedImages(prev => [...prev, ...newImages]);
+        }
+        
+        // Check pagination info if available
+        if (response.pagination) {
+          setTotalImages(response.pagination.total);
+          setHasMore(response.pagination.hasNext);
+        } else {
+          // If no pagination info, assume we got all images
+          setHasMore(false);
+          setTotalImages(newImages.length);
+        }
+        
+        setCurrentPage(page);
       }
     } catch (err) {
       console.error('Error loading gallery images:', err);
       setError('Failed to load gallery images. Please try again later.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const loadMoreImages = useCallback(() => {
-    if (!hasMore) return;
-
-    const currentLength = displayedImages.length;
-    const nextImages = galleryImages.slice(currentLength, currentLength + IMAGES_PER_PAGE);
-    
-    if (nextImages.length > 0) {
-      setDisplayedImages(prev => [...prev, ...nextImages]);
-      setHasMore(currentLength + nextImages.length < galleryImages.length);
-    } else {
-      setHasMore(false);
-    }
-  }, [displayedImages.length, galleryImages, hasMore]);
+    if (!hasMore || loadingMore) return;
+    loadGalleryImages(currentPage + 1);
+  }, [hasMore, loadingMore, currentPage]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
-    if (loading || !hasMore) return;
+    if (loading || !hasMore || loadingMore) return;
 
     const options = {
       root: null,
@@ -83,7 +103,7 @@ const Images = () => {
         observerRef.current.disconnect();
       }
     };
-  }, [loading, hasMore, loadMoreImages]);
+  }, [loading, hasMore, loadingMore, loadMoreImages]);
 
   const filteredImages = displayedImages;
 
@@ -220,7 +240,7 @@ const Images = () => {
                   Gallery
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Showing {displayedImages.length} of {galleryImages.length} image{galleryImages.length !== 1 ? 's' : ''}
+                  Showing {displayedImages.length} {totalImages > 0 ? `of ${totalImages}` : ''} image{displayedImages.length !== 1 ? 's' : ''}
                 </p>
               </div>
 
@@ -253,7 +273,7 @@ const Images = () => {
                       
                       {/* Image Number Badge */}
                       <div className="absolute top-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-sm font-medium">
-                        {index + 1} / {galleryImages.length}
+                        {index + 1} {totalImages > 0 ? `/ ${totalImages}` : ''}
                       </div>
                     </div>
                     
@@ -284,7 +304,12 @@ const Images = () => {
               {/* Loading indicator and intersection observer target */}
               {hasMore && (
                 <div ref={loadMoreRef} className="flex justify-center items-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-orange-500"></div>
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-orange-500"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Loading more images...
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -352,7 +377,7 @@ const Images = () => {
                 <h3 className="text-xl font-bold mb-2">{selectedImage.title}</h3>
                 <p className="text-gray-300">{selectedImage.caption || 'No description'}</p>
                 <div className="mt-4 text-sm text-gray-400">
-                  Image {filteredImages.findIndex(img => img.id === selectedImage.id) + 1} of {filteredImages.length}
+                  Image {galleryImages.findIndex(img => img.id === selectedImage.id) + 1} of {totalImages > 0 ? totalImages : galleryImages.length}
                 </div>
               </div>
             </div>
