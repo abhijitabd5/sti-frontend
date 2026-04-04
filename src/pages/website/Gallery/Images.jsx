@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import galleryApi from '@/services/api/galleryApi';
 import { useSEO } from '@/hooks/useSEO';
+
+const IMAGES_PER_PAGE = 12; // 3 rows × 4 columns
 
 const Images = () => {
   // SEO Management
@@ -12,7 +14,11 @@ const Images = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [displayedImages, setDisplayedImages] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState(null);
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
     loadGalleryImages();
@@ -26,6 +32,9 @@ const Images = () => {
       
       if (response.success && response.data) {
         setGalleryImages(response.data);
+        // Initially display first 12 images
+        setDisplayedImages(response.data.slice(0, IMAGES_PER_PAGE));
+        setHasMore(response.data.length > IMAGES_PER_PAGE);
       }
     } catch (err) {
       console.error('Error loading gallery images:', err);
@@ -35,11 +44,53 @@ const Images = () => {
     }
   };
 
+  const loadMoreImages = useCallback(() => {
+    if (!hasMore) return;
 
-  const filteredImages = galleryImages;
+    const currentLength = displayedImages.length;
+    const nextImages = galleryImages.slice(currentLength, currentLength + IMAGES_PER_PAGE);
+    
+    if (nextImages.length > 0) {
+      setDisplayedImages(prev => [...prev, ...nextImages]);
+      setHasMore(currentLength + nextImages.length < galleryImages.length);
+    } else {
+      setHasMore(false);
+    }
+  }, [displayedImages.length, galleryImages, hasMore]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (loading || !hasMore) return;
+
+    const options = {
+      root: null,
+      rootMargin: '200px',
+      threshold: 0.1
+    };
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMoreImages();
+      }
+    }, options);
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loading, hasMore, loadMoreImages]);
+
+  const filteredImages = displayedImages;
 
   const openLightbox = (image) => {
-    setSelectedImage(image);
+    // Find the image in the full gallery array for proper navigation
+    const imageInGallery = galleryImages.find(img => img.id === image.id);
+    setSelectedImage(imageInGallery);
     document.body.style.overflow = 'hidden';
   };
 
@@ -49,16 +100,16 @@ const Images = () => {
   };
 
   const navigateImage = (direction) => {
-    const currentIndex = filteredImages.findIndex(img => img.id === selectedImage.id);
+    const currentIndex = galleryImages.findIndex(img => img.id === selectedImage.id);
     let newIndex;
     
     if (direction === 'next') {
-      newIndex = (currentIndex + 1) % filteredImages.length;
+      newIndex = (currentIndex + 1) % galleryImages.length;
     } else {
-      newIndex = currentIndex === 0 ? filteredImages.length - 1 : currentIndex - 1;
+      newIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
     }
     
-    setSelectedImage(filteredImages[newIndex]);
+    setSelectedImage(galleryImages[newIndex]);
   };
 
   useEffect(() => {
@@ -72,7 +123,7 @@ const Images = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [selectedImage, filteredImages]);
+  }, [selectedImage, galleryImages]);
 
   if (loading) {
     return (
@@ -169,7 +220,7 @@ const Images = () => {
                   Gallery
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Showing {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
+                  Showing {displayedImages.length} of {galleryImages.length} image{galleryImages.length !== 1 ? 's' : ''}
                 </p>
               </div>
 
@@ -202,7 +253,7 @@ const Images = () => {
                       
                       {/* Image Number Badge */}
                       <div className="absolute top-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-sm font-medium">
-                        {index + 1} / {filteredImages.length}
+                        {index + 1} / {galleryImages.length}
                       </div>
                     </div>
                     
@@ -229,6 +280,22 @@ const Images = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Loading indicator and intersection observer target */}
+              {hasMore && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-8">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-orange-500"></div>
+                </div>
+              )}
+
+              {/* End of gallery message */}
+              {!hasMore && displayedImages.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    You've reached the end of the gallery
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>

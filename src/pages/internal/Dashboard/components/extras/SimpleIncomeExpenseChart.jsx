@@ -48,7 +48,8 @@ function SimpleIncomeExpenseChart() {
     if (chartData.length === 0) return 100;
     const maxIncome = Math.max(...chartData.map(item => item.income));
     const maxExpense = Math.max(...chartData.map(item => item.expenses));
-    return Math.max(maxIncome, maxExpense) * 1.1; // Add 10% padding
+    const maxInvestment = Math.max(...chartData.map(item => item.investment || 0));
+    return Math.max(maxIncome, maxExpense, maxInvestment) * 1.1; // Add 10% padding
   };
 
   const getBarHeight = (value, maxValue) => {
@@ -63,7 +64,7 @@ function SimpleIncomeExpenseChart() {
         {/* Title and Period Dropdown */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">
-            Simple Income Vs Expenses Chart
+            Income vs Expenses vs Investment Chart
           </h2>
           
           {/* Period Dropdown */}
@@ -146,6 +147,10 @@ function SimpleIncomeExpenseChart() {
                 <div className="w-4 h-4 bg-violet-500 rounded mr-2"></div>
                 <span className="text-sm text-gray-600 dark:text-gray-400">Expenses</span>
               </div>
+              <div className="flex items-center">
+                <div className="w-4 h-4 bg-emerald-500 rounded mr-2"></div>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Investment</span>
+              </div>
             </div>
 
             {/* Chart */}
@@ -183,12 +188,12 @@ function SimpleIncomeExpenseChart() {
                           <div
                             className="bg-sky-500 hover:bg-sky-600 transition-colors duration-200 rounded-t"
                             style={{
-                              width: '20px',
+                              width: '16px',
                               height: `${getBarHeight(item.income, maxValue) * 3.2}px`
                             }}
                           ></div>
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                             Income: {formatCurrency(item.income)}
                           </div>
                         </div>
@@ -198,13 +203,28 @@ function SimpleIncomeExpenseChart() {
                           <div
                             className="bg-violet-500 hover:bg-violet-600 transition-colors duration-200 rounded-t"
                             style={{
-                              width: '20px',
+                              width: '16px',
                               height: `${getBarHeight(item.expenses, maxValue) * 3.2}px`
                             }}
                           ></div>
                           {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                             Expenses: {formatCurrency(item.expenses)}
+                          </div>
+                        </div>
+
+                        {/* Investment bar */}
+                        <div className="relative group">
+                          <div
+                            className="bg-emerald-500 hover:bg-emerald-600 transition-colors duration-200 rounded-t"
+                            style={{
+                              width: '16px',
+                              height: `${getBarHeight(item.investment || 0, maxValue) * 3.2}px`
+                            }}
+                          ></div>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                            Investment: {formatCurrency(item.investment || 0)}
                           </div>
                         </div>
                       </div>
