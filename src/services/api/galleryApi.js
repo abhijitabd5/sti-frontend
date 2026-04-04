@@ -121,9 +121,13 @@ class GalleryApi {
   }
 
   // Get public gallery items by page slug
-  async getPublicGalleryByPageSlug(pageSlug) {
+  async getPublicGalleryByPageSlug(pageSlug, params = {}) {
     try {
-      const response = await httpClient.get(`/public/gallery/page/${pageSlug}`);
+      const queryParams = new URLSearchParams(params);
+      const queryString = queryParams.toString();
+      const url = `/public/gallery/page/${pageSlug}${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await httpClient.get(url);
       return response.data;
     } catch (error) {
       console.error('Error fetching public gallery by page slug:', error);

@@ -113,6 +113,15 @@ function DashboardIncomeVsExpenses() {
               categoryPercentage: 0.7,
               borderRadius: 4,
             },
+            {
+              label: 'Investment',
+              data: data.map(item => Number(item.investment) || 0),
+              backgroundColor: getCSSVariable('--color-emerald-500'),
+              hoverBackgroundColor: getCSSVariable('--color-emerald-600'),
+              barPercentage: 0.7,
+              categoryPercentage: 0.7,
+              borderRadius: 4,
+            },
           ],
         };
         
@@ -135,7 +144,7 @@ function DashboardIncomeVsExpenses() {
       <header className="px-5 py-4 border-b border-gray-100 dark:border-gray-700/60">
         {/* Title, Period Dropdown, and Date Range - All in One Row */}
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="font-semibold text-gray-800 dark:text-gray-100">Income Vs Expenses</h2>
+          <h2 className="font-semibold text-gray-800 dark:text-gray-100">Income vs Expenses vs Investment</h2>
           
           <div className="flex items-center gap-3 flex-wrap">
             {/* Date Range Inputs - Month Only */}

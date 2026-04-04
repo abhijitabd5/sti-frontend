@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import WebsiteLayout from '@/components/common/Layouts/WebsiteLayout';
 import ApplyNow from '@/components/common/ApplyNow/ApplyNow';
 import galleryApi from '@/services/api/galleryApi';
 import { useSEO } from '@/hooks/useSEO';
+
+const IMAGES_PER_PAGE = 12; // 3 rows × 4 columns
 
 const Images = () => {
   // SEO Management
@@ -11,35 +13,104 @@ const Images = () => {
   
   const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [displayedImages, setDisplayedImages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalImages, setTotalImages] = useState(0);
   const [error, setError] = useState(null);
+  const observerRef = useRef(null);
+  const loadMoreRef = useRef(null);
 
   useEffect(() => {
-    loadGalleryImages();
+    loadGalleryImages(1);
   }, []);
 
-  const loadGalleryImages = async () => {
+  const loadGalleryImages = async (page = 1) => {
     try {
-      setLoading(true);
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
-      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_images');
+      
+      const response = await galleryApi.getPublicGalleryByPageSlug('gallery_images', {
+        page,
+        limit: IMAGES_PER_PAGE
+      });
       
       if (response.success && response.data) {
-        setGalleryImages(response.data);
+        const newImages = response.data;
+        
+        if (page === 1) {
+          setGalleryImages(newImages);
+          setDisplayedImages(newImages);
+        } else {
+          setGalleryImages(prev => [...prev, ...newImages]);
+          setDisplayedImages(prev => [...prev, ...newImages]);
+        }
+        
+        // Check pagination info if available
+        if (response.pagination) {
+          setTotalImages(response.pagination.total);
+          setHasMore(response.pagination.hasNext);
+        } else {
+          // If no pagination info, assume we got all images
+          setHasMore(false);
+          setTotalImages(newImages.length);
+        }
+        
+        setCurrentPage(page);
       }
     } catch (err) {
       console.error('Error loading gallery images:', err);
       setError('Failed to load gallery images. Please try again later.');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
+  const loadMoreImages = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    loadGalleryImages(currentPage + 1);
+  }, [hasMore, loadingMore, currentPage]);
 
-  const filteredImages = galleryImages;
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    if (loading || !hasMore || loadingMore) return;
+
+    const options = {
+      root: null,
+      rootMargin: '200px',
+      threshold: 0.1
+    };
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        loadMoreImages();
+      }
+    }, options);
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [loading, hasMore, loadingMore, loadMoreImages]);
+
+  const filteredImages = displayedImages;
 
   const openLightbox = (image) => {
-    setSelectedImage(image);
+    // Find the image in the full gallery array for proper navigation
+    const imageInGallery = galleryImages.find(img => img.id === image.id);
+    setSelectedImage(imageInGallery);
     document.body.style.overflow = 'hidden';
   };
 
@@ -49,16 +120,16 @@ const Images = () => {
   };
 
   const navigateImage = (direction) => {
-    const currentIndex = filteredImages.findIndex(img => img.id === selectedImage.id);
+    const currentIndex = galleryImages.findIndex(img => img.id === selectedImage.id);
     let newIndex;
     
     if (direction === 'next') {
-      newIndex = (currentIndex + 1) % filteredImages.length;
+      newIndex = (currentIndex + 1) % galleryImages.length;
     } else {
-      newIndex = currentIndex === 0 ? filteredImages.length - 1 : currentIndex - 1;
+      newIndex = currentIndex === 0 ? galleryImages.length - 1 : currentIndex - 1;
     }
     
-    setSelectedImage(filteredImages[newIndex]);
+    setSelectedImage(galleryImages[newIndex]);
   };
 
   useEffect(() => {
@@ -72,7 +143,7 @@ const Images = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [selectedImage, filteredImages]);
+  }, [selectedImage, galleryImages]);
 
   if (loading) {
     return (
@@ -169,7 +240,7 @@ const Images = () => {
                   Gallery
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Showing {filteredImages.length} image{filteredImages.length !== 1 ? 's' : ''}
+                  Showing {displayedImages.length} {totalImages > 0 ? `of ${totalImages}` : ''} image{displayedImages.length !== 1 ? 's' : ''}
                 </p>
               </div>
 
@@ -202,7 +273,7 @@ const Images = () => {
                       
                       {/* Image Number Badge */}
                       <div className="absolute top-3 left-3 bg-black/60 text-white px-2 py-1 rounded text-sm font-medium">
-                        {index + 1} / {filteredImages.length}
+                        {index + 1} {totalImages > 0 ? `/ ${totalImages}` : ''}
                       </div>
                     </div>
                     
@@ -229,6 +300,27 @@ const Images = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Loading indicator and intersection observer target */}
+              {hasMore && (
+                <div ref={loadMoreRef} className="flex justify-center items-center py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-orange-500"></div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Loading more images...
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* End of gallery message */}
+              {!hasMore && displayedImages.length > 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
+                    You've reached the end of the gallery
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -285,7 +377,7 @@ const Images = () => {
                 <h3 className="text-xl font-bold mb-2">{selectedImage.title}</h3>
                 <p className="text-gray-300">{selectedImage.caption || 'No description'}</p>
                 <div className="mt-4 text-sm text-gray-400">
-                  Image {filteredImages.findIndex(img => img.id === selectedImage.id) + 1} of {filteredImages.length}
+                  Image {galleryImages.findIndex(img => img.id === selectedImage.id) + 1} of {totalImages > 0 ? totalImages : galleryImages.length}
                 </div>
               </div>
             </div>
