@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PlusIcon, EyeIcon, TrashIcon, CheckCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, EyeIcon, TrashIcon, CheckCircleIcon, XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import internalEnquiryApi from '@/services/api/internalEnquiryApi';
 import ViewEnquiryModal from './components/ViewEnquiryModal';
@@ -323,23 +323,66 @@ function OfflineEnquiries() {
         {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Page {pagination.page} of {pagination.totalPages}
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} results
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
               <button
-                onClick={() => setPage(Math.max(1, page - 1))}
+                onClick={() => setPage(pagination.page - 1)}
                 disabled={!pagination.hasPrev || loading}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex items-center px-3 py-1 rounded border text-sm ${
+                  pagination.hasPrev && !loading
+                    ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                }`}
               >
+                <ChevronLeftIcon className="h-4 w-4 mr-1" />
                 Previous
               </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (pagination.page <= 3) {
+                    pageNum = i + 1;
+                  } else if (pagination.page >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = pagination.page - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setPage(pageNum)}
+                      className={`px-3 py-1 rounded text-sm ${
+                        pageNum === pagination.page
+                          ? 'bg-violet-600 text-white'
+                          : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Next Button */}
               <button
-                onClick={() => setPage(Math.min(pagination.totalPages, page + 1))}
+                onClick={() => setPage(pagination.page + 1)}
                 disabled={!pagination.hasNext || loading}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex items-center px-3 py-1 rounded border text-sm ${
+                  pagination.hasNext && !loading
+                    ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                }`}
               >
                 Next
+                <ChevronRightIcon className="h-4 w-4 ml-1" />
               </button>
             </div>
           </div>

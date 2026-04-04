@@ -211,28 +211,66 @@ const DeletedTransactionsTable = ({
             {/* Pagination */}
             {pagination.last_page > 1 && (
               <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700/60 flex items-center justify-between">
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   Showing {pagination.from} to {pagination.to} of {pagination.total} results
                 </div>
                 <div className="flex items-center space-x-2">
+                  {/* Previous Button */}
                   <button
                     onClick={() => onPageChange(pagination.current_page - 1)}
                     disabled={pagination.current_page === 1}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className={`flex items-center px-3 py-1 rounded border text-sm ${
+                      pagination.current_page > 1
+                        ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    <ChevronLeftIcon className="h-4 w-4" />
+                    <ChevronLeftIcon className="h-4 w-4 mr-1" />
+                    Previous
                   </button>
-                  
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Page {pagination.current_page} of {pagination.last_page}
-                  </span>
-                  
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => {
+                      let pageNum;
+                      if (pagination.last_page <= 5) {
+                        pageNum = i + 1;
+                      } else if (pagination.current_page <= 3) {
+                        pageNum = i + 1;
+                      } else if (pagination.current_page >= pagination.last_page - 2) {
+                        pageNum = pagination.last_page - 4 + i;
+                      } else {
+                        pageNum = pagination.current_page - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => onPageChange(pageNum)}
+                          className={`px-3 py-1 rounded text-sm ${
+                            pageNum === pagination.current_page
+                              ? 'bg-violet-600 text-white'
+                              : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Next Button */}
                   <button
                     onClick={() => onPageChange(pagination.current_page + 1)}
                     disabled={pagination.current_page === pagination.last_page}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className={`flex items-center px-3 py-1 rounded border text-sm ${
+                      pagination.current_page < pagination.last_page
+                        ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        : 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                    }`}
                   >
-                    <ChevronRightIcon className="h-4 w-4" />
+                    Next
+                    <ChevronRightIcon className="h-4 w-4 ml-1" />
                   </button>
                 </div>
               </div>

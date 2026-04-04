@@ -213,14 +213,14 @@ function CertificateTemplates() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700/60 p-4">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Default</p>
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mt-1 truncate">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-100 mt-1 truncate" title={stats.default_template?.name || 'None'}>
                   {stats.default_template?.name || 'None'}
                 </p>
               </div>
-              <CheckCircleIcon className="h-10 w-10 text-violet-500" />
+              <CheckCircleIcon className="h-10 w-10 text-violet-500 flex-shrink-0" />
             </div>
           </div>
         </div>
