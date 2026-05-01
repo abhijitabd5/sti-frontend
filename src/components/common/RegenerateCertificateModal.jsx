@@ -39,7 +39,10 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
   }, [isOpen, certificate]);
 
   const populateFormFromCertificate = () => {
-    if (!certificate?.certificate_data_snapshot) return;
+    if (!certificate?.certificate_data_snapshot) {
+      console.warn('Certificate data snapshot not found:', certificate);
+      return;
+    }
 
     const snapshot = certificate.certificate_data_snapshot;
     
