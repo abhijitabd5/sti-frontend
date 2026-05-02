@@ -111,11 +111,18 @@ function Certificates() {
           response = await certificateApi.markHardCopyDelivered(certificateId);
           break;
         case 'regenerate':
-          // Open modal instead of direct regeneration
-          const cert = certificates.find(c => c.id === certificateId);
-          if (cert) {
-            setSelectedCertificate(cert);
-            setRegenerateModalOpen(true);
+          // Fetch full certificate details before opening modal
+          try {
+            const certResponse = await certificateApi.getCertificateById(certificateId);
+            if (certResponse.success) {
+              setSelectedCertificate(certResponse.data);
+              setRegenerateModalOpen(true);
+            } else {
+              showError('Failed to load certificate details');
+            }
+          } catch (error) {
+            console.error('Error loading certificate details:', error);
+            showError('Failed to load certificate details');
           }
           return;
         default:
