@@ -4,6 +4,15 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import ProgressModal from './components/ProgressModal';
 import { INDIAN_STATES, getStateDisplayName } from '@/config/constants';
+import { 
+  validateDateOfBirth, 
+  validateEnrollmentDate,
+  sanitizeDateString,
+  getMinDateOfBirth,
+  getMaxDateOfBirth,
+  getMinEnrollmentDate,
+  getMaxEnrollmentDate
+} from '@/utils/dateValidation';
 
 // Icons
 import { 
@@ -232,6 +241,36 @@ function EnrollmentForm() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Validate and sanitize date fields to prevent malformed dates
+    if (name === 'date_of_birth' && value) {
+      const sanitized = sanitizeDateString(value);
+      if (!sanitized) {
+        console.warn(`Invalid date format for ${name}: ${value}`);
+        return; // Don't update state with invalid format
+      }
+      
+      const validation = validateDateOfBirth(sanitized);
+      if (!validation.valid) {
+        console.warn(`Date validation failed for ${name}: ${validation.error}`);
+        return; // Don't update state with invalid date
+      }
+    }
+    
+    if (name === 'enrollment_date' && value) {
+      const sanitized = sanitizeDateString(value);
+      if (!sanitized) {
+        console.warn(`Invalid date format for ${name}: ${value}`);
+        return; // Don't update state with invalid format
+      }
+      
+      const validation = validateEnrollmentDate(sanitized);
+      if (!validation.valid) {
+        console.warn(`Date validation failed for ${name}: ${validation.error}`);
+        return; // Don't update state with invalid date
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -286,6 +325,24 @@ function EnrollmentForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Final validation before submission
+    if (formData.date_of_birth) {
+      const dobValidation = validateDateOfBirth(formData.date_of_birth);
+      if (!dobValidation.valid) {
+        alert(`Invalid date of birth: ${dobValidation.error}`);
+        return;
+      }
+    }
+    
+    if (formData.enrollment_date) {
+      const enrollValidation = validateEnrollmentDate(formData.enrollment_date);
+      if (!enrollValidation.valid) {
+        alert(`Invalid enrollment date: ${enrollValidation.error}`);
+        return;
+      }
+    }
+    
     setLoading(true);
 
     try {
@@ -510,6 +567,8 @@ function EnrollmentForm() {
                     name="date_of_birth"
                     value={formData.date_of_birth}
                     onChange={handleInputChange}
+                    min={getMinDateOfBirth()}
+                    max={getMaxDateOfBirth()}
                     required
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
                   />
@@ -672,6 +731,8 @@ function EnrollmentForm() {
                     name="enrollment_date"
                     value={formData.enrollment_date}
                     onChange={handleInputChange}
+                    min={getMinEnrollmentDate()}
+                    max={getMaxEnrollmentDate()}
                     required
                     className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
                   />
