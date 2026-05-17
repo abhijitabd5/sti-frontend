@@ -81,12 +81,12 @@ function DashboardIncomeVsExpenses() {
         
         let newChartData;
         
-        // Format period to proper date format for Chart.js time scale
+        // Format period to DD-MM-YYYY format for display
         const formatPeriodToDate = (period) => {
           // Handle both "2025-06" and "2025-01" formats
           if (period.includes('-')) {
             const [year, month] = period.split('-');
-            return `${month.padStart(2, '0')}-01-${year}`;
+            return `01-${month.padStart(2, '0')}-${year}`;
           }
           // Fallback for other formats
           return `01-01-${period}`;
