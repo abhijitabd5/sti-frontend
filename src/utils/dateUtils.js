@@ -75,3 +75,49 @@ export const getIndianTimezoneOffset = () => {
   
   return `${sign}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 };
+
+/**
+ * Format date from YYYY-MM-DD to DD-MM-YYYY for display
+ * @param {string} dateString - Date string in YYYY-MM-DD format
+ * @returns {string} Formatted date string in DD-MM-YYYY format
+ */
+export const formatDateToDDMMYYYY = (dateString) => {
+  if (!dateString) return '';
+  
+  // Handle YYYY-MM format (month input)
+  if (/^\d{4}-\d{2}$/.test(dateString)) {
+    const [year, month] = dateString.split('-');
+    return `${month}-${year}`;
+  }
+  
+  // Handle YYYY-MM-DD format (date input)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    const [year, month, day] = dateString.split('-');
+    return `${day}-${month}-${year}`;
+  }
+  
+  return dateString;
+};
+
+/**
+ * Format date from DD-MM-YYYY to YYYY-MM-DD for backend
+ * @param {string} dateString - Date string in DD-MM-YYYY format
+ * @returns {string} Formatted date string in YYYY-MM-DD format
+ */
+export const formatDateToYYYYMMDD = (dateString) => {
+  if (!dateString) return '';
+  
+  // Handle MM-YYYY format (month display)
+  if (/^\d{2}-\d{4}$/.test(dateString)) {
+    const [month, year] = dateString.split('-');
+    return `${year}-${month}`;
+  }
+  
+  // Handle DD-MM-YYYY format (date display)
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+    const [day, month, year] = dateString.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  
+  return dateString;
+};
