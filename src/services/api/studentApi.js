@@ -23,6 +23,17 @@ class StudentApi {
     }
   }
 
+  // Get enrollment details by enrollment ID
+  async getEnrollmentById(enrollmentId) {
+    try {
+      const response = await httpClient.get(`/internal/student/enrollments/${enrollmentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching enrollment details:', error);
+      throw error;
+    }
+  }
+
   // Check Aadhaar number
   async checkAadhaar(aadharNumber) {
     try {

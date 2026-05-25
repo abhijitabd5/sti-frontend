@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import BarChart from '@/components/charts/BarChart';
 import transactionApi from '@/services/api/transactionApi';
+import { MonthPicker } from '@/components/ui/Internal/MonthPicker';
+import { format, parse } from 'date-fns';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
@@ -21,11 +23,13 @@ function DashboardIncomeVsExpenses() {
       return true;
     }
 
-    const [fromYear, fromMonth] = from.split('-').map(Number);
-    const [toYear, toMonth] = to.split('-').map(Number);
+    // Parse dates from dd-MM-yyyy format
+    const fromDate = parse(from, 'dd-MM-yyyy', new Date());
+    const toDate = parse(to, 'dd-MM-yyyy', new Date());
     
     // Calculate difference in months
-    const monthsDiff = (toYear - fromYear) * 12 + (toMonth - fromMonth);
+    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + 
+                       (toDate.getMonth() - fromDate.getMonth());
     
     if (monthsDiff > 12) {
       setDateError('Date range cannot exceed 12 months');
@@ -39,16 +43,6 @@ function DashboardIncomeVsExpenses() {
     
     setDateError('');
     return true;
-  };
-
-  const handleDateFromChange = (value) => {
-    setDateFrom(value);
-    validateDateRange(value, dateTo);
-  };
-
-  const handleDateToChange = (value) => {
-    setDateTo(value);
-    validateDateRange(dateFrom, value);
   };
 
   useEffect(() => {
@@ -70,9 +64,13 @@ function DashboardIncomeVsExpenses() {
         period: selectedPeriod
       };
       
-      // Add date range if dates are provided
-      if (dateFrom) params.from = dateFrom;
-      if (dateTo) params.to = dateTo;
+      // Add date range if dates are provided - convert dd-MM-yyyy to yyyy-MM format
+      if (dateFrom && dateTo) {
+        const fromDate = parse(dateFrom, 'dd-MM-yyyy', new Date());
+        const toDate = parse(dateTo, 'dd-MM-yyyy', new Date());
+        params.from = format(fromDate, 'yyyy-MM');
+        params.to = format(toDate, 'yyyy-MM');
+      }
 
       const response = await transactionApi.getIncomeVsExpense(params);
 
@@ -147,25 +145,30 @@ function DashboardIncomeVsExpenses() {
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">Income vs Expenses vs Investment</h2>
           
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Date Range Inputs - Month Only */}
+            {/* Month Range - Two Separate Month Pickers */}
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
-              <input
-                type="month"
+              <MonthPicker
                 value={dateFrom}
-                onChange={(e) => handleDateFromChange(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => {
+                  setDateFrom(value);
+                  validateDateRange(value, dateTo);
+                }}
+                placeholder="Select month"
               />
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
-              <input
-                type="month"
+              <MonthPicker
                 value={dateTo}
-                onChange={(e) => handleDateToChange(e.target.value)}
-                min={dateFrom || undefined}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => {
+                  setDateTo(value);
+                  validateDateRange(dateFrom, value);
+                }}
+                placeholder="Select month"
+                disabled={!dateFrom}
+                minDate={dateFrom}
               />
             </div>
             

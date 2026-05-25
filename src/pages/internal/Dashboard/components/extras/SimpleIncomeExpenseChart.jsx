@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import transactionApi from '@/services/api/transactionApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 function SimpleIncomeExpenseChart() {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
@@ -92,21 +93,21 @@ function SimpleIncomeExpenseChart() {
           
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
-            <input
-              type="date"
+            <DatePicker
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              onChange={(date) => setStartDate(date)}
+              placeholder="Select date"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
-            <input
-              type="date"
+            <DatePicker
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              onChange={(date) => setEndDate(date)}
+              placeholder="Select date"
+              disabled={!startDate}
+              minDate={startDate}
             />
           </div>
           

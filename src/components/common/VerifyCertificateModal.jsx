@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { publicCertificateApi } from '@/services/api/publicCertificateApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
+import { format, parse, subYears } from 'date-fns';
 
 const VerifyCertificateModal = ({ isOpen, onClose }) => {
   const [certificateNumber, setCertificateNumber] = useState('');
@@ -12,16 +14,13 @@ const VerifyCertificateModal = ({ isOpen, onClose }) => {
 
   // Calculate max date (18 years ago from today)
   const getMaxDate = () => {
-    const today = new Date();
-    today.setFullYear(today.getFullYear() - 18);
-    return today.toISOString().split('T')[0];
+    return subYears(new Date(), 18);
   };
 
-  // Convert YYYY-MM-DD to DD-MM-YYYY format for backend
+  // Convert dd-MM-yyyy to DD-MM-YYYY format for backend (already in correct format)
   const formatDateForBackend = (dateString) => {
     if (!dateString) return null;
-    const [year, month, day] = dateString.split('-');
-    return `${day}-${month}-${year}`;
+    return dateString; // Already in dd-MM-yyyy format from DatePicker
   };
 
   const handleVerify = async (e) => {
@@ -188,17 +187,13 @@ const VerifyCertificateModal = ({ isOpen, onClose }) => {
 
                 {/* Date of Birth */}
                 <div>
-                  <label htmlFor="dateOfBirth" className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Date of Birth
-                  </label>
-                  <input
-                    type="date"
-                    id="dateOfBirth"
+                  <DatePicker
+                    label="Date of Birth"
                     value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    min="1900-01-01"
-                    max={getMaxDate()}
-                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                    onChange={setDateOfBirth}
+                    maxDate={getMaxDate()}
+                    minDate={new Date('1900-01-01')}
+                    placeholder="Select date of birth"
                     disabled={loading}
                   />
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">

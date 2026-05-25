@@ -7,6 +7,7 @@ import AadhaarCheckModal from './components/AadhaarCheckModal';
 import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Icons
 import { 
@@ -330,27 +331,24 @@ function StudentList() {
               />
             </div>
 
-            {/* Date From */}
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Created From:</label>
-              <input
-                type="date"
+            {/* Date Range Filter */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+              <DatePicker
                 value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
-                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
-                title="Filter students created from this date"
+                onChange={(date) => setFilters(prev => ({ ...prev, dateFrom: date }))}
+                placeholder="Select date"
               />
             </div>
 
-            {/* Date To */}
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">To:</label>
-              <input
-                type="date"
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+              <DatePicker
                 value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
-                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
-                title="Filter students created up to this date (optional - defaults to today)"
+                onChange={(date) => setFilters(prev => ({ ...prev, dateTo: date }))}
+                placeholder="Select date"
+                disabled={!filters.dateFrom}
+                minDate={filters.dateFrom}
               />
             </div>
 
