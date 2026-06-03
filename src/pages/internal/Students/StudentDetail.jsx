@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import { getStateDisplayName } from '@/config/constants';
+import PaymentHistory from './components/PaymentHistory';
+import PaymentModal from './components/PaymentModal';
 
 // Icons
 import { 
@@ -28,8 +30,12 @@ function StudentDetail() {
   const navigate = useNavigate();
   const [student, setStudent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [paymentHistory, setPaymentHistory] = useState([]);
+  const [paymentData, setPaymentData] = useState(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState(null);
+  const [paymentModalLoading, setPaymentModalLoading] = useState(false);
 
   useEffect(() => {
     loadStudentDetails();
@@ -44,7 +50,9 @@ function StudentDetail() {
         setStudent(response.data);
         // Load payment history for the first enrollment if exists
         if (response.data.enrollments && response.data.enrollments.length > 0) {
-          loadPaymentHistory(studentId, response.data.enrollments[0].id);
+          const enrollmentId = response.data.enrollments[0].id;
+          setSelectedEnrollmentId(enrollmentId);
+          loadPaymentHistory(enrollmentId);
         }
       }
     } catch (error) {
@@ -54,18 +62,70 @@ function StudentDetail() {
     }
   };
 
-  const loadPaymentHistory = async (studentId, enrollmentId) => {
+  const loadPaymentHistory = async (enrollmentId) => {
     try {
       setPaymentLoading(true);
-      const response = await studentApi.getPaymentHistory(studentId, enrollmentId);
+      const response = await studentApi.getEnrollmentPayments(enrollmentId);
       
       if (response.success) {
-        setPaymentHistory(response.data);
+        setPaymentData(response.data);
       }
     } catch (error) {
       console.error('Error loading payment history:', error);
     } finally {
       setPaymentLoading(false);
+    }
+  };
+
+  const handleAddPayment = () => {
+    setSelectedPayment(null);
+    setShowPaymentModal(true);
+  };
+
+  const handleEditPayment = (payment) => {
+    setSelectedPayment(payment);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentFormData) => {
+    try {
+      setPaymentModalLoading(true);
+      
+      if (selectedPayment) {
+        // Update existing payment
+        const response = await studentApi.updatePayment(selectedPayment.id, paymentFormData);
+        if (response.success) {
+          setShowPaymentModal(false);
+          loadPaymentHistory(selectedEnrollmentId);
+          loadStudentDetails(); // Reload to update enrollment totals
+        }
+      } else {
+        // Create new payment
+        const response = await studentApi.createPayment(selectedEnrollmentId, paymentFormData);
+        if (response.success) {
+          setShowPaymentModal(false);
+          loadPaymentHistory(selectedEnrollmentId);
+          loadStudentDetails(); // Reload to update enrollment totals
+        }
+      }
+    } catch (error) {
+      console.error('Error saving payment:', error);
+      alert(error.response?.data?.message || 'Failed to save payment');
+    } finally {
+      setPaymentModalLoading(false);
+    }
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    try {
+      const response = await studentApi.deletePayment(paymentId);
+      if (response.success) {
+        loadPaymentHistory(selectedEnrollmentId);
+        loadStudentDetails(); // Reload to update enrollment totals
+      }
+    } catch (error) {
+      console.error('Error deleting payment:', error);
+      alert(error.response?.data?.message || 'Failed to delete payment');
     }
   };
 
@@ -413,71 +473,28 @@ function StudentDetail() {
             </div>
 
             {/* Payment History */}
-            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-                <div className="flex items-center space-x-3">
-                  <CurrencyDollarIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">Payment History</h3>
-                </div>
-              </div>
-              
-              <div className="p-6">
-                {paymentLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-violet-500"></div>
-                  </div>
-                ) : paymentHistory.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 dark:bg-gray-700/50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Date
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Amount
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Method
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Type
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Remaining Due
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700/60">
-                        {paymentHistory.map((payment) => (
-                          <tr key={payment.id}>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                              {formatDate(payment.payment_date)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-green-600 dark:text-green-400">
-                              {formatCurrency(payment.amount)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 capitalize">
-                              {payment.payment_method?.replace('_', ' ')}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 capitalize">
-                              {payment.type?.replace('_', ' ')}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-red-600 dark:text-red-400">
-                              {formatCurrency(payment.remaining_due_amount)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No payment history available</p>
-                )}
-              </div>
-            </div>
+            <PaymentHistory
+              paymentData={paymentData}
+              onAddPayment={handleAddPayment}
+              onEditPayment={handleEditPayment}
+              onDeletePayment={handleDeletePayment}
+              loading={paymentLoading}
+            />
           </div>
         </div>
+
+        {/* Payment Modal */}
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedPayment(null);
+          }}
+          onSubmit={handlePaymentSubmit}
+          payment={selectedPayment}
+          enrollmentInfo={paymentData?.enrollment}
+          loading={paymentModalLoading}
+        />
       </div>
     </AdminLayout>
   );

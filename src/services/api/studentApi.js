@@ -23,6 +23,17 @@ class StudentApi {
     }
   }
 
+  // Get enrollment details by enrollment ID
+  async getEnrollmentById(enrollmentId) {
+    try {
+      const response = await httpClient.get(`/internal/student/enrollments/${enrollmentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching enrollment details:', error);
+      throw error;
+    }
+  }
+
   // Check Aadhaar number
   async checkAadhaar(aadharNumber) {
     try {
@@ -98,12 +109,67 @@ class StudentApi {
   }
 
   // Get payment history
-  async getPaymentHistory(studentId, enrollmentId) {
+  async getPaymentHistory(enrollmentId) {
     try {
-      const response = await httpClient.get(`/internal/student/${studentId}/${enrollmentId}/payments`);
+      const response = await httpClient.get(`/internal/student/enrollments/${enrollmentId}/payments`);
       return response.data;
     } catch (error) {
       console.error('Error fetching payment history:', error);
+      throw error;
+    }
+  }
+
+  // Create enrollment payment
+  async createPayment(enrollmentId, paymentData) {
+    try {
+      const response = await httpClient.post(`/internal/enrollments/${enrollmentId}/payments`, paymentData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      throw error;
+    }
+  }
+
+  // Get enrollment payments
+  async getEnrollmentPayments(enrollmentId) {
+    try {
+      const response = await httpClient.get(`/internal/enrollments/${enrollmentId}/payments`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching enrollment payments:', error);
+      throw error;
+    }
+  }
+
+  // Get payment by ID
+  async getPaymentById(paymentId) {
+    try {
+      const response = await httpClient.get(`/internal/payments/${paymentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching payment:', error);
+      throw error;
+    }
+  }
+
+  // Update payment
+  async updatePayment(paymentId, paymentData) {
+    try {
+      const response = await httpClient.put(`/internal/payments/${paymentId}`, paymentData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      throw error;
+    }
+  }
+
+  // Delete payment
+  async deletePayment(paymentId) {
+    try {
+      const response = await httpClient.delete(`/internal/payments/${paymentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting payment:', error);
       throw error;
     }
   }

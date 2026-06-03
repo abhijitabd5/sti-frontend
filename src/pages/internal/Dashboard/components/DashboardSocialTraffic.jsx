@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { format, addDays } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { SOURCES } from '@/config/constants';
-import DatePickerWithRange from '@/components/ui/Internal/DatePicker/Datepicker';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 import dashboardApi from '@/services/api/dashboardApi';
 
 // Source icons mapping
@@ -62,10 +62,8 @@ const getSourceIcon = (source) => {
 };
 
 function DashboardSocialTraffic() {
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 10, 1), // November 1, 2025
-    to: addDays(new Date(2025, 10, 1), 14), // November 15, 2025
-  });
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -115,7 +113,7 @@ function DashboardSocialTraffic() {
 
   useEffect(() => {
     fetchData();
-  }, [dateRange]);
+  }, [dateFrom, dateTo]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -123,10 +121,12 @@ function DashboardSocialTraffic() {
       // Fetch data for all periods with custom date range
       const params = {};
       
-      // Add custom date range if both dates are selected
-      if (dateRange.from && dateRange.to) {
-        params.customFrom = format(dateRange.from, 'yyyy-MM-dd');
-        params.customTo = format(dateRange.to, 'yyyy-MM-dd');
+      // Add custom date range if both dates are selected - convert dd-MM-yyyy to yyyy-MM-dd
+      if (dateFrom && dateTo) {
+        const fromDate = parse(dateFrom, 'dd-MM-yyyy', new Date());
+        const toDate = parse(dateTo, 'dd-MM-yyyy', new Date());
+        params.customFrom = format(fromDate, 'yyyy-MM-dd');
+        params.customTo = format(toDate, 'yyyy-MM-dd');
       }
 
       const response = await dashboardApi.getSourceAnalytics(params);
@@ -182,11 +182,25 @@ function DashboardSocialTraffic() {
           {/* Date Range Picker for Custom Column */}
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 dark:text-gray-400">Custom Range:</span>
-            <DatePickerWithRange 
-              className="min-w-[280px]"
-              date={dateRange}
-              setDate={setDateRange}
-            />
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+              <DatePicker
+                value={dateFrom}
+                onChange={(value) => setDateFrom(value)}
+                placeholder="Select date"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+              <DatePicker
+                value={dateTo}
+                onChange={(value) => setDateTo(value)}
+                placeholder="Select date"
+                disabled={!dateFrom}
+                minDate={dateFrom}
+              />
+            </div>
           </div>
         </div>
       </header>

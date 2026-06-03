@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import promotionPartnerApi from '@/services/api/promotionPartnerApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Icons
 import { EyeIcon, PencilIcon, TrashIcon, PlusIcon, MagnifyingGlassIcon, ClipboardIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
@@ -145,8 +146,27 @@ function Partners() {
               <option value="suspended">Suspended</option>
               <option value="draft">Draft</option>
             </select>
-            <input type="date" value={dateFrom} onChange={(e)=>setDateFrom(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
-            <input type="date" value={dateTo} onChange={(e)=>setDateTo(e.target.value)} className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm" />
+            
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+              <DatePicker
+                value={dateFrom}
+                onChange={(date) => setDateFrom(date)}
+                placeholder="Select date"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+              <DatePicker
+                value={dateTo}
+                onChange={(date) => setDateTo(date)}
+                placeholder="Select date"
+                disabled={!dateFrom}
+                minDate={dateFrom}
+              />
+            </div>
+            
             <button onClick={() => fetchList(1)} className="btn bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700">Apply</button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import StudentDoughnutChart from '@/components/charts/StudentDoughnutChart';
 import StudentBarChart from '@/components/charts/StudentBarChart';
 import dashboardApi from '@/services/api/dashboardApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
@@ -394,22 +395,21 @@ function DashboardStudentsPerState() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
-              <input
-                type="date"
+              <DatePicker
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => setDateFrom(value)}
+                placeholder="Select date"
               />
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
-              <input
-                type="date"
+              <DatePicker
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                min={dateFrom || undefined}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => setDateTo(value)}
+                placeholder="Select date"
+                disabled={!dateFrom}
+                minDate={dateFrom}
               />
             </div>
             

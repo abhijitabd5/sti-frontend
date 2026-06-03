@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import DoughnutChart from '@/components/charts/DoughnutChart';
 import transactionApi from '@/services/api/transactionApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
@@ -122,25 +123,23 @@ function DashboardIncomeExpensesByCategory() {
           <div className="flex flex-wrap items-center gap-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">Date Range:</span>
             
-            {/* Start Date */}
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
-              <input
-                type="date"
+              <DatePicker
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => setStartDate(value)}
+                placeholder="Select date"
               />
             </div>
             
-            {/* End Date */}
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
-              <input
-                type="date"
+              <DatePicker
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => setEndDate(value)}
+                placeholder="Select date"
+                disabled={!startDate}
+                minDate={startDate}
               />
             </div>
             

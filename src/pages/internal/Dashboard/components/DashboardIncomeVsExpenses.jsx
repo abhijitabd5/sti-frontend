@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import BarChart from '@/components/charts/BarChart';
 import transactionApi from '@/services/api/transactionApi';
+import { MonthPicker } from '@/components/ui/Internal/MonthPicker';
+import { format, parse } from 'date-fns';
 
 // Import utilities
 import { getCSSVariable } from '@/utils/domUtils';
@@ -21,11 +23,13 @@ function DashboardIncomeVsExpenses() {
       return true;
     }
 
-    const [fromYear, fromMonth] = from.split('-').map(Number);
-    const [toYear, toMonth] = to.split('-').map(Number);
+    // Parse dates from dd-MM-yyyy format
+    const fromDate = parse(from, 'dd-MM-yyyy', new Date());
+    const toDate = parse(to, 'dd-MM-yyyy', new Date());
     
     // Calculate difference in months
-    const monthsDiff = (toYear - fromYear) * 12 + (toMonth - fromMonth);
+    const monthsDiff = (toDate.getFullYear() - fromDate.getFullYear()) * 12 + 
+                       (toDate.getMonth() - fromDate.getMonth());
     
     if (monthsDiff > 12) {
       setDateError('Date range cannot exceed 12 months');
@@ -39,16 +43,6 @@ function DashboardIncomeVsExpenses() {
     
     setDateError('');
     return true;
-  };
-
-  const handleDateFromChange = (value) => {
-    setDateFrom(value);
-    validateDateRange(value, dateTo);
-  };
-
-  const handleDateToChange = (value) => {
-    setDateTo(value);
-    validateDateRange(dateFrom, value);
   };
 
   useEffect(() => {
@@ -66,13 +60,24 @@ function DashboardIncomeVsExpenses() {
     
     setLoading(true);
     try {
-      const params = {
-        period: selectedPeriod
-      };
+      const params = {};
       
-      // Add date range if dates are provided
-      if (dateFrom) params.from = dateFrom;
-      if (dateTo) params.to = dateTo;
+      // If custom date range is provided, use that (takes priority over period)
+      if (dateFrom && dateTo) {
+        const fromDate = parse(dateFrom, 'dd-MM-yyyy', new Date());
+        const toDate = parse(dateTo, 'dd-MM-yyyy', new Date());
+        
+        // For 'from': use the first day of the month (already is)
+        // For 'to': use the last day of the month to include the entire month
+        const toDateEndOfMonth = new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0);
+        
+        // Send dates in YYYY-MM-DD format
+        params.from = format(fromDate, 'yyyy-MM-dd');
+        params.to = format(toDateEndOfMonth, 'yyyy-MM-dd');
+      } else {
+        // Otherwise, use the selected period (month or year)
+        params.period = selectedPeriod;
+      }
 
       const response = await transactionApi.getIncomeVsExpense(params);
 
@@ -81,12 +86,14 @@ function DashboardIncomeVsExpenses() {
         
         let newChartData;
         
-        // Format period to DD-MM-YYYY format for display
+        // Format period to MM-DD-YYYY format for Chart.js time scale
+        // This ensures each month is displayed as the 1st day of that month
         const formatPeriodToDate = (period) => {
-          // Handle both "2025-06" and "2025-01" formats
+          // Parse "2026-01" format to "01-01-2026" (MM-DD-YYYY)
           if (period.includes('-')) {
             const [year, month] = period.split('-');
-            return `01-${month.padStart(2, '0')}-${year}`;
+            // MM-DD-YYYY format: month-day-year
+            return `${month.padStart(2, '0')}-01-${year}`;
           }
           // Fallback for other formats
           return `01-01-${period}`;
@@ -125,6 +132,12 @@ function DashboardIncomeVsExpenses() {
           ],
         };
         
+        console.log('=== Formatted Chart Data ===');
+        console.log('Labels:', newChartData.labels);
+        console.log('Income data:', newChartData.datasets[0].data);
+        console.log('Expenses data:', newChartData.datasets[1].data);
+        console.log('Investment data:', newChartData.datasets[2].data);
+        
         setChartData(newChartData);
       } else {
         // No data available
@@ -147,25 +160,30 @@ function DashboardIncomeVsExpenses() {
           <h2 className="font-semibold text-gray-800 dark:text-gray-100">Income vs Expenses vs Investment</h2>
           
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Date Range Inputs - Month Only */}
+            {/* Month Range - Two Separate Month Pickers */}
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
-              <input
-                type="month"
+              <MonthPicker
                 value={dateFrom}
-                onChange={(e) => handleDateFromChange(e.target.value)}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => {
+                  setDateFrom(value);
+                  validateDateRange(value, dateTo);
+                }}
+                placeholder="Select month"
               />
             </div>
             
             <div className="flex items-center gap-2">
               <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
-              <input
-                type="month"
+              <MonthPicker
                 value={dateTo}
-                onChange={(e) => handleDateToChange(e.target.value)}
-                min={dateFrom || undefined}
-                className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-1 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                onChange={(value) => {
+                  setDateTo(value);
+                  validateDateRange(dateFrom, value);
+                }}
+                placeholder="Select month"
+                disabled={!dateFrom}
+                minDate={dateFrom}
               />
             </div>
             

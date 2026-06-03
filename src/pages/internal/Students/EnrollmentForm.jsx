@@ -3,16 +3,23 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import ProgressModal from './components/ProgressModal';
+import PaymentModal from './components/PaymentModal';
 import { INDIAN_STATES, getStateDisplayName } from '@/config/constants';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
+import { format, parse } from 'date-fns';
 import { 
-  validateDateOfBirth, 
   validateEnrollmentDate,
   sanitizeDateString,
-  getMinDateOfBirth,
-  getMaxDateOfBirth,
   getMinEnrollmentDate,
   getMaxEnrollmentDate
 } from '@/utils/dateValidation';
+import {
+  validateMobile,
+  validateDateOfBirth,
+  getMinDateOfBirth,
+  getMaxDateOfBirth,
+  sanitizeMobileInput
+} from '@/utils/studentValidation';
 
 // Icons
 import { 
@@ -22,19 +29,34 @@ import {
   CurrencyDollarIcon,
   BuildingOfficeIcon,
   DocumentTextIcon,
-  CalendarIcon
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 
 function EnrollmentForm() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isExisting, studentData, aadharNumber } = location.state || {};
+  
+  // Get enrollmentId from URL params for edit mode
+  const urlParams = new URLSearchParams(location.search);
+  const enrollmentIdFromUrl = location.pathname.split('/').pop();
+  const isEditMode = location.pathname.includes('/edit/');
+  const enrollmentId = isEditMode ? enrollmentIdFromUrl : null;
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [coursesLoading, setCoursesLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(isEditMode);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalLoading, setPaymentModalLoading] = useState(false);
   const [documentRows, setDocumentRows] = useState([{ id: 1, type: '', file: null }]);
+  const [validationErrors, setValidationErrors] = useState({
+    mobile: '',
+    date_of_birth: ''
+  });
+  const [studentId, setStudentId] = useState(null);
+  const [enrollmentData, setEnrollmentData] = useState(null);
 
   // Available document types
   const documentTypes = [
@@ -49,7 +71,10 @@ function EnrollmentForm() {
   const [formData, setFormData] = useState({
     // Student Info (readonly if existing)
     aadhar_number: aadharNumber || '',
+    pan_number: '',
     student_code: studentData?.student_code || '',
+    first_name: '',
+    last_name: '',
     name_on_id: studentData?.name || '',
     father_name: studentData?.father_name || '',
     mother_name: studentData?.mother_name || '',
@@ -65,6 +90,7 @@ function EnrollmentForm() {
     // Course Selection
     course_id: '',
     enrollment_date: new Date().toISOString().split('T')[0],
+    completion_date: '',
     status: 'not_started',
 
     // Accommodation
@@ -106,6 +132,75 @@ function EnrollmentForm() {
   useEffect(() => {
     loadCourses();
   }, []);
+
+  // Load enrollment data in edit mode
+  useEffect(() => {
+    if (isEditMode && enrollmentId) {
+      loadEnrollmentData(enrollmentId);
+    }
+  }, [isEditMode, enrollmentId]);
+
+  const loadEnrollmentData = async (enrollmentId) => {
+    try {
+      setDataLoading(true);
+      const response = await studentApi.getEnrollmentById(enrollmentId);
+      
+      if (response.success && response.data) {
+        const enrollmentData = response.data;
+        const studentInfo = enrollmentData.student;
+        const userInfo = studentInfo?.user;
+        
+        // Store student ID for later use
+        if (studentInfo && studentInfo.id) {
+          setStudentId(studentInfo.id);
+        }
+        
+        setEnrollmentData(enrollmentData);
+        
+        // Populate form with student and enrollment data
+        setFormData(prev => ({
+          ...prev,
+          // Student Info
+          aadhar_number: studentInfo?.aadhar_number || '',
+          pan_number: studentInfo?.pan_number || '',
+          student_code: studentInfo?.student_code || '',
+          first_name: userInfo?.first_name || '',
+          last_name: userInfo?.last_name || '',
+          name_on_id: studentInfo?.name_on_id || '',
+          father_name: studentInfo?.father_name || '',
+          mother_name: studentInfo?.mother_name || '',
+          date_of_birth: studentInfo?.date_of_birth || '',
+          gender: studentInfo?.gender || 'Male',
+          address: studentInfo?.address || '',
+          state: studentInfo?.state_slug || '',
+          city: studentInfo?.city || '',
+          pincode: studentInfo?.pincode || '',
+          mobile: userInfo?.mobile || '',
+          email: userInfo?.email || '',
+          
+          // Enrollment Info
+          course_id: enrollmentData?.course_id || '',
+          enrollment_date: enrollmentData?.enrollment_date || new Date().toISOString().split('T')[0],
+          completion_date: enrollmentData?.completion_date || '',
+          status: enrollmentData?.status || 'not_started',
+          is_hostel_opted: Boolean(enrollmentData?.is_hostel_opted),
+          is_mess_opted: Boolean(enrollmentData?.is_mess_opted),
+          extra_discount_amount: parseFloat(enrollmentData?.extra_discount_amount) || 0,
+          paid_amount: 0, // For additional payment in edit mode
+          payment_method: 'cash',
+          remark: enrollmentData?.remark || ''
+        }));
+      } else {
+        throw new Error(response.message || 'Failed to load enrollment data');
+      }
+    } catch (error) {
+      console.error('Error loading enrollment data:', error);
+      alert('Failed to load enrollment data. Please try again.');
+      navigate('/admin/students');
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   // Update fee calculations when relevant fields change
   useEffect(() => {
@@ -242,6 +337,32 @@ function EnrollmentForm() {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     
+    // Handle mobile number validation and sanitization
+    if (name === 'mobile') {
+      const sanitized = sanitizeMobileInput(value);
+      
+      // Update form data with sanitized value
+      setFormData(prev => ({
+        ...prev,
+        [name]: sanitized
+      }));
+      
+      // Validate mobile number
+      if (sanitized) {
+        const validation = validateMobile(sanitized);
+        setValidationErrors(prev => ({
+          ...prev,
+          mobile: validation.valid ? '' : validation.error
+        }));
+      } else {
+        setValidationErrors(prev => ({
+          ...prev,
+          mobile: ''
+        }));
+      }
+      return;
+    }
+    
     // Validate and sanitize date fields to prevent malformed dates
     if (name === 'date_of_birth' && value) {
       const sanitized = sanitizeDateString(value);
@@ -252,9 +373,22 @@ function EnrollmentForm() {
       
       const validation = validateDateOfBirth(sanitized);
       if (!validation.valid) {
-        console.warn(`Date validation failed for ${name}: ${validation.error}`);
-        return; // Don't update state with invalid date
+        setValidationErrors(prev => ({
+          ...prev,
+          date_of_birth: validation.error
+        }));
+      } else {
+        setValidationErrors(prev => ({
+          ...prev,
+          date_of_birth: ''
+        }));
       }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: sanitized
+      }));
+      return;
     }
     
     if (name === 'enrollment_date' && value) {
@@ -326,11 +460,26 @@ function EnrollmentForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate mobile number
+    const mobileValidation = validateMobile(formData.mobile);
+    if (!mobileValidation.valid) {
+      setValidationErrors(prev => ({
+        ...prev,
+        mobile: mobileValidation.error
+      }));
+      alert(`Mobile number validation failed: ${mobileValidation.error}`);
+      return;
+    }
+    
     // Final validation before submission
     if (formData.date_of_birth) {
       const dobValidation = validateDateOfBirth(formData.date_of_birth);
       if (!dobValidation.valid) {
-        alert(`Invalid date of birth: ${dobValidation.error}`);
+        setValidationErrors(prev => ({
+          ...prev,
+          date_of_birth: dobValidation.error
+        }));
+        alert(`Date of birth validation failed: ${dobValidation.error}`);
         return;
       }
     }
@@ -346,66 +495,203 @@ function EnrollmentForm() {
     setLoading(true);
 
     try {
-      // Get state name from the selected state slug
-      const stateName = getStateDisplayName(formData.state);
-      
-      // Prepare enrollment data
-      const enrollmentData = {
-        ...formData,
-        state_slug: formData.state, // Send state slug
-        state_name: stateName, // Send state name
-        extra_discount_amount: parseFloat(formData.extra_discount_amount) || 0,
-        paid_amount: parseFloat(formData.paid_amount) || 0,
-        course_id: parseInt(formData.course_id)
-      };
-      
-      // Remove the original state field to avoid confusion
-      delete enrollmentData.state;
-
-      // Create enrollment
-      const response = await studentApi.createEnrollment(enrollmentData);
-
-      if (response.success) {
-        const { student_id } = response.data;
-
-        // Show progress modal
-        setShowProgressModal(true);
-
-        // If documents are selected, upload them
-        const documentsToUpload = documentRows.filter(row => row.file && row.type);
-        let documentUploadSuccess = true;
-        
-        if (documentsToUpload.length > 0) {
-          try {
-            await uploadDocuments(student_id, documentsToUpload);
-          } catch (error) {
-            console.error('Document upload error:', error);
-            documentUploadSuccess = false;
-          }
-        }
-
-        // Navigate to student list after delay
-        setTimeout(() => {
-          setShowProgressModal(false);
-          navigate('/admin/students', { 
-            state: { 
-              message: documentUploadSuccess 
-                ? 'Student enrolled successfully!' 
-                : 'Student enrolled successfully! Note: Some documents may not have been uploaded.',
-              studentId: student_id
-            },
-            replace: true // Replace history to prevent back button issues
-          });
-        }, 2000);
+      if (isEditMode && enrollmentId) {
+        // Update existing enrollment
+        await handleUpdateEnrollment();
       } else {
-        // Handle API error response
-        throw new Error(response.message || 'Failed to create enrollment');
+        // Create new enrollment
+        await handleCreateEnrollment();
       }
     } catch (error) {
-      console.error('Error creating enrollment:', error);
-      alert(error.message || 'Failed to enroll student. Please try again.');
+      console.error('Error submitting form:', error);
+      alert(error.message || 'Failed to save enrollment. Please try again.');
       setLoading(false);
       setShowProgressModal(false);
+    }
+  };
+
+  const handleCreateEnrollment = async () => {
+    // Get state name from the selected state slug
+    const stateName = getStateDisplayName(formData.state);
+    
+    // Prepare enrollment data
+    const enrollmentData = {
+      ...formData,
+      state_slug: formData.state, // Send state slug
+      state_name: stateName, // Send state name
+      extra_discount_amount: parseFloat(formData.extra_discount_amount) || 0,
+      paid_amount: parseFloat(formData.paid_amount) || 0,
+      course_id: parseInt(formData.course_id)
+    };
+    
+    // Remove the original state field to avoid confusion
+    delete enrollmentData.state;
+
+    // Create enrollment
+    const response = await studentApi.createEnrollment(enrollmentData);
+
+    if (response.success) {
+      const { student_id } = response.data;
+
+      // Show progress modal
+      setShowProgressModal(true);
+
+      // If documents are selected, upload them
+      const documentsToUpload = documentRows.filter(row => row.file && row.type);
+      let documentUploadSuccess = true;
+      
+      if (documentsToUpload.length > 0) {
+        try {
+          await uploadDocuments(student_id, documentsToUpload);
+        } catch (error) {
+          console.error('Document upload error:', error);
+          documentUploadSuccess = false;
+        }
+      }
+
+      // Navigate to student list after delay
+      setTimeout(() => {
+        setShowProgressModal(false);
+        navigate('/admin/students', { 
+          state: { 
+            message: documentUploadSuccess 
+              ? 'Student enrolled successfully!' 
+              : 'Student enrolled successfully! Note: Some documents may not have been uploaded.',
+            studentId: student_id
+          },
+          replace: true // Replace history to prevent back button issues
+        });
+      }, 2000);
+    } else {
+      // Handle API error response
+      throw new Error(response.message || 'Failed to create enrollment');
+    }
+  };
+
+  const handleUpdateEnrollment = async () => {
+    // Get state name from the selected state slug
+    const stateName = getStateDisplayName(formData.state);
+    
+    // Prepare update data with ONLY API-allowed fields
+    const updateData = {};
+
+    // Enrollment fields (optional)
+    if (formData.status) {
+      updateData.status = formData.status;
+    }
+    if (formData.enrollment_date) {
+      updateData.enrollment_date = formData.enrollment_date;
+    }
+    if (formData.completion_date) {
+      updateData.completion_date = formData.completion_date;
+    }
+    if (formData.remark) {
+      updateData.remark = formData.remark;
+    }
+
+    // Payment fields (optional - ADDITIVE)
+    if (parseFloat(formData.paid_amount) > 0) {
+      updateData.paid_amount = parseFloat(formData.paid_amount);
+      updateData.payment_method = formData.payment_method; // Required if paid_amount is provided
+    }
+
+    // User fields (optional - updates users table)
+    if (formData.first_name) {
+      updateData.first_name = formData.first_name;
+    }
+    if (formData.last_name) {
+      updateData.last_name = formData.last_name;
+    }
+    if (formData.mobile) {
+      updateData.mobile = formData.mobile;
+    }
+    if (formData.email) {
+      updateData.email = formData.email;
+    }
+
+    // Student profile fields (optional - updates students table)
+    if (formData.name_on_id) {
+      updateData.name_on_id = formData.name_on_id;
+    }
+    if (formData.father_name) {
+      updateData.father_name = formData.father_name;
+    }
+    if (formData.mother_name) {
+      updateData.mother_name = formData.mother_name;
+    }
+    if (formData.date_of_birth) {
+      updateData.date_of_birth = formData.date_of_birth;
+    }
+    if (formData.gender) {
+      updateData.gender = formData.gender;
+    }
+    if (formData.address) {
+      updateData.address = formData.address;
+    }
+    if (formData.state) {
+      updateData.state_slug = formData.state;
+      updateData.state_name = stateName;
+    }
+    if (formData.city) {
+      updateData.city = formData.city;
+    }
+    if (formData.pincode) {
+      updateData.pincode = formData.pincode;
+    }
+    if (formData.aadhar_number) {
+      updateData.aadhar_number = formData.aadhar_number;
+    }
+    if (formData.pan_number) {
+      updateData.pan_number = formData.pan_number;
+    }
+
+    console.log('Sending update data:', updateData);
+
+    // Update enrollment
+    const response = await studentApi.updateEnrollment(enrollmentId, updateData);
+
+    if (response.success) {
+      // Show progress modal briefly
+      setShowProgressModal(true);
+
+      // Navigate to student detail page after delay
+      setTimeout(() => {
+        setShowProgressModal(false);
+        navigate(`/admin/students/${studentId}`, { 
+          state: { 
+            message: 'Enrollment updated successfully!'
+          },
+          replace: true
+        });
+      }, 1500);
+    } else {
+      // Handle API error response
+      throw new Error(response.message || 'Failed to update enrollment');
+    }
+  };
+
+  const handleAddPayment = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentFormData) => {
+    try {
+      setPaymentModalLoading(true);
+      
+      // Create payment via enrollment update endpoint
+      const response = await studentApi.createPayment(enrollmentId, paymentFormData);
+      
+      if (response.success) {
+        setShowPaymentModal(false);
+        // Reload enrollment data to get updated totals
+        loadEnrollmentData(enrollmentId);
+        alert('Payment added successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      alert(error.response?.data?.message || 'Failed to add payment');
+    } finally {
+      setPaymentModalLoading(false);
     }
   };
 
@@ -435,7 +721,7 @@ function EnrollmentForm() {
     }
   };
 
-  if (coursesLoading) {
+  if (coursesLoading || dataLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -448,13 +734,37 @@ function EnrollmentForm() {
   return (
     <AdminLayout>
       <div className="max-w-4xl mx-auto" style={{ minHeight: '100vh' }}>
+        {/* Header with Back Button */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-            {isExisting ? 'Enroll Existing Student' : 'Enroll New Student'}
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Fill in the student information and course details for enrollment
-          </p>
+          <div className="flex items-center space-x-4 mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                if (isEditMode && studentId) {
+                  // If in edit mode, go back to student detail page
+                  navigate(`/admin/students/${studentId}`);
+                } else {
+                  // Otherwise go to students list
+                  navigate('/admin/students');
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Go back"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
+                {isEditMode ? 'Edit Student Enrollment' : (isExisting ? 'Enroll Existing Student' : 'Enroll New Student')}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {isEditMode 
+                  ? 'Update enrollment information and add additional payments' 
+                  : 'Fill in the student information and course details for enrollment'
+                }
+              </p>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -477,8 +787,25 @@ function EnrollmentForm() {
                     type="text"
                     name="aadhar_number"
                     value={formData.aadhar_number}
-                    readOnly
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    onChange={handleInputChange}
+                    readOnly={!isEditMode}
+                    maxLength="12"
+                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 ${!isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700 focus:outline-none focus:ring-violet-500 focus:border-violet-500'}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    PAN Number
+                  </label>
+                  <input
+                    type="text"
+                    name="pan_number"
+                    value={formData.pan_number}
+                    onChange={handleInputChange}
+                    maxLength="10"
+                    placeholder="ABCDE1234F"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -499,18 +826,41 @@ function EnrollmentForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name (as on ID) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="name_on_id"
                     value={formData.name_on_id}
                     onChange={handleInputChange}
-                    readOnly={isExisting}
                     required
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isExisting ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -523,12 +873,26 @@ function EnrollmentForm() {
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleInputChange}
-                    readOnly={isExisting}
                     required
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isExisting ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    maxLength="10"
+                    placeholder="Enter 10 digit mobile number"
+                    className={`block w-full px-3 py-2 border ${
+                      validationErrors.mobile 
+                        ? 'border-red-500 dark:border-red-500' 
+                        : 'border-gray-300 dark:border-gray-600'
+                    } rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700`}
                   />
+                  />
+                  {validationErrors.mobile && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {validationErrors.mobile}
+                    </p>
+                  )}
+                  {!validationErrors.mobile && formData.mobile && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Must be 10 digits starting with 6, 7, 8, or 9
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -541,7 +905,7 @@ function EnrollmentForm() {
                     value={formData.father_name}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -554,24 +918,29 @@ function EnrollmentForm() {
                     name="mother_name"
                     value={formData.mother_name}
                     onChange={handleInputChange}
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Date of Birth <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="date_of_birth"
-                    value={formData.date_of_birth}
-                    onChange={handleInputChange}
-                    min={getMinDateOfBirth()}
-                    max={getMaxDateOfBirth()}
-                    required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                  <DatePicker
+                    label={<>Date of Birth <span className="text-red-500">*</span></>}
+                    value={formData.date_of_birth ? format(parse(formData.date_of_birth, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
+                    onChange={(date) => {
+                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
+                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
+                      handleInputChange({ target: { name: 'date_of_birth', value: convertedDate } });
+                    }}
+                    maxDate={getMaxDateOfBirth()}
+                    minDate={getMinDateOfBirth()}
+                    error={validationErrors.date_of_birth}
+                    disabled={isExisting}
                   />
+                  {!validationErrors.date_of_birth && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Student must be at least 15 years old
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -615,7 +984,7 @@ function EnrollmentForm() {
                   onChange={handleInputChange}
                   required
                   rows="3"
-                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                 />
               </div>
 
@@ -629,7 +998,7 @@ function EnrollmentForm() {
                     value={formData.state}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   >
                     <option value="">Select State</option>
                     {INDIAN_STATES.map(state => (
@@ -650,7 +1019,7 @@ function EnrollmentForm() {
                     value={formData.city}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -664,7 +1033,7 @@ function EnrollmentForm() {
                     value={formData.pincode}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
               </div>
@@ -691,7 +1060,8 @@ function EnrollmentForm() {
                     value={formData.course_id}
                     onChange={handleInputChange}
                     required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                    disabled={isEditMode}
+                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'}`}
                   >
                     <option value="">Select Course</option>
                     {courses.map((course) => (
@@ -700,6 +1070,11 @@ function EnrollmentForm() {
                       </option>
                     ))}
                   </select>
+                  {isEditMode && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Course cannot be changed in edit mode
+                    </p>
+                  )}
                   
                   {/* Course Details Preview */}
                   {formData.course_id && (() => {
@@ -724,22 +1099,6 @@ function EnrollmentForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Enrollment Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    name="enrollment_date"
-                    value={formData.enrollment_date}
-                    onChange={handleInputChange}
-                    min={getMinEnrollmentDate()}
-                    max={getMaxEnrollmentDate()}
-                    required
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -753,8 +1112,52 @@ function EnrollmentForm() {
                     <option value="ongoing">Ongoing</option>
                     <option value="completed">Completed</option>
                     <option value="aborted">Aborted</option>
+                    <option value="expelled">Expelled</option>
                   </select>
                 </div>
+
+                <div>
+                  <DatePicker
+                    label={<>Enrollment Date <span className="text-red-500">*</span></>}
+                    value={formData.enrollment_date ? format(parse(formData.enrollment_date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
+                    onChange={(date) => {
+                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
+                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
+                      handleInputChange({ target: { name: 'enrollment_date', value: convertedDate } });
+                    }}
+                    maxDate={new Date(getMaxEnrollmentDate())}
+                    minDate={new Date(getMinEnrollmentDate())}
+                  />
+                </div>
+
+                <div>
+                  <DatePicker
+                    label="Completion Date"
+                    value={formData.completion_date ? format(parse(formData.completion_date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
+                    onChange={(date) => {
+                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
+                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
+                      handleInputChange({ target: { name: 'completion_date', value: convertedDate } });
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Optional - Set when course is completed
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Remark
+                </label>
+                <textarea
+                  name="remark"
+                  value={formData.remark}
+                  onChange={handleInputChange}
+                  rows="2"
+                  placeholder="Add any notes or remarks about this enrollment"
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                />
               </div>
             </div>
           </div>
@@ -812,6 +1215,11 @@ function EnrollmentForm() {
                 {/* Accommodation */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Accommodation Options</h4>
+                  {isEditMode && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      Accommodation options cannot be changed in edit mode
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(() => {
                       const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
@@ -828,10 +1236,10 @@ function EnrollmentForm() {
                               name="is_hostel_opted"
                               checked={formData.is_hostel_opted}
                               onChange={handleInputChange}
-                              disabled={!hostelAvailable}
+                              disabled={!hostelAvailable || isEditMode}
                               className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
                             />
-                            <label className={`ml-2 block text-sm ${!hostelAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                            <label className={`ml-2 block text-sm ${(!hostelAvailable || isEditMode) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                               Hostel Opted {hostelAvailable ? `(+₹${hostelFeeAmount})` : '(Not Available)'}
                             </label>
                           </div>
@@ -842,10 +1250,10 @@ function EnrollmentForm() {
                               name="is_mess_opted"
                               checked={formData.is_mess_opted}
                               onChange={handleInputChange}
-                              disabled={!messAvailable}
+                              disabled={!messAvailable || isEditMode}
                               className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
                             />
-                            <label className={`ml-2 block text-sm ${!messAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                            <label className={`ml-2 block text-sm ${(!messAvailable || isEditMode) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                               Mess Opted {messAvailable ? `(+₹${messFeeAmount})` : '(Not Available)'}
                             </label>
                           </div>
@@ -866,8 +1274,14 @@ function EnrollmentForm() {
                     value={formData.extra_discount_amount}
                     onChange={handleInputChange}
                     min="0"
-                    className="block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    disabled={isEditMode}
+                    className={`block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'}`}
                   />
+                  {isEditMode && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Extra discount cannot be changed in edit mode
+                    </p>
+                  )}
                 </div>
 
                 {/* Tax Configuration - Hidden (calculations still happen with 0%) */}
@@ -941,53 +1355,86 @@ function EnrollmentForm() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Paid Amount
-                      </label>
-                      <input
-                        type="number"
-                        name="paid_amount"
-                        value={formData.paid_amount}
-                        onChange={handleInputChange}
-                        min="0"
-                        max={feeCalculation.total_payable_fee}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                    </div>
+                    {isEditMode ? (
+                      <>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Add Payment
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleAddPayment}
+                            className="w-full px-4 py-2 border border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400 rounded-md hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
+                          >
+                            + Add Payment Record
+                          </button>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Use payment modal to add detailed payment records
+                          </p>
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Due Amount
-                      </label>
-                      <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                        ₹{feeCalculation.due_amount.toFixed(2)}
-                      </div>
-                    </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Due Amount
+                          </label>
+                          <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            ₹{feeCalculation.due_amount.toFixed(2)}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Paid Amount
+                          </label>
+                          <input
+                            type="number"
+                            name="paid_amount"
+                            value={formData.paid_amount}
+                            onChange={handleInputChange}
+                            min="0"
+                            max={feeCalculation.total_payable_fee}
+                            placeholder="0"
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Payment Method
-                      </label>
-                      <select
-                        name="payment_method"
-                        value={formData.payment_method}
-                        onChange={handleInputChange}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                      >
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="upi">UPI</option>
-                        <option value="bank_transfer">Bank Transfer</option>
-                      </select>
-                    </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Due Amount
+                          </label>
+                          <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            ₹{feeCalculation.due_amount.toFixed(2)}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Payment Method
+                          </label>
+                          <select
+                            name="payment_method"
+                            value={formData.payment_method}
+                            onChange={handleInputChange}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          >
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Documents Upload */}
+          {/* Documents Upload - Only show in create mode */}
+          {!isEditMode && (
           <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
               <div className="flex items-center space-x-3">
@@ -1069,6 +1516,7 @@ function EnrollmentForm() {
               </div>
             </div>
           </div>
+          )}
 
           {/* Remarks */}
           <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
@@ -1104,7 +1552,7 @@ function EnrollmentForm() {
               disabled={loading || !formData.course_id}
               className="btn bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 text-white hover:from-green-600 hover:via-emerald-600 hover:to-teal-600 shadow-lg disabled:opacity-50"
             >
-              {loading ? 'Enrolling...' : 'Enroll Student'}
+              {loading ? (isEditMode ? 'Updating...' : 'Enrolling...') : (isEditMode ? 'Update Enrollment' : 'Enroll Student')}
             </button>
           </div>
         </form>
@@ -1114,6 +1562,25 @@ function EnrollmentForm() {
           isOpen={showProgressModal}
           hasDocuments={documentRows.some(row => row.file && row.type)}
         />
+
+        {/* Payment Modal */}
+        {isEditMode && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            onSubmit={handlePaymentSubmit}
+            payment={null}
+            enrollmentInfo={enrollmentData ? {
+              student_code: enrollmentData.student?.student_code,
+              student_name: enrollmentData.student?.name_on_id,
+              course_title: enrollmentData.course?.title,
+              total_payable_fee: enrollmentData.total_payable_fee,
+              paid_amount: enrollmentData.paid_amount,
+              due_amount: enrollmentData.due_amount
+            } : null}
+            loading={paymentModalLoading}
+          />
+        )}
       </div>
     </AdminLayout>
   );

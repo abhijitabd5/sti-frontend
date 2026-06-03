@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import promotionReportsApi from '@/services/api/promotionReportsApi';
 import { getSourceLabel } from '@/config/constants';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Icons
 import { 
@@ -9,8 +10,7 @@ import {
   UsersIcon, 
   DocumentTextIcon,
   MagnifyingGlassIcon,
-  ArrowDownTrayIcon,
-  CalendarIcon
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 
 function PromotionReports() {
@@ -358,22 +358,23 @@ function PromotionReports() {
 
             {/* Second Row - Date Range and Actions */}
             <div className="flex flex-col md:flex-row md:items-center md:space-x-3 space-y-3 md:space-y-0">
-              <div className="flex items-center space-x-2 flex-1">
-                <CalendarIcon className="h-4 w-4 text-gray-400" />
-                <input 
-                  type="date" 
-                  value={dateFrom} 
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm"
-                  placeholder="From"
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+                <DatePicker
+                  value={dateFrom}
+                  onChange={(date) => setDateFrom(date)}
+                  placeholder="Select date"
                 />
-                <span className="text-gray-400">to</span>
-                <input 
-                  type="date" 
-                  value={dateTo} 
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm"
-                  placeholder="To"
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+                <DatePicker
+                  value={dateTo}
+                  onChange={(date) => setDateTo(date)}
+                  placeholder="Select date"
+                  disabled={!dateFrom}
+                  minDate={dateFrom}
                 />
               </div>
 

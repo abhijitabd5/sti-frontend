@@ -6,6 +6,7 @@ import IssueCertificateModal from '@/components/common/IssueCertificateModal';
 import certificateApi from '@/services/api/certificateApi';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
 
 // Icons
 import { 
@@ -168,27 +169,23 @@ function PendingCertificates() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Start Date
-            </label>
-            <input
-              type="date"
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">From:</label>
+            <DatePicker
               value={filters.start_date}
-              onChange={(e) => setFilters(prev => ({ ...prev, start_date: e.target.value, page: 1 }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+              onChange={(date) => setFilters(prev => ({ ...prev, start_date: date, page: 1 }))}
+              placeholder="Select date"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              End Date
-            </label>
-            <input
-              type="date"
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">To:</label>
+            <DatePicker
               value={filters.end_date}
-              onChange={(e) => setFilters(prev => ({ ...prev, end_date: e.target.value, page: 1 }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm"
+              onChange={(date) => setFilters(prev => ({ ...prev, end_date: date, page: 1 }))}
+              placeholder="Select date"
+              disabled={!filters.start_date}
+              minDate={filters.start_date}
             />
           </div>
         </div>

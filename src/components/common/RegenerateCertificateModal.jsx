@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { format, parse } from 'date-fns';
 import certificateTemplateApi from '@/services/api/certificateTemplateApi';
 import certificateApi from '@/services/api/certificateApi';
+import { DatePicker } from '@/components/ui/Internal/DatePicker';
+import { MonthPicker } from '@/components/ui/Internal/MonthPicker';
 
 // Icons
 import { 
@@ -22,13 +24,13 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
     guardian_name: '',
     guardian_gender: 'male',
     grade: '',
-    examination_date: '',
-    commencement_month_year: '',
-    completion_month_year: '',
+    examination_date: '', // dd-MM-yyyy format
+    commencement_month_year: '', // dd-MM-yyyy format
+    completion_month_year: '', // dd-MM-yyyy format
     course_duration_value: '',
     course_duration_type: 'Months',
     template_id: '',
-    issue_date: format(new Date(), 'yyyy-MM-dd')
+    issue_date: format(new Date(), 'dd-MM-yyyy') // dd-MM-yyyy format
   });
 
   useEffect(() => {
@@ -57,36 +59,53 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       }
     }
 
-    // Parse examination date (e.g., "February 2026" -> "2026-02")
+    // Parse examination date (e.g., "February 2026" -> "01-02-2026" dd-MM-yyyy)
     let examinationDate = '';
     if (snapshot.examination_month_year) {
       try {
         const parsed = parse(snapshot.examination_month_year, 'MMMM yyyy', new Date());
-        examinationDate = format(parsed, 'yyyy-MM');
+        examinationDate = format(parsed, 'dd-MM-yyyy');
       } catch (e) {
         console.error('Error parsing examination date:', e);
       }
     }
 
-    // Parse commencement date (e.g., "Feb 2026" -> "2026-02")
+    // Parse commencement date (e.g., "February 2026" -> "01-02-2026" dd-MM-yyyy)
     let commencementDate = '';
     if (snapshot.commencement_month_year) {
       try {
         const parsed = parse(snapshot.commencement_month_year, 'MMMM yyyy', new Date());
-        commencementDate = format(parsed, 'yyyy-MM');
+        commencementDate = format(parsed, 'dd-MM-yyyy');
       } catch (e) {
         console.error('Error parsing commencement date:', e);
       }
     }
 
-    // Parse completion date (e.g., "March 2026" -> "2026-03")
+    // Parse completion date (e.g., "March 2026" -> "01-03-2026" dd-MM-yyyy)
     let completionDate = '';
     if (snapshot.completion_month_year) {
       try {
         const parsed = parse(snapshot.completion_month_year, 'MMMM yyyy', new Date());
-        completionDate = format(parsed, 'yyyy-MM');
+        completionDate = format(parsed, 'dd-MM-yyyy');
       } catch (e) {
         console.error('Error parsing completion date:', e);
+      }
+    }
+
+    // Parse issue_date (e.g., "15-01-2026" dd-MM-yyyy -> keep as is)
+    let issueDate = format(new Date(), 'dd-MM-yyyy');
+    if (certificate.issue_date) {
+      try {
+        // Try parsing as dd-MM-yyyy first
+        const parsed = parse(certificate.issue_date, 'dd-MM-yyyy', new Date());
+        if (!isNaN(parsed.getTime())) {
+          issueDate = certificate.issue_date;
+        } else {
+          // Fallback: try ISO format
+          issueDate = format(new Date(certificate.issue_date), 'dd-MM-yyyy');
+        }
+      } catch (e) {
+        console.error('Error parsing issue date:', e);
       }
     }
 
@@ -103,7 +122,7 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       course_duration_value: durationValue,
       course_duration_type: durationType,
       template_id: certificate.template_id || '',
-      issue_date: certificate.issue_date ? format(new Date(certificate.issue_date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')
+      issue_date: issueDate
     });
   };
 
@@ -234,19 +253,14 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       const formDataToSend = new FormData();
       
       // Convert date formats
-      // Convert "2026-03" to "March 2026"
-      const formatMonthYear = (monthInput) => {
-        if (!monthInput) return '';
-        const date = parse(monthInput, 'yyyy-MM', new Date());
+      // Convert "01-05-2026" (dd-MM-yyyy) to "May 2026" (Month Year)
+      const formatMonthYear = (dateInput) => {
+        if (!dateInput) return '';
+        const date = parse(dateInput, 'dd-MM-yyyy', new Date());
         return format(date, 'MMMM yyyy');
       };
       
-      // Convert "2026-03-15" to "15-03-2026"
-      const formatIssueDate = (dateInput) => {
-        if (!dateInput) return '';
-        const date = parse(dateInput, 'yyyy-MM-dd', new Date());
-        return format(date, 'dd-MM-yyyy');
-      };
+      // issue_date is already in dd-MM-yyyy format, no conversion needed
       
       // Append all form fields
       formDataToSend.append('student_name', formData.student_name.trim());
@@ -261,7 +275,7 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
       formDataToSend.append('course_duration_value', parseInt(formData.course_duration_value));
       formDataToSend.append('course_duration_type', formData.course_duration_type.toLowerCase());
       formDataToSend.append('template_id', parseInt(formData.template_id));
-      formDataToSend.append('issue_date', formatIssueDate(formData.issue_date));
+      formDataToSend.append('issue_date', formData.issue_date); // Already in dd-MM-yyyy format
       
       // Append photo if selected
       if (studentPhoto) {
@@ -544,45 +558,31 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Examination Month & Year <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="month"
-                      name="examination_date"
+                    <MonthPicker
+                      label={<>Examination Month & Year <span className="text-red-500">*</span></>}
                       value={formData.examination_date}
-                      onChange={handleInputChange}
-                      required
-                      max={format(new Date(), 'yyyy-MM')}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      onChange={(date) => handleInputChange({ target: { name: 'examination_date', value: date } })}
+                      placeholder="Select month"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Course Start Month & Year <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="month"
-                      name="commencement_month_year"
+                    <MonthPicker
+                      label={<>Course Start Month & Year <span className="text-red-500">*</span></>}
                       value={formData.commencement_month_year}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      onChange={(date) => handleInputChange({ target: { name: 'commencement_month_year', value: date } })}
+                      placeholder="Select month"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Course Completion Month & Year <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="month"
-                      name="completion_month_year"
+                    <MonthPicker
+                      label={<>Course Completion Month & Year <span className="text-red-500">*</span></>}
                       value={formData.completion_month_year}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      onChange={(date) => handleInputChange({ target: { name: 'completion_month_year', value: date } })}
+                      placeholder="Select month"
+                      disabled={!formData.commencement_month_year}
+                      minDate={formData.commencement_month_year}
                     />
                   </div>
                 </div>
@@ -675,18 +675,11 @@ function RegenerateCertificateModal({ isOpen, onClose, certificate, onSuccess, o
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Issue Date <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      name="issue_date"
+                    <DatePicker
+                      label={<>Issue Date <span className="text-red-500">*</span></>}
                       value={formData.issue_date}
-                      onChange={handleInputChange}
-                      required
-                      min="2000-01-01"
-                      max={format(new Date(), 'yyyy-MM-dd')}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      onChange={(date) => handleInputChange({ target: { name: 'issue_date', value: date } })}
+                      placeholder="Select date"
                     />
                   </div>
                 </div>

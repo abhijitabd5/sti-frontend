@@ -24,6 +24,9 @@ import Certificate from "@/pages/website/Certificate/Certificate";
 // Import lazy admin wrapper (lazy loading)
 import LazyAdminWrapper from "@/components/common/LazyAdminWrapper";
 
+// Demo components
+import { DatePickerDemo } from "@/components/ui/Internal/DatePickerDemo";
+
 // import ExampleUsage from "@/components/ui/RichTextEditor/ExampleUsage";
 
 function App() {
@@ -59,6 +62,9 @@ function App() {
         <Route path="/certificate" element={<Certificate />} />
         <Route path="/logout" element={<Logout />} />
         {/* <Route path="/example-editor" element={<ExampleUsage />} /> */}
+
+        {/* Demo Routes */}
+        <Route path="/demo/datepicker" element={<DatePickerDemo />} />
 
         {/* Protected Admin Routes - Lazy Loaded */}
         <Route path="/admin/*" element={<LazyAdminWrapper />} />

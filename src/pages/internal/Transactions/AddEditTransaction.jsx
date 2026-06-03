@@ -5,11 +5,12 @@ import Toast from "@/components/ui/Internal/Toast/Toast";
 import useToast from "@/hooks/useToast";
 import transactionApi from "@/services/api/transactionApi";
 import TransactionCategoryApi from "@/services/api/transactionCategoryApi";
+import { DatePicker } from "@/components/ui/Internal/DatePicker";
+import { format } from "date-fns";
 
 // Icons
 import {
   ArrowLeftIcon,
-  CalendarIcon,
   PaperClipIcon,
   XMarkIcon,
   ChevronDownIcon,
@@ -35,7 +36,7 @@ const AddEditTransaction = () => {
     type: transactionType,
     category_id: "",
     amount: "",
-    transaction_date: new Date().toISOString().split("T")[0], // Today's date in YYYY-MM-DD format
+    transaction_date: format(new Date(), 'dd-MM-yyyy'), // Today's date in dd-MM-yyyy format
     payment_mode: "",
     description: "",
     payment_ref_num: "",
@@ -380,29 +381,12 @@ const AddEditTransaction = () => {
 
               {/* Transaction Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Transaction Date <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="date"
-                    value={formData.transaction_date}
-                    onChange={(e) =>
-                      handleInputChange("transaction_date", e.target.value)
-                    }
-                    className={`w-full pl-10 pr-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-500 transition-colors ${
-                      errors.transaction_date
-                        ? "border-red-300 dark:border-red-500"
-                        : "border-gray-200 dark:border-gray-700/60"
-                    } bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100`}
-                  />
-                </div>
-                {errors.transaction_date && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
-                    {errors.transaction_date}
-                  </p>
-                )}
+                <DatePicker
+                  label={<>Transaction Date <span className="text-red-500">*</span></>}
+                  value={formData.transaction_date}
+                  onChange={(date) => handleInputChange("transaction_date", date)}
+                  error={errors.transaction_date}
+                />
               </div>
 
               {/* Payment Mode */}
