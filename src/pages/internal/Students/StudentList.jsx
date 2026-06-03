@@ -4,6 +4,7 @@ import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import { getTimestamp } from '@/utils/dateUtils';
 import AadhaarCheckModal from './components/AadhaarCheckModal';
+import PaymentModal from './components/PaymentModal';
 import ConfirmDeleteModal from '@/components/common/Modal/ConfirmDeleteModal';
 import Toast from '@/components/ui/Internal/Toast/Toast';
 import useToast from '@/hooks/useToast';
@@ -22,7 +23,8 @@ import {
   FunnelIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  TrashIcon
+  TrashIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 
 function StudentList() {
@@ -36,6 +38,9 @@ function StudentList() {
   const [exportLoading, setExportLoading] = useState(false);
   const [pagination, setPagination] = useState({});
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedEnrollment, setSelectedEnrollment] = useState(null);
+  const [paymentModalLoading, setPaymentModalLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(10);
@@ -143,6 +148,49 @@ function StudentList() {
 
   const handleAttachDocuments = (studentId) => {
     navigate(`/admin/students/${studentId}/documents`);
+  };
+
+  const handleAddPayment = async (student) => {
+    // Load enrollment details to get full enrollment info
+    try {
+      const response = await studentApi.getEnrollmentById(student.enrollment_id);
+      if (response.success && response.data) {
+        setSelectedEnrollment({
+          enrollment_id: student.enrollment_id,
+          student_code: student.student_code,
+          student_name: student.name,
+          course_title: response.data.course?.title || 'Unknown Course',
+          total_payable_fee: response.data.total_payable_fee,
+          paid_amount: response.data.paid_amount,
+          due_amount: response.data.due_amount
+        });
+        setShowPaymentModal(true);
+      }
+    } catch (error) {
+      console.error('Error loading enrollment details:', error);
+      alert('Failed to load enrollment details');
+    }
+  };
+
+  const handlePaymentSubmit = async (paymentFormData) => {
+    try {
+      setPaymentModalLoading(true);
+      
+      const response = await studentApi.createPayment(selectedEnrollment.enrollment_id, paymentFormData);
+      
+      if (response.success) {
+        setShowPaymentModal(false);
+        setSelectedEnrollment(null);
+        // Reload students list to show updated payment info
+        loadStudents();
+        showSuccess('Payment added successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      alert(error.response?.data?.message || 'Failed to add payment');
+    } finally {
+      setPaymentModalLoading(false);
+    }
   };
 
   const handleDeleteStudent = (student) => {
@@ -405,11 +453,11 @@ function StudentList() {
             )}
           </div>
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600 dark:text-gray-400">Records per page:</label>
+            <label className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">Records per page:</label>
             <select
               value={recordsPerPage}
               onChange={(e) => handleRecordsPerPageChange(Number(e.target.value))}
-              className="px-3 py-1 rounded border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100"
+              className="pl-3 pr-8 py-1.5 rounded border border-gray-200 dark:border-gray-700/60 bg-white dark:bg-gray-900 text-sm text-gray-800 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
             >
               <option value={10}>10</option>
               <option value={25}>25</option>
@@ -543,6 +591,15 @@ function StudentList() {
                           <PencilIcon className="h-4 w-4" />
                         </button>
 
+                        {/* Add Payment */}
+                        <button
+                          onClick={() => handleAddPayment(student)}
+                          className="p-1 text-gray-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+                          title="Add Payment"
+                        >
+                          <CurrencyDollarIcon className="h-4 w-4" />
+                        </button>
+
                         {/* Attach Documents */}
                         <button
                           onClick={() => handleAttachDocuments(student.student_id)}
@@ -643,6 +700,20 @@ function StudentList() {
         isOpen={showEnrollModal}
         onClose={() => setShowEnrollModal(false)}
       />
+
+      {/* Payment Modal */}
+      {selectedEnrollment && (
+        <PaymentModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            setSelectedEnrollment(null);
+          }}
+          onSubmit={handlePaymentSubmit}
+          loading={paymentModalLoading}
+          enrollmentInfo={selectedEnrollment}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal

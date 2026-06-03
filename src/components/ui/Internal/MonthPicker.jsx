@@ -32,9 +32,10 @@ export const MonthPicker = ({
   const yearEnd = endOfYear(currentYear);
   const monthsInYear = eachMonthOfInterval({ start: yearStart, end: yearEnd });
 
-  // Generate year range (1900 to current year + 10)
+  // Generate year range (last 15 years only, up to current year)
   const currentYearNum = new Date().getFullYear();
-  const years = Array.from({ length: currentYearNum - 1900 + 11 }, (_, i) => 1900 + i);
+  const startYear = currentYearNum - 15;
+  const years = Array.from({ length: 16 }, (_, i) => startYear + i); // 15 years + current year = 16 total
 
   const handleMonthSelect = (month) => {
     // Select the first day of the month
@@ -45,23 +46,35 @@ export const MonthPicker = ({
   };
 
   const isMonthDisabled = (month) => {
+    const today = new Date();
+    const currentMonth = startOfMonth(today);
+    
+    // Disable all future months
+    if (month > currentMonth) return true;
+    
+    // Check if month is within last 15 years
+    const fifteenYearsAgo = new Date(today.getFullYear() - 15, 0, 1);
+    if (month < fifteenYearsAgo) return true;
+    
+    // If minDate is provided, disable months before it
     if (minDate) {
       const minDateObj = parse(minDate, 'dd-MM-yyyy', new Date());
       if (!isNaN(minDateObj.getTime())) {
-        // Compare year and month
-        if (month.getFullYear() < minDateObj.getFullYear()) return true;
-        if (month.getFullYear() === minDateObj.getFullYear() && 
-            month.getMonth() <= minDateObj.getMonth()) return true;
+        const minMonth = startOfMonth(minDateObj);
+        // For "To" field: disable months before or equal to the "From" date
+        if (month <= minMonth) return true;
       }
     }
+    
+    // If maxDate is provided, disable months after it
     if (maxDate) {
       const maxDateObj = parse(maxDate, 'dd-MM-yyyy', new Date());
       if (!isNaN(maxDateObj.getTime())) {
-        if (month.getFullYear() > maxDateObj.getFullYear()) return true;
-        if (month.getFullYear() === maxDateObj.getFullYear() && 
-            month.getMonth() > maxDateObj.getMonth()) return true;
+        const maxMonth = startOfMonth(maxDateObj);
+        if (month > maxMonth) return true;
       }
     }
+    
     return false;
   };
 
@@ -115,16 +128,24 @@ export const MonthPicker = ({
             </span>
 
             {parsedValue && !isNaN(parsedValue.getTime()) && !disabled && (
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={(e) => {
                   e.stopPropagation();
                   onChange('');
                 }}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    onChange('');
+                  }
+                }}
+                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
               >
                 <XMarkIcon className="w-4 h-4 text-gray-400" />
-              </button>
+              </div>
             )}
           </button>
         </Popover.Trigger>
@@ -141,8 +162,16 @@ export const MonthPicker = ({
               <div className="flex items-center justify-between mb-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentYear(subMonths(currentYear, 12))}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    const newYear = subMonths(currentYear, 12);
+                    const fifteenYearsAgo = new Date().getFullYear() - 15;
+                    // Don't go before 15 years ago
+                    if (newYear.getFullYear() >= fifteenYearsAgo) {
+                      setCurrentYear(newYear);
+                    }
+                  }}
+                  disabled={currentYear.getFullYear() <= new Date().getFullYear() - 15}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -162,8 +191,16 @@ export const MonthPicker = ({
                 
                 <button
                   type="button"
-                  onClick={() => setCurrentYear(addMonths(currentYear, 12))}
-                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    const newYear = addMonths(currentYear, 12);
+                    const currentYearNum = new Date().getFullYear();
+                    // Don't go beyond current year
+                    if (newYear.getFullYear() <= currentYearNum) {
+                      setCurrentYear(newYear);
+                    }
+                  }}
+                  disabled={currentYear.getFullYear() >= new Date().getFullYear()}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-4 h-4 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

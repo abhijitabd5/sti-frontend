@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import AdminLayout from '@/components/common/Layouts/AdminLayout';
 import studentApi from '@/services/api/studentApi';
 import ProgressModal from './components/ProgressModal';
+import PaymentModal from './components/PaymentModal';
 import { INDIAN_STATES, getStateDisplayName } from '@/config/constants';
 import { DatePicker } from '@/components/ui/Internal/DatePicker';
 import { format, parse } from 'date-fns';
@@ -27,7 +28,8 @@ import {
   AcademicCapIcon,
   CurrencyDollarIcon,
   BuildingOfficeIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  ArrowLeftIcon
 } from '@heroicons/react/24/outline';
 
 function EnrollmentForm() {
@@ -46,6 +48,8 @@ function EnrollmentForm() {
   const [coursesLoading, setCoursesLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(isEditMode);
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentModalLoading, setPaymentModalLoading] = useState(false);
   const [documentRows, setDocumentRows] = useState([{ id: 1, type: '', file: null }]);
   const [validationErrors, setValidationErrors] = useState({
     mobile: '',
@@ -67,7 +71,10 @@ function EnrollmentForm() {
   const [formData, setFormData] = useState({
     // Student Info (readonly if existing)
     aadhar_number: aadharNumber || '',
+    pan_number: '',
     student_code: studentData?.student_code || '',
+    first_name: '',
+    last_name: '',
     name_on_id: studentData?.name || '',
     father_name: studentData?.father_name || '',
     mother_name: studentData?.mother_name || '',
@@ -83,6 +90,7 @@ function EnrollmentForm() {
     // Course Selection
     course_id: '',
     enrollment_date: new Date().toISOString().split('T')[0],
+    completion_date: '',
     status: 'not_started',
 
     // Accommodation
@@ -138,52 +146,56 @@ function EnrollmentForm() {
       const response = await studentApi.getEnrollmentById(enrollmentId);
       
       if (response.success && response.data) {
-        const { student_info, enrollment_info } = response.data;
+        const enrollmentData = response.data;
+        const studentInfo = enrollmentData.student;
+        const userInfo = studentInfo?.user;
         
         // Store student ID for later use
-        if (student_info && student_info.id) {
-          setStudentId(student_info.id);
+        if (studentInfo && studentInfo.id) {
+          setStudentId(studentInfo.id);
         }
         
-        if (enrollment_info) {
-          setEnrollmentData(enrollment_info);
-        }
+        setEnrollmentData(enrollmentData);
         
         // Populate form with student and enrollment data
         setFormData(prev => ({
           ...prev,
           // Student Info
-          aadhar_number: student_info?.aadhar_number || '',
-          student_code: student_info?.student_code || '',
-          name_on_id: student_info?.name || '',
-          father_name: student_info?.father_name || '',
-          mother_name: student_info?.mother_name || '',
-          date_of_birth: student_info?.date_of_birth || '',
-          gender: student_info?.gender || 'Male',
-          address: student_info?.address || '',
-          state: student_info?.state_slug || '',
-          city: student_info?.city || '',
-          pincode: student_info?.pincode || '',
-          mobile: student_info?.mobile || '',
-          email: student_info?.email || '',
+          aadhar_number: studentInfo?.aadhar_number || '',
+          pan_number: studentInfo?.pan_number || '',
+          student_code: studentInfo?.student_code || '',
+          first_name: userInfo?.first_name || '',
+          last_name: userInfo?.last_name || '',
+          name_on_id: studentInfo?.name_on_id || '',
+          father_name: studentInfo?.father_name || '',
+          mother_name: studentInfo?.mother_name || '',
+          date_of_birth: studentInfo?.date_of_birth || '',
+          gender: studentInfo?.gender || 'Male',
+          address: studentInfo?.address || '',
+          state: studentInfo?.state_slug || '',
+          city: studentInfo?.city || '',
+          pincode: studentInfo?.pincode || '',
+          mobile: userInfo?.mobile || '',
+          email: userInfo?.email || '',
           
           // Enrollment Info
-          course_id: enrollment_info?.course_id || '',
-          enrollment_date: enrollment_info?.enrollment_date || new Date().toISOString().split('T')[0],
-          status: enrollment_info?.status || 'not_started',
-          is_hostel_opted: enrollment_info?.is_hostel_opted || false,
-          is_mess_opted: enrollment_info?.is_mess_opted || false,
-          extra_discount_amount: enrollment_info?.extra_discount_amount || 0,
+          course_id: enrollmentData?.course_id || '',
+          enrollment_date: enrollmentData?.enrollment_date || new Date().toISOString().split('T')[0],
+          completion_date: enrollmentData?.completion_date || '',
+          status: enrollmentData?.status || 'not_started',
+          is_hostel_opted: Boolean(enrollmentData?.is_hostel_opted),
+          is_mess_opted: Boolean(enrollmentData?.is_mess_opted),
+          extra_discount_amount: parseFloat(enrollmentData?.extra_discount_amount) || 0,
           paid_amount: 0, // For additional payment in edit mode
           payment_method: 'cash',
-          remark: enrollment_info?.remark || ''
+          remark: enrollmentData?.remark || ''
         }));
       } else {
         throw new Error(response.message || 'Failed to load enrollment data');
       }
     } catch (error) {
       console.error('Error loading enrollment data:', error);
-      alert('Failed to load enrollment data. The backend API endpoint may not be implemented yet. Please check BACKEND_API_REQUIREMENTS.md for implementation details.');
+      alert('Failed to load enrollment data. Please try again.');
       navigate('/admin/students');
     } finally {
       setDataLoading(false);
@@ -557,18 +569,83 @@ function EnrollmentForm() {
   };
 
   const handleUpdateEnrollment = async () => {
-    // Prepare update data (only fields that can be updated)
-    const updateData = {
-      status: formData.status,
-      enrollment_date: formData.enrollment_date,
-      remark: formData.remark
-    };
+    // Get state name from the selected state slug
+    const stateName = getStateDisplayName(formData.state);
+    
+    // Prepare update data with ONLY API-allowed fields
+    const updateData = {};
 
-    // Add payment info if paid_amount is provided
+    // Enrollment fields (optional)
+    if (formData.status) {
+      updateData.status = formData.status;
+    }
+    if (formData.enrollment_date) {
+      updateData.enrollment_date = formData.enrollment_date;
+    }
+    if (formData.completion_date) {
+      updateData.completion_date = formData.completion_date;
+    }
+    if (formData.remark) {
+      updateData.remark = formData.remark;
+    }
+
+    // Payment fields (optional - ADDITIVE)
     if (parseFloat(formData.paid_amount) > 0) {
       updateData.paid_amount = parseFloat(formData.paid_amount);
-      updateData.payment_method = formData.payment_method;
+      updateData.payment_method = formData.payment_method; // Required if paid_amount is provided
     }
+
+    // User fields (optional - updates users table)
+    if (formData.first_name) {
+      updateData.first_name = formData.first_name;
+    }
+    if (formData.last_name) {
+      updateData.last_name = formData.last_name;
+    }
+    if (formData.mobile) {
+      updateData.mobile = formData.mobile;
+    }
+    if (formData.email) {
+      updateData.email = formData.email;
+    }
+
+    // Student profile fields (optional - updates students table)
+    if (formData.name_on_id) {
+      updateData.name_on_id = formData.name_on_id;
+    }
+    if (formData.father_name) {
+      updateData.father_name = formData.father_name;
+    }
+    if (formData.mother_name) {
+      updateData.mother_name = formData.mother_name;
+    }
+    if (formData.date_of_birth) {
+      updateData.date_of_birth = formData.date_of_birth;
+    }
+    if (formData.gender) {
+      updateData.gender = formData.gender;
+    }
+    if (formData.address) {
+      updateData.address = formData.address;
+    }
+    if (formData.state) {
+      updateData.state_slug = formData.state;
+      updateData.state_name = stateName;
+    }
+    if (formData.city) {
+      updateData.city = formData.city;
+    }
+    if (formData.pincode) {
+      updateData.pincode = formData.pincode;
+    }
+    if (formData.aadhar_number) {
+      updateData.aadhar_number = formData.aadhar_number;
+    }
+    if (formData.pan_number) {
+      updateData.pan_number = formData.pan_number;
+    }
+
+    console.log('Sending update data:', updateData);
 
     // Update enrollment
     const response = await studentApi.updateEnrollment(enrollmentId, updateData);
@@ -590,6 +667,31 @@ function EnrollmentForm() {
     } else {
       // Handle API error response
       throw new Error(response.message || 'Failed to update enrollment');
+    }
+  };
+
+  const handleAddPayment = () => {
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async (paymentFormData) => {
+    try {
+      setPaymentModalLoading(true);
+      
+      // Create payment via enrollment update endpoint
+      const response = await studentApi.createPayment(enrollmentId, paymentFormData);
+      
+      if (response.success) {
+        setShowPaymentModal(false);
+        // Reload enrollment data to get updated totals
+        loadEnrollmentData(enrollmentId);
+        alert('Payment added successfully!');
+      }
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      alert(error.response?.data?.message || 'Failed to add payment');
+    } finally {
+      setPaymentModalLoading(false);
     }
   };
 
@@ -632,16 +734,37 @@ function EnrollmentForm() {
   return (
     <AdminLayout>
       <div className="max-w-4xl mx-auto" style={{ minHeight: '100vh' }}>
+        {/* Header with Back Button */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
-            {isEditMode ? 'Edit Student Enrollment' : (isExisting ? 'Enroll Existing Student' : 'Enroll New Student')}
-          </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            {isEditMode 
-              ? 'Update enrollment information and add additional payments' 
-              : 'Fill in the student information and course details for enrollment'
-            }
-          </p>
+          <div className="flex items-center space-x-4 mb-4">
+            <button
+              type="button"
+              onClick={() => {
+                if (isEditMode && studentId) {
+                  // If in edit mode, go back to student detail page
+                  navigate(`/admin/students/${studentId}`);
+                } else {
+                  // Otherwise go to students list
+                  navigate('/admin/students');
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              title="Go back"
+            >
+              <ArrowLeftIcon className="h-5 w-5" />
+            </button>
+            <div>
+              <h1 className="text-2xl md:text-3xl text-gray-800 dark:text-gray-100 font-bold">
+                {isEditMode ? 'Edit Student Enrollment' : (isExisting ? 'Enroll Existing Student' : 'Enroll New Student')}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {isEditMode 
+                  ? 'Update enrollment information and add additional payments' 
+                  : 'Fill in the student information and course details for enrollment'
+                }
+              </p>
+            </div>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -664,8 +787,25 @@ function EnrollmentForm() {
                     type="text"
                     name="aadhar_number"
                     value={formData.aadhar_number}
-                    readOnly
-                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    onChange={handleInputChange}
+                    readOnly={!isEditMode}
+                    maxLength="12"
+                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 ${!isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700 focus:outline-none focus:ring-violet-500 focus:border-violet-500'}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    PAN Number
+                  </label>
+                  <input
+                    type="text"
+                    name="pan_number"
+                    value={formData.pan_number}
+                    onChange={handleInputChange}
+                    maxLength="10"
+                    placeholder="ABCDE1234F"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -686,18 +826,41 @@ function EnrollmentForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Name <span className="text-red-500">*</span>
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name (as on ID) <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="name_on_id"
                     value={formData.name_on_id}
                     onChange={handleInputChange}
-                    readOnly={isExisting || isEditMode}
                     required
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      (isExisting || isEditMode) ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -710,7 +873,6 @@ function EnrollmentForm() {
                     name="mobile"
                     value={formData.mobile}
                     onChange={handleInputChange}
-                    readOnly={isExisting || isEditMode}
                     required
                     maxLength="10"
                     placeholder="Enter 10 digit mobile number"
@@ -718,9 +880,8 @@ function EnrollmentForm() {
                       validationErrors.mobile 
                         ? 'border-red-500 dark:border-red-500' 
                         : 'border-gray-300 dark:border-gray-600'
-                    } rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      (isExisting || isEditMode) ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    } rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700`}
+                  />
                   />
                   {validationErrors.mobile && (
                     <p className="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -744,10 +905,7 @@ function EnrollmentForm() {
                     value={formData.father_name}
                     onChange={handleInputChange}
                     required
-                    readOnly={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -760,10 +918,7 @@ function EnrollmentForm() {
                     name="mother_name"
                     value={formData.mother_name}
                     onChange={handleInputChange}
-                    readOnly={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -829,10 +984,7 @@ function EnrollmentForm() {
                   onChange={handleInputChange}
                   required
                   rows="3"
-                  readOnly={isEditMode}
-                  className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                    isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                  }`}
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                 />
               </div>
 
@@ -846,10 +998,7 @@ function EnrollmentForm() {
                     value={formData.state}
                     onChange={handleInputChange}
                     required
-                    disabled={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   >
                     <option value="">Select State</option>
                     {INDIAN_STATES.map(state => (
@@ -870,10 +1019,7 @@ function EnrollmentForm() {
                     value={formData.city}
                     onChange={handleInputChange}
                     required
-                    readOnly={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
 
@@ -887,10 +1033,7 @@ function EnrollmentForm() {
                     value={formData.pincode}
                     onChange={handleInputChange}
                     required
-                    readOnly={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
                   />
                 </div>
               </div>
@@ -918,9 +1061,7 @@ function EnrollmentForm() {
                     onChange={handleInputChange}
                     required
                     disabled={isEditMode}
-                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${
-                      isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'
-                    }`}
+                    className={`block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 ${isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'}`}
                   >
                     <option value="">Select Course</option>
                     {courses.map((course) => (
@@ -931,7 +1072,7 @@ function EnrollmentForm() {
                   </select>
                   {isEditMode && (
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Course cannot be changed after enrollment
+                      Course cannot be changed in edit mode
                     </p>
                   )}
                   
@@ -957,20 +1098,6 @@ function EnrollmentForm() {
                 </div>
 
                 <div>
-                  <DatePicker
-                    label={<>Enrollment Date <span className="text-red-500">*</span></>}
-                    value={formData.enrollment_date ? format(parse(formData.enrollment_date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
-                    onChange={(date) => {
-                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
-                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
-                      handleInputChange({ target: { name: 'enrollment_date', value: convertedDate } });
-                    }}
-                    maxDate={new Date(getMaxEnrollmentDate())}
-                    minDate={new Date(getMinEnrollmentDate())}
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status <span className="text-red-500">*</span>
                   </label>
@@ -985,14 +1112,58 @@ function EnrollmentForm() {
                     <option value="ongoing">Ongoing</option>
                     <option value="completed">Completed</option>
                     <option value="aborted">Aborted</option>
+                    <option value="expelled">Expelled</option>
                   </select>
                 </div>
+
+                <div>
+                  <DatePicker
+                    label={<>Enrollment Date <span className="text-red-500">*</span></>}
+                    value={formData.enrollment_date ? format(parse(formData.enrollment_date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
+                    onChange={(date) => {
+                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
+                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
+                      handleInputChange({ target: { name: 'enrollment_date', value: convertedDate } });
+                    }}
+                    maxDate={new Date(getMaxEnrollmentDate())}
+                    minDate={new Date(getMinEnrollmentDate())}
+                  />
+                </div>
+
+                <div>
+                  <DatePicker
+                    label="Completion Date"
+                    value={formData.completion_date ? format(parse(formData.completion_date, 'yyyy-MM-dd', new Date()), 'dd-MM-yyyy') : ''}
+                    onChange={(date) => {
+                      // Convert dd-MM-yyyy to yyyy-MM-dd for backend
+                      const convertedDate = date ? format(parse(date, 'dd-MM-yyyy', new Date()), 'yyyy-MM-dd') : '';
+                      handleInputChange({ target: { name: 'completion_date', value: convertedDate } });
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Optional - Set when course is completed
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Remark
+                </label>
+                <textarea
+                  name="remark"
+                  value={formData.remark}
+                  onChange={handleInputChange}
+                  rows="2"
+                  placeholder="Add any notes or remarks about this enrollment"
+                  className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 bg-white dark:bg-gray-700"
+                />
               </div>
             </div>
           </div>
 
           {/* Fee Information */}
-          {formData.course_id && !isEditMode && (
+          {formData.course_id && (
             <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
                 <div className="flex items-center space-x-3">
@@ -1044,6 +1215,11 @@ function EnrollmentForm() {
                 {/* Accommodation */}
                 <div>
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Accommodation Options</h4>
+                  {isEditMode && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                      Accommodation options cannot be changed in edit mode
+                    </p>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(() => {
                       const selectedCourse = courses.find(course => course.id === parseInt(formData.course_id));
@@ -1060,10 +1236,10 @@ function EnrollmentForm() {
                               name="is_hostel_opted"
                               checked={formData.is_hostel_opted}
                               onChange={handleInputChange}
-                              disabled={!hostelAvailable}
+                              disabled={!hostelAvailable || isEditMode}
                               className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
                             />
-                            <label className={`ml-2 block text-sm ${!hostelAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                            <label className={`ml-2 block text-sm ${(!hostelAvailable || isEditMode) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                               Hostel Opted {hostelAvailable ? `(+₹${hostelFeeAmount})` : '(Not Available)'}
                             </label>
                           </div>
@@ -1074,10 +1250,10 @@ function EnrollmentForm() {
                               name="is_mess_opted"
                               checked={formData.is_mess_opted}
                               onChange={handleInputChange}
-                              disabled={!messAvailable}
+                              disabled={!messAvailable || isEditMode}
                               className="h-4 w-4 text-violet-600 focus:ring-violet-500 border-gray-300 dark:border-gray-600 rounded disabled:opacity-50"
                             />
-                            <label className={`ml-2 block text-sm ${!messAvailable ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                            <label className={`ml-2 block text-sm ${(!messAvailable || isEditMode) ? 'text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                               Mess Opted {messAvailable ? `(+₹${messFeeAmount})` : '(Not Available)'}
                             </label>
                           </div>
@@ -1098,8 +1274,14 @@ function EnrollmentForm() {
                     value={formData.extra_discount_amount}
                     onChange={handleInputChange}
                     min="0"
-                    className="block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    disabled={isEditMode}
+                    className={`block w-full max-w-xs px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isEditMode ? 'bg-gray-50 dark:bg-gray-700 cursor-not-allowed' : 'bg-white dark:bg-gray-700'}`}
                   />
+                  {isEditMode && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Extra discount cannot be changed in edit mode
+                    </p>
+                  )}
                 </div>
 
                 {/* Tax Configuration - Hidden (calculations still happen with 0%) */}
@@ -1173,126 +1355,78 @@ function EnrollmentForm() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        {isEditMode ? 'Additional Payment Amount' : 'Paid Amount'}
-                      </label>
-                      <input
-                        type="number"
-                        name="paid_amount"
-                        value={formData.paid_amount}
-                        onChange={handleInputChange}
-                        min="0"
-                        max={isEditMode ? undefined : feeCalculation.total_payable_fee}
-                        placeholder={isEditMode ? 'Enter additional payment' : '0'}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      {isEditMode && (
-                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                          Enter any additional payment received
-                        </p>
-                      )}
-                    </div>
+                    {isEditMode ? (
+                      <>
+                        <div className="md:col-span-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Add Payment
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleAddPayment}
+                            className="w-full px-4 py-2 border border-violet-600 text-violet-600 dark:border-violet-400 dark:text-violet-400 rounded-md hover:bg-violet-50 dark:hover:bg-violet-900/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500 transition-colors"
+                          >
+                            + Add Payment Record
+                          </button>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Use payment modal to add detailed payment records
+                          </p>
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Due Amount
-                      </label>
-                      <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                        ₹{feeCalculation.due_amount.toFixed(2)}
-                      </div>
-                    </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Due Amount
+                          </label>
+                          <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            ₹{feeCalculation.due_amount.toFixed(2)}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Paid Amount
+                          </label>
+                          <input
+                            type="number"
+                            name="paid_amount"
+                            value={formData.paid_amount}
+                            onChange={handleInputChange}
+                            min="0"
+                            max={feeCalculation.total_payable_fee}
+                            placeholder="0"
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Payment Method
-                      </label>
-                      <select
-                        name="payment_method"
-                        value={formData.payment_method}
-                        onChange={handleInputChange}
-                        className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                      >
-                        <option value="cash">Cash</option>
-                        <option value="card">Card</option>
-                        <option value="upi">UPI</option>
-                        <option value="bank_transfer">Bank Transfer</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Due Amount
+                          </label>
+                          <div className={`text-lg font-semibold ${feeCalculation.due_amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                            ₹{feeCalculation.due_amount.toFixed(2)}
+                          </div>
+                        </div>
 
-          {/* Payment Section - Only show in edit mode */}
-          {isEditMode && (
-            <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700/60">
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700/60">
-                <div className="flex items-center space-x-3">
-                  <CurrencyDollarIcon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                  <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100">Payment Information</h3>
-                </div>
-              </div>
-              
-              <div className="p-6 space-y-4">
-                {enrollmentData && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg mb-4">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Total Fee</p>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        ₹{parseFloat(enrollmentData.total_fee || 0).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Already Paid</p>
-                      <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                        ₹{parseFloat(enrollmentData.paid_amount || 0).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Due Amount</p>
-                      <p className="text-lg font-semibold text-red-600 dark:text-red-400">
-                        ₹{parseFloat(enrollmentData.due_amount || 0).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Additional Payment Amount
-                    </label>
-                    <input
-                      type="number"
-                      name="paid_amount"
-                      value={formData.paid_amount}
-                      onChange={handleInputChange}
-                      min="0"
-                      placeholder="Enter additional payment"
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                    />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      Enter any additional payment received
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Payment Method
-                    </label>
-                    <select
-                      name="payment_method"
-                      value={formData.payment_method}
-                      onChange={handleInputChange}
-                      className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
-                    >
-                      <option value="cash">Cash</option>
-                      <option value="card">Card</option>
-                      <option value="upi">UPI</option>
-                      <option value="bank_transfer">Bank Transfer</option>
-                    </select>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Payment Method
+                          </label>
+                          <select
+                            name="payment_method"
+                            value={formData.payment_method}
+                            onChange={handleInputChange}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-violet-500 focus:border-violet-500"
+                          >
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="upi">UPI</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1428,6 +1562,25 @@ function EnrollmentForm() {
           isOpen={showProgressModal}
           hasDocuments={documentRows.some(row => row.file && row.type)}
         />
+
+        {/* Payment Modal */}
+        {isEditMode && (
+          <PaymentModal
+            isOpen={showPaymentModal}
+            onClose={() => setShowPaymentModal(false)}
+            onSubmit={handlePaymentSubmit}
+            payment={null}
+            enrollmentInfo={enrollmentData ? {
+              student_code: enrollmentData.student?.student_code,
+              student_name: enrollmentData.student?.name_on_id,
+              course_title: enrollmentData.course?.title,
+              total_payable_fee: enrollmentData.total_payable_fee,
+              paid_amount: enrollmentData.paid_amount,
+              due_amount: enrollmentData.due_amount
+            } : null}
+            loading={paymentModalLoading}
+          />
+        )}
       </div>
     </AdminLayout>
   );

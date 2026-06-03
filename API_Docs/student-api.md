@@ -238,23 +238,154 @@
 
 ---
 
+## 4a. Get Enrollment Details
+
+**Method:** `GET`  
+**Endpoint:** `/api/internal/student/enrollments/:enrollmentId`  
+**Description:** Get detailed information about a specific enrollment including payment history.
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Enrollment retrieved successfully",
+  "data": {
+    "id": 6,
+    "student_id": 6,
+    "course_id": 1,
+    "status": "ongoing",
+    "enrollment_date": "2025-01-01",
+    "completion_date": null,
+    "base_course_fee": "20000.00",
+    "course_discount_amount": "2000.00",
+    "course_discount_percentage": "10.00",
+    "discounted_course_fee": "18000.00",
+    "is_hostel_opted": false,
+    "hostel_fee": "0.00",
+    "is_mess_opted": false,
+    "mess_fee": "0.00",
+    "pre_tax_total_fee": "18000.00",
+    "extra_discount_amount": "0.00",
+    "taxable_amount": "18000.00",
+    "total_tax_amount": "0.00",
+    "total_payable_fee": "18000.00",
+    "paid_amount": "10000.00",
+    "due_amount": "8000.00",
+    "remark": null,
+    "student": {
+      "id": 6,
+      "student_code": "STI202500004",
+      "name_on_id": "David Smith",
+      "user": {
+        "mobile": "9876543211",
+        "email": "david@example.com"
+      }
+    },
+    "course": {
+      "id": 1,
+      "title": "Excavator Training - Beginner",
+      "slug": "excavator-training-beginner"
+    },
+    "payment_history": {
+      "payments": [
+        {
+          "id": 15,
+          "type": "course_fee",
+          "amount": 5000.00,
+          "payment_date": "2025-01-15",
+          "payment_method": "upi",
+          "previous_due_amount": 13000.00,
+          "remaining_due_amount": 8000.00,
+          "created_at": "2025-01-15T10:30:00.000Z"
+        },
+        {
+          "id": 14,
+          "type": "course_fee",
+          "amount": 5000.00,
+          "payment_date": "2025-01-01",
+          "payment_method": "cash",
+          "previous_due_amount": 18000.00,
+          "remaining_due_amount": 13000.00,
+          "created_at": "2025-01-01T09:00:00.000Z"
+        }
+      ],
+      "summary": {
+        "payment_count": 2,
+        "total_paid": 10000.00,
+        "first_payment_date": "2025-01-01",
+        "last_payment_date": "2025-01-15"
+      }
+    },
+    "createdAt": "2025-01-01T08:00:00.000Z",
+    "updatedAt": "2025-01-15T10:30:00.000Z"
+  },
+  "timestamp": "2025-09-26T08:30:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Enrollment not found",
+  "timestamp": "2025-09-26T08:30:00.123Z"
+}
+```
+
+**Note:** This endpoint now includes complete payment history with:
+- Individual payment records sorted by date (newest first)
+- Payment summary statistics
+- Due amount progression tracking
+
+---
+
 ## 5. Update Student Enrollment
 
 **Method:** `PUT`  
 **Endpoint:** `/api/internal/student/enrollments/:enrollmentId`  
-**Description:** Update an existing student enrollment. Can include additional payment.
+**Description:** Update an existing student enrollment. Can update student profile, user details, and include additional payment.
 
 **Request Payload:**
 ```json
 {
+  // Enrollment fields
   "status": "ongoing",                    // Optional - not_started/ongoing/completed/aborted/expelled
   "enrollment_date": "2025-01-01",        // Optional - Defaults to today if not provided
   "completion_date": "2025-06-01",        // Optional
-  "paid_amount": 5000,                    // Optional - Additional payment amount
+  "remark": "Updated enrollment",         // Optional
+  
+  // Payment fields
+  "paid_amount": 5000,                    // Optional - Additional payment amount (ADDITIVE)
   "payment_method": "upi",                // Optional - Required if paid_amount is provided
-  "remark": "Updated enrollment"          // Optional
+  
+  // User fields (updates users table)
+  "first_name": "John",                   // Optional - User's first name
+  "last_name": "Doe",                     // Optional - User's last name
+  "mobile": "9876543210",                 // Optional - 10 digit mobile (must be unique)
+  "email": "john.doe@example.com",        // Optional - Email address
+  
+  // Student profile fields (updates students table)
+  "name_on_id": "John Michael Doe",       // Optional - Full name as on ID
+  "father_name": "Father Name",           // Optional
+  "mother_name": "Mother Name",           // Optional
+  "date_of_birth": "1995-01-01",          // Optional - YYYY-MM-DD format
+  "gender": "Male",                       // Optional - Male/Female/Other
+  "address": "Complete Address",          // Optional
+  "state_slug": "maharashtra",            // Optional - State slug from states table
+  "state_name": "Maharashtra",            // Optional - State name
+  "city": "Nagpur",                       // Optional
+  "pincode": "440001",                    // Optional
+  "aadhar_number": "123456789012",        // Optional - 12 digit Aadhar
+  "pan_number": "ABCDE1234F"              // Optional - PAN number
 }
 ```
+
+**Important Notes:**
+- All fields are optional - send only the fields you want to update
+- `paid_amount` is **ADDITIVE** - it adds to existing paid_amount, not replaces it
+- `mobile` must be unique across all users
+- Date fields must be in YYYY-MM-DD format
+- Updates can span across enrollment, student, and user records in a single request
 
 **Success Response:**
 ```json
@@ -601,3 +732,292 @@ file-2-slug: "hsc"
   "message": "Invalid start_date format. Please use YYYY-MM-DD format.",
   "timestamp": "2025-09-26T07:49:00.123Z"
 }
+```
+
+---
+
+# Enrollment Payment Management APIs
+
+These endpoints provide granular CRUD operations for managing payments specific to student enrollments.
+
+---
+
+## 14. Create Enrollment Payment
+
+**Method:** `POST`  
+**Endpoint:** `/api/internal/enrollments/:enrollmentId/payments`  
+**Description:** Create a new payment record for a specific enrollment. Automatically updates enrollment paid_amount and due_amount, and creates corresponding transaction record.
+
+**Request Payload:**
+```json
+{
+  "amount": 5000,                         // MANDATORY - Payment amount (must be > 0)
+  "payment_method": "upi",                // MANDATORY - cash, cheque, upi, bank_transfer, card, net_banking, payment_gateway
+  "payment_date": "2025-01-15",           // Optional - Defaults to today (YYYY-MM-DD)
+  "type": "course_fee",                   // Optional - course_fee, accommodation_fee, penalty, miscellaneous (default: course_fee)
+  "description": "Partial payment"        // Optional - Payment description
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Payment created successfully",
+  "data": {
+    "payment_id": 15,
+    "amount": 5000.00,
+    "previous_due": 14280.00,
+    "new_due": 9280.00,
+    "total_paid": 10000.00
+  },
+  "timestamp": "2025-09-26T08:00:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Enrollment not found",
+  "timestamp": "2025-09-26T08:00:00.123Z"
+}
+```
+
+**Important Notes:**
+- Creates records in both `student_payments` and `transactions` tables
+- Automatically updates `student_enrollments.paid_amount` and `due_amount`
+- Transaction is atomic - all updates succeed or all fail
+- Snapshots previous and remaining due amounts for audit trail
+
+---
+
+## 15. Get Enrollment Payments
+
+**Method:** `GET`  
+**Endpoint:** `/api/internal/enrollments/:enrollmentId/payments`  
+**Description:** Get all payment records for a specific enrollment with summary statistics.
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Enrollment payments retrieved successfully",
+  "data": {
+    "enrollment": {
+      "id": 6,
+      "student_code": "STI202500004",
+      "student_name": "David Smith",
+      "course_title": "Excavator Training - Beginner",
+      "total_payable_fee": 14280.00,
+      "paid_amount": 10000.00,
+      "due_amount": 4280.00
+    },
+    "payments": [
+      {
+        "id": 15,
+        "type": "course_fee",
+        "amount": 5000.00,
+        "payment_date": "2025-01-15",
+        "payment_method": "upi",
+        "previous_due_amount": 14280.00,
+        "remaining_due_amount": 9280.00,
+        "created_at": "2025-01-15T10:30:00.000Z"
+      },
+      {
+        "id": 14,
+        "type": "course_fee",
+        "amount": 5000.00,
+        "payment_date": "2025-01-01",
+        "payment_method": "cash",
+        "previous_due_amount": 14280.00,
+        "remaining_due_amount": 9280.00,
+        "created_at": "2025-01-01T09:00:00.000Z"
+      }
+    ],
+    "summary": {
+      "payment_count": 2,
+      "total_paid": 10000.00,
+      "first_payment_date": "2025-01-01",
+      "last_payment_date": "2025-01-15"
+    }
+  },
+  "timestamp": "2025-09-26T08:05:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Enrollment not found",
+  "timestamp": "2025-09-26T08:05:00.123Z"
+}
+```
+
+---
+
+## 16. Get Payment by ID
+
+**Method:** `GET`  
+**Endpoint:** `/api/internal/payments/:paymentId`  
+**Description:** Get detailed information about a specific payment record.
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Payment retrieved successfully",
+  "data": {
+    "id": 15,
+    "student": {
+      "id": 6,
+      "student_code": "STI202500004",
+      "name": "David Smith",
+      "mobile": "9876543211",
+      "email": "david@example.com"
+    },
+    "course": {
+      "id": 1,
+      "title": "Excavator Training - Beginner",
+      "slug": "excavator-training-beginner"
+    },
+    "enrollment": {
+      "id": 6,
+      "status": "ongoing",
+      "total_payable_fee": 14280.00,
+      "paid_amount": 10000.00,
+      "due_amount": 4280.00
+    },
+    "payment": {
+      "type": "course_fee",
+      "amount": 5000.00,
+      "payment_date": "2025-01-15",
+      "payment_method": "upi",
+      "previous_due_amount": 14280.00,
+      "remaining_due_amount": 9280.00
+    },
+    "created_at": "2025-01-15T10:30:00.000Z",
+    "updated_at": "2025-01-15T10:30:00.000Z"
+  },
+  "timestamp": "2025-09-26T08:10:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Payment not found",
+  "timestamp": "2025-09-26T08:10:00.123Z"
+}
+```
+
+---
+
+## 17. Update Payment
+
+**Method:** `PUT`  
+**Endpoint:** `/api/internal/payments/:paymentId`  
+**Description:** Update an existing payment record. If amount is changed, automatically recalculates enrollment totals and updates corresponding transaction.
+
+**Request Payload:**
+```json
+{
+  "amount": 6000,                         // Optional - New payment amount
+  "payment_date": "2025-01-16",           // Optional - Update payment date
+  "payment_method": "bank_transfer",      // Optional - Update payment method
+  "type": "course_fee",                   // Optional - Update payment type
+  "description": "Updated payment"        // Optional - Update description
+}
+```
+
+**Important Notes:**
+- All fields are optional - send only what you want to update
+- If `amount` is changed:
+  - Recalculates enrollment `paid_amount` and `due_amount`
+  - Updates corresponding transaction record
+  - Updates `remaining_due_amount` in payment record
+- Changes are atomic - all updates succeed or all fail
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Payment updated successfully",
+  "data": null,
+  "timestamp": "2025-09-26T08:15:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Payment not found",
+  "timestamp": "2025-09-26T08:15:00.123Z"
+}
+```
+
+---
+
+## 18. Delete Payment
+
+**Method:** `DELETE`  
+**Endpoint:** `/api/internal/payments/:paymentId`  
+**Description:** Soft delete a payment record. Automatically recalculates enrollment totals and soft deletes corresponding transaction.
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Payment deleted successfully",
+  "data": {
+    "deleted_amount": 5000.00,
+    "new_paid_amount": 5000.00,
+    "new_due_amount": 9280.00
+  },
+  "timestamp": "2025-09-26T08:20:00.123Z"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "message": "Payment not found",
+  "timestamp": "2025-09-26T08:20:00.123Z"
+}
+```
+
+**Important Notes:**
+- Soft delete (record marked as deleted, not removed from database)
+- Automatically:
+  - Subtracts payment amount from enrollment `paid_amount`
+  - Recalculates enrollment `due_amount`
+  - Soft deletes corresponding transaction record
+- Changes are atomic - all updates succeed or all fail
+- Maintains audit trail with `deleted_by` and `deletedAt` fields
+
+---
+
+## Payment Management Summary
+
+### Key Features:
+- ✅ **Granular Control**: Create, read, update, delete individual payments
+- ✅ **Automatic Sync**: Enrollment totals and transactions stay in sync
+- ✅ **Audit Trail**: Tracks previous/remaining due amounts for each payment
+- ✅ **Atomic Operations**: All related updates succeed or fail together
+- ✅ **Soft Deletes**: Maintains complete payment history
+
+### Tables Updated:
+1. **student_payments** - Individual payment records
+2. **transactions** - General ledger entries
+3. **student_enrollments** - Updated paid_amount and due_amount
+
+### Use Cases:
+- Record partial payments over time
+- Correct payment entry errors
+- Track payment history with due amount progression
+- Generate payment receipts
+- Analyze payment patterns and cash flow

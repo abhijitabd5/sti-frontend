@@ -60,16 +60,23 @@ function DashboardIncomeVsExpenses() {
     
     setLoading(true);
     try {
-      const params = {
-        period: selectedPeriod
-      };
+      const params = {};
       
-      // Add date range if dates are provided - convert dd-MM-yyyy to yyyy-MM format
+      // If custom date range is provided, use that (takes priority over period)
       if (dateFrom && dateTo) {
         const fromDate = parse(dateFrom, 'dd-MM-yyyy', new Date());
         const toDate = parse(dateTo, 'dd-MM-yyyy', new Date());
-        params.from = format(fromDate, 'yyyy-MM');
-        params.to = format(toDate, 'yyyy-MM');
+        
+        // For 'from': use the first day of the month (already is)
+        // For 'to': use the last day of the month to include the entire month
+        const toDateEndOfMonth = new Date(toDate.getFullYear(), toDate.getMonth() + 1, 0);
+        
+        // Send dates in YYYY-MM-DD format
+        params.from = format(fromDate, 'yyyy-MM-dd');
+        params.to = format(toDateEndOfMonth, 'yyyy-MM-dd');
+      } else {
+        // Otherwise, use the selected period (month or year)
+        params.period = selectedPeriod;
       }
 
       const response = await transactionApi.getIncomeVsExpense(params);
@@ -79,12 +86,14 @@ function DashboardIncomeVsExpenses() {
         
         let newChartData;
         
-        // Format period to DD-MM-YYYY format for display
+        // Format period to MM-DD-YYYY format for Chart.js time scale
+        // This ensures each month is displayed as the 1st day of that month
         const formatPeriodToDate = (period) => {
-          // Handle both "2025-06" and "2025-01" formats
+          // Parse "2026-01" format to "01-01-2026" (MM-DD-YYYY)
           if (period.includes('-')) {
             const [year, month] = period.split('-');
-            return `01-${month.padStart(2, '0')}-${year}`;
+            // MM-DD-YYYY format: month-day-year
+            return `${month.padStart(2, '0')}-01-${year}`;
           }
           // Fallback for other formats
           return `01-01-${period}`;
@@ -122,6 +131,12 @@ function DashboardIncomeVsExpenses() {
             },
           ],
         };
+        
+        console.log('=== Formatted Chart Data ===');
+        console.log('Labels:', newChartData.labels);
+        console.log('Income data:', newChartData.datasets[0].data);
+        console.log('Expenses data:', newChartData.datasets[1].data);
+        console.log('Investment data:', newChartData.datasets[2].data);
         
         setChartData(newChartData);
       } else {
