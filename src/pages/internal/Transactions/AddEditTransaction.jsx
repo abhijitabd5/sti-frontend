@@ -7,6 +7,7 @@ import transactionApi from "@/services/api/transactionApi";
 import TransactionCategoryApi from "@/services/api/transactionCategoryApi";
 import { DatePicker } from "@/components/ui/Internal/DatePicker";
 import { format } from "date-fns";
+import { formatDateToYYYYMMDD, formatDateToDDMMYYYY } from "@/utils/dateUtils";
 
 // Icons
 import {
@@ -93,13 +94,16 @@ const AddEditTransaction = () => {
       if (response.success) {
         // Map API response to form data structure
         const transaction = response.data;
+        
+        // Convert transaction_date from YYYY-MM-DD to DD-MM-YYYY for DatePicker
+        const backendDate = transaction.transaction_date?.split("T")[0] || transaction.transaction_date;
+        const displayDate = formatDateToDDMMYYYY(backendDate);
+        
         setFormData({
           type: transaction.type,
           category_id: transaction.category_id,
           amount: transaction.amount,
-          transaction_date:
-            transaction.transaction_date?.split("T")[0] ||
-            transaction.transaction_date,
+          transaction_date: displayDate,
           payment_mode: transaction.payment_mode || "",
           description: transaction.description || "",
           payment_ref_num: transaction.payment_ref_num || "",
@@ -203,10 +207,12 @@ const AddEditTransaction = () => {
     try {
       setLoading(true);
 
-      // Ensure type is set correctly
+      // Ensure type is set correctly and convert date format for backend
       const finalFormData = {
         ...formData,
         type: transactionType,
+        // Convert transaction_date from DD-MM-YYYY to YYYY-MM-DD format for backend
+        transaction_date: formatDateToYYYYMMDD(formData.transaction_date),
       };
 
 
